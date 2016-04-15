@@ -135,15 +135,6 @@ architecture Behavioral of cpu is
       uPCsig   : in std_logic;
       K4_out   : out std_logic_vector(2 downto 0));
   end component;
-
-  component ALU
-    port (
-      clk : in std_logic;
-      rst : in std_logic;
-      AR  : in unsigned(11 downto 0);
-      ALUsig : in unsigned(3 downto 0);
-      TR  : in unsigned(11 downto 0));
-  end component;
   
 begin 
     --  Sätt Z och N flaggorna
@@ -172,41 +163,104 @@ begin
                 SP when (TB = 24) else
                 TR when (TB = 26) else
                 SR when (TB = 36) else
-                AR when (TB = 37) else
+                AR when (TB = 37) else 
+                (others => '0') when (rst = '1') else
                 (others => '0');
 
-    ADR <= DATA_BUS(11 downto 0) when (FB = 1) else ADR;
-
-    XR <= DATA_BUS(11 downto 0) when (FB = 19) else XR;
-
-    SP <= DATA_BUS(11 downto 0) when (FB = 21) else SP;
-
-    DR <= DATA_BUS(18 downto 0) when (FB = 6) else DR;
-
-    TR <= DATA_BUS(11 downto 0) when (FB = 25) else TR;
-
-    SR <= DATA_BUS(11 downto 0) when (FB = 35) else
-          AR when (FB = 34) else SR;
-
-    HR <= AR when (FB = 38) else HR;
-
-    AR <= HR when (FB = 39) else AR;
-
-    DR <= p_mem(to_integer(ADR));
-
-    -- FB = 22 SP++, FB = 23 SP--
-
-    SP_REG : process(clk)
+    ADR_reg : process(clk)
     begin
       if rising_edge(clk) then
-        if FB = 22 then
-          SP <= SP + 1;
-        elsif FB = 23 then
-          SP <= SP - 1;
+        if rst = '1' then
+          ADR <= (others => '0');
+        elsif FB = 1 then
+          ADR <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
+
+    XR_reg : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          XR <= (others => '0');
+        elsif FB = 19 then
+          XR <= DATA_BUS(11 downto 0);
+        end if;
+      end if;
+    end process;
+
+   -- SPsig == 1 => SP++, SPsig == 2 => SP--, SPsig == 3 => SPsig = 0
     
+    SP_reg : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          SP <= (others => '0');
+        elsif FB = 21 then
+          SP <= DATA_BUS(11 downto 0);
+        elsif SPsig = 1 then
+          SP <= SP + 1;
+        elsif SPsig = 2 then
+          SP <= SP - 1;
+        elsif SPsig = 3 then
+          SP <= (others => '0');
+        end if;
+      end if;
+    end process;
+
+    TR_reg : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          TR <= (others => '0');
+        elsif FB = 25 then
+          TR <= DATA_BUS(11 downto 0);
+        elsif FB = 32 then
+          AR <= TR;
+        end if;
+      end if;
+    end process;
+
+
+    SR_reg : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          SR <= (others => '0');
+        elsif FB = 35 then
+          SR <= DATA_BUS(11 downto 0);
+        elsif FB = 34 then
+          SR <= AR;
+        end if;
+      end if;
+    end process;
+
+    HR_reg : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          HR <= (others => '0');
+        elsif FB = 38 then
+          HR <= AR;
+        end if;
+      end if;
+    end process;
+
+    DR_reg : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          DR <= (others => '0');
+        elsif FB = 6 then
+          DR <= DATA_BUS(18 downto 0);
+        elsif (RW = '0') and (FB = 2) then
+          DR <= p_mem(to_integer(ADR));
+        elsif (RW = '1') and (FB = 2) then
+          p_mem(to_integer(ADR)) <= DR;
+        end if;
+      end if;
+    end process;
+
     -- Mappning till ingångar för K4
     
     U0 : K4 port map (
@@ -256,15 +310,26 @@ begin
     -- inte kommer att behöva 27 och 33 som signaler om vi har en LOAD funktion
     -- på ALU:n. För att tillexempel köra en ADD så kör först LOAD på det som
     -- ligger i TR så TR hamnar i AR. Lägg det du vill ADDA i TR och kör ADD så
-    -- läggs blir AR <= AR + TR.
-    
-    U3 : ALU port map (
-      clk => clk,
-      rst => rst,
-      TR  => TR,
-      AR  => AR,
-      ALUsig => ALUsig
-      );
+    -- blir AR <= AR + TR.
+
+    ALU_func : process(clk)
+    begin
+      if rising_edge(clk) then
+        if rst = '1' then
+          AR <= (others => '0');
+        elsif ALUsig = 28 then
+          AR <= AR + 1;
+        elsif ALUsig = 29 then
+          AR <= AR - 1;
+        elsif ALUsig = 30 then
+          AR <= AR + TR;
+        elsif ALUsig = 31 then
+          AR <= AR - TR;
+        elsif ALUsig = 32 then
+          AR <= TR;
+        end if;
+      end if;
+    end process;
     
   end Behavioral;
   
