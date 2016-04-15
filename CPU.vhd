@@ -1,10 +1,10 @@
--- Detta ‰r en CPU av Olle roos typ med avbrott
--- Alla register fˆrrutom DR och IR ‰r 12 bitar breda, DR och IR ‰r 19
--- Program minnet ‰r 19 bitar brett
--- Bussen ‰r 19 bitar brett
--- Mikrominnet ‰r 33 bitar brett
--- Signaler som kan anv‰ndas fast inte gÂr mellan buss och
--- register nÂs genom att endast ange FB
+-- Detta √§r en CPU av Olle roos typ med avbrott
+-- Alla register f√∂rrutom DR och IR √§r 12 bitar breda, DR och IR √§r 19
+-- Program minnet √§r 19 bitar brett
+-- Bussen √§r 19 bitar brett
+-- Mikrominnet √§r 33 bitar brett
+-- Signaler som kan anv√§ndas fast inte g√•r mellan buss och
+-- register n√•s genom att endast ange FB
 
 
 library IEEE;
@@ -29,7 +29,7 @@ architecture Behavioral of cpu is
 
   -- uM = ALU_TB_FB_PC_I_SEQ_RW_SP_uAddr
   
-  -- Skriv mikrominne nedanfˆr
+  -- Skriv mikrominne nedanf√∂r
   constant u_mem_c : u_mem_t := (others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -48,7 +48,7 @@ architecture Behavioral of cpu is
   signal SPsig : unsigned(1 downto 0);         -- Manipulera stackpekaren
   signal PCsig : std_logic;                    -- PC++
 
-  -- Nollst‰ll uPC
+  -- Nollst√§ll uPC
 
   signal uPCzero : std_logic;
 
@@ -56,11 +56,11 @@ architecture Behavioral of cpu is
   
   signal uPCsig : std_logic;
 
-  -- L‰s K1
+  -- L√§s K1
 
   signal K1sig : std_logic;
 
-  -- L‰s K2
+  -- L√§s K2
 
   signal K2sig : std_logic;
 
@@ -84,22 +84,22 @@ architecture Behavioral of cpu is
   
   type p_mem_t is array(0 to 4095) of unsigned(18 downto 0);
 
-  -- Skriv program minne nedanfˆr
+  -- Skriv program minne nedanf√∂r
   
   constant p_mem_c : p_mem_t :=  (others => (others => '0'));           
 
-  signal p_mem : p_mem_t := p_mem_c;         -- S‰tt program minne
+  signal p_mem : p_mem_t := p_mem_c;         -- S√§tt program minne
 
   signal DR     : unsigned(18 downto 0);     -- Dataregister
   signal ADR    : unsigned(11 downto 0);     -- Address register
-  signal PC     : unsigned(11 downto 0);     -- Program r‰knaren
+  signal PC     : unsigned(11 downto 0);     -- Program r√§knaren
   signal IR     : unsigned(18 downto 0);     -- Instruktion register
   signal XR     : unsigned(11 downto 0);     -- XR
   signal SP     : unsigned(11 downto 0);     -- Stack pekare
-  signal TR     : unsigned(11 downto 0);     -- Tempor‰ra register
+  signal TR     : unsigned(11 downto 0);     -- Tempor√§ra register
   signal AR     : unsigned(11 downto 0);     -- Ackumulator register
   signal SR     : unsigned(11 downto 0);     -- Status register
-  signal HR     : unsigned(11 downto 0);     -- Hj‰lp register
+  signal HR     : unsigned(11 downto 0);     -- Hj√§lp register
   signal DATA_BUS : unsigned(18 downto 0);   -- Bussen 2 byte
 
   -- N flagga
@@ -137,12 +137,12 @@ architecture Behavioral of cpu is
   end component;
   
 begin 
-    --  S‰tt Z och N flaggorna
+    --  S√§tt Z och N flaggorna
 
     N <= SP(0);
     Z <= SP(1);
   
-    -- Kombinatorik fˆr avl‰sning uM
+    -- Kombinatorik f√∂r avl√§sning uM
     
     uAddr <= uM(7 downto 0);
     SPsig <= uM(9 downto 8);
@@ -154,7 +154,7 @@ begin
     TB <= uM(28 downto 23);
     ALUsig <= uM(32 downto 29);
 
-    -- Installera alla till och frÂn signaler
+    -- Installera alla till och fr√•n signaler
 
     DATA_BUS <= IR when (TB = 8) else
                 DR when (TB = 6) else
@@ -261,7 +261,7 @@ begin
       end if;
     end process;
 
-    -- Mappning till ingÂngar fˆr K4
+    -- Mappning till ing√•ngar f√∂r K4
     
     U0 : K4 port map (
       clk      => clk,
@@ -275,7 +275,7 @@ begin
       K4_out   => K4_out
       );
 
-    -- Koppla in K1 och K2 till muxen, K4_out v‰ljer
+    -- Koppla in K1 och K2 till muxen, K4_out v√§ljer
     -- Address till avbrotts rutin  = 60
     
     with K4_out select
@@ -286,7 +286,7 @@ begin
              "00111100" when "100",
              uPCnext    when others;
 
-    -- S‰tt mikrosignalen
+    -- S√§tt mikrosignalen
     
     uM <= u_mem(to_integer(uPC));
 
@@ -306,10 +306,10 @@ begin
 
     -- Installera ALU
 
-    -- ALU Kommer att fungera lite olikt den originella Olle roos datorn dÂ vi
-    -- inte kommer att behˆva 27 och 33 som signaler om vi har en LOAD funktion
-    -- pÂ ALU:n. Fˆr att tillexempel kˆra en ADD sÂ kˆr fˆrst LOAD pÂ det som
-    -- ligger i TR sÂ TR hamnar i AR. L‰gg det du vill ADDA i TR och kˆr ADD sÂ
+    -- ALU Kommer att fungera lite olikt den originella Olle roos datorn d√• vi
+    -- inte kommer att beh√∂va 27 och 33 som signaler om vi har en LOAD funktion
+    -- p√• ALU:n. F√∂r att tillexempel k√∂ra en ADD s√• k√∂r f√∂rst LOAD p√• det som
+    -- ligger i TR s√• TR hamnar i AR. L√§gg det du vill ADDA i TR och k√∂r ADD s√•
     -- blir AR <= AR + TR.
 
     ALU_func : process(clk)
