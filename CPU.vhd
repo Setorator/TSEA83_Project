@@ -5,6 +5,7 @@
 -- Mikrominnet är 33 bitar brett
 -- Signaler som kan användas fast inte går mellan buss och
 -- register nås genom att endast ange FB
+-- TR, SR och HR är register som är bortagna då vi inte kommer att behöva dom
 
 
 library IEEE;
@@ -29,8 +30,7 @@ architecture Behavioral of cpu is
 
   -- uM = ALU_TB_FB_PC_I_SEQ_RW_SP_uAddr
   
-  -- Skriv mikrominne nedanför
-  constant u_mem_c : u_mem_t := (others => (others => '0'));
+  constant u_mem_c : u_mem_t := (others => (others => '0')); -- Skriv mikrominne här
 
   signal u_mem : u_mem_t := u_mem_c;
 
@@ -47,26 +47,7 @@ architecture Behavioral of cpu is
   signal SEQ   : unsigned(3 downto 0);
   signal SPsig : unsigned(1 downto 0);         -- Manipulera stackpekaren
   signal PCsig : std_logic;                    -- PC++
-
-  -- Nollställ uPC
-
-  signal uPCzero : std_logic;
-
-  -- uPC++
-  
-  signal uPCsig : std_logic;
-
-  -- Läs K1
-
-  signal K1sig : std_logic;
-
-  -- Läs K2
-
-  signal K2sig : std_logic;
-
-  -- K4 out
-
-  signal K4_out : std_logic_vector(2 downto 0);
+  signal I     : std_logic; 				   -- T-vippa
   
   -- K1 out
 
@@ -76,71 +57,47 @@ architecture Behavioral of cpu is
 
   signal K2_out : unsigned(7 downto 0);
   
-  -- uPCnext = uPC + 1 
-
-  signal uPCnext : unsigned(7 downto 0);
+  -- K2 minne
+  
+  type K2_mem_t is array(0 to 3) of unsigned(7 downto 0);
+  
+  constant K2_mem_c : K2_mem_t := (others => (others => '0')); -- Skriv K2 minne här
+  
+  signal K2_mem : K2_mem_t := K2_mem_c;
+  
+  -- K1 minne
+  
+  type K1_mem_t is array(0 to 31) of unsigned(7 downto 0);
+  
+  constant K1_mem_c : K1_mem_t := (others => (others => '0')); -- Skriv K1 minne här
+  
+  signal K1_mem : K1_mem_t := K1_mem_c; 
   
   -- program memory
   
   type p_mem_t is array(0 to 4095) of unsigned(18 downto 0);
-
-  -- Skriv program minne nedanför
   
-  constant p_mem_c : p_mem_t :=  (others => (others => '0'));           
+  constant p_mem_c : p_mem_t :=  (others => (others => '0')); -- Skriv program minne här    
 
   signal p_mem : p_mem_t := p_mem_c;         -- Sätt program minne
 
-  signal DR     : unsigned(18 downto 0);     -- Dataregister
-  signal ADR    : unsigned(11 downto 0);     -- Address register
-  signal PC     : unsigned(11 downto 0);     -- Program räknaren
-  signal IR     : unsigned(18 downto 0);     -- Instruktion register
-  signal XR     : unsigned(11 downto 0);     -- XR
-  signal SP     : unsigned(11 downto 0);     -- Stack pekare
-  signal TR     : unsigned(11 downto 0);     -- Temporära register
-  signal AR     : unsigned(11 downto 0);     -- Ackumulator register
-  signal SR     : unsigned(11 downto 0);     -- Status register
-  signal HR     : unsigned(11 downto 0);     -- Hjälp register
+  signal DR       : unsigned(18 downto 0);     -- Dataregister
+  signal ADR      : unsigned(11 downto 0);     -- Address register
+  signal PC       : unsigned(11 downto 0);     -- Program räknaren
+  signal IR       : unsigned(18 downto 0);     -- Instruktion register
+  signal XR       : unsigned(11 downto 0);     -- XR
+  signal SP       : unsigned(11 downto 0);     -- Stack pekare
+  signal AR       : unsigned(11 downto 0);     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0);   -- Bussen 2 byte
 
-  -- N flagga
+  -- Flaggorna
   
   signal N : std_logic := '0';
-
-  -- Z flagga
-
   signal Z : std_logic := '0';
+  signal O : std_logic := '0';
+  signal C : std_logic := '0';
 
-  component K1
-    port(
-      K1_in : in unsigned(4 downto 0);
-      K1_out : out unsigned(7 downto 0));
-  end component;
-
-  component K2
-    port(
-      K2_in : in unsigned(1 downto 0);
-      K2_out : out unsigned(7 downto 0)
-      );
-  end component;
-  
-  component K4
-    port (
-      clk : in std_logic;
-      rst : in std_logic;
-      intr  : in std_logic;
-      Isig     : in std_logic;
-      K1sig    : in std_logic;
-      K2sig    : in std_logic;
-      uPCzero  : in std_logic;
-      uPCsig   : in std_logic;
-      K4_out   : out std_logic_vector(2 downto 0));
-  end component;
-  
 begin 
-    --  Sätt Z och N flaggorna
-
-    N <= SP(0);
-    Z <= SP(1);
   
     -- Kombinatorik för avläsning uM
     
@@ -154,15 +111,13 @@ begin
     TB <= uM(28 downto 23);
     ALUsig <= uM(32 downto 29);
 
-    -- Installera alla till och från signaler
+    -- Installera alla signaler till bussen
 
     DATA_BUS <= IR when (TB = 8) else
                 DR when (TB = 6) else
                 PC when (TB = 18) else
                 XR when (TB = 20) else
                 SP when (TB = 24) else
-                TR when (TB = 26) else
-                SR when (TB = 36) else
                 AR when (TB = 37) else 
                 (others => '0') when (rst = '1') else
                 (others => '0');
@@ -189,7 +144,9 @@ begin
       end if;
     end process;
 
-   -- SPsig == 1 => SP++, SPsig == 2 => SP--, SPsig == 3 => SPsig = 0
+   -- SPsig == 1 => SP++, 
+   --SPsig == 2 => SP--, 
+   --SPsig == 3 => SP = 0
     
     SP_reg : process(clk)
     begin
@@ -208,128 +165,164 @@ begin
       end if;
     end process;
 
-    TR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          TR <= (others => '0');
-        elsif FB = 25 then
-          TR <= DATA_BUS(11 downto 0);
-        elsif FB = 32 then
-          AR <= TR;
-        end if;
-      end if;
-    end process;
-
-
-    SR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          SR <= (others => '0');
-        elsif FB = 35 then
-          SR <= DATA_BUS(11 downto 0);
-        elsif FB = 34 then
-          SR <= AR;
-        end if;
-      end if;
-    end process;
-
-    HR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          HR <= (others => '0');
-        elsif FB = 38 then
-          HR <= AR;
-        end if;
-      end if;
-    end process;
-
     DR_reg : process(clk)
     begin
       if rising_edge(clk) then
         if rst = '1' then
           DR <= (others => '0');
         elsif FB = 6 then
-          DR <= DATA_BUS(18 downto 0);
-        elsif (RW = '0') and (FB = 2) then
+          DR <= "000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
+        elsif (RW = '0') and (FB = 2) then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
-        elsif (RW = '1') and (FB = 2) then
+        elsif (RW = '1') and (FB = 2) then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
         end if;
       end if;
     end process;
+	
+	-- Fungerar som en T vippa.
+	-- signalen I används som en spärr för att inte kunna få avbrott under -
+	-- ett avbrott.
+	I_vippan : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then I <= '0';
+			elsif Isig = '1' then I <= not I; 
+			end if;
+		end if;
+	end process;
+	
+	-- Behöver uM vara en process???? är lite osäker . . .
+	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju end
+	-- vippa i sånna fall fast går ju lösa med kombinatorik också eller?
+	
+	uM_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then uM <= (others => '0');
+			elsif (intr = '1') and (I = '0') then uPC <= "000000111100"; --60
+			elsif SEQ = 0 then uPC <= uPC + 1;
+			elsif SEQ = 1 then uPC <= K1_out;
+			elsif SEQ = 2 then uPC <= K2_out;
+			elsif SEQ = 3 then uPC <= (others => '0');
+			elsif SEQ = 4 then 
+				if Z = '0' then 
+					uPC <= uAddr;
+				else     
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 5 then uPC <= uAddr;
+			elsif SEQ = 6 then
+				if Z = '1' then
+					uPC <= uAddr;
+				else
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 7 then
+				if N = '1' then
+					uPC <= uAddr;
+				else
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 8 then
+				if C = '1' then
+					uPC <= uAddr;
+				else
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 9 then
+				if O = '1' then
+					uPC <= uAddr;
+				else
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 10 then
+				if C = '0' then
+					uPC <= uAddr;
+				else
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 11 then
+				if O = '0' then
+					uPC <= uAddr;
+				else
+					uPC <= uPC + 1;
+				end if;
+			elsif SEQ = 12 then
+				uPC <= (others => '0'); -- HALT
+			end if; 
+		end if;
+	end process;
 
-    -- Mappning till ingångar för K4
-    
-    U0 : K4 port map (
-      clk      => clk,
-      rst      => rst,
-      Isig     => Isig,
-      intr     => intr,
-      K1sig    => K1sig,
-      K2sig    => K2sig,
-      uPCzero  => uPCzero,
-      uPCsig   => uPCsig,
-      K4_out   => K4_out
-      );
-
-    -- Koppla in K1 och K2 till muxen, K4_out väljer
-    -- Address till avbrotts rutin  = 60
-    
-    with K4_out select
-      uPC <= uPCnext    when "000",
-             K1_out     when "001",
-             "00000000" when "010",
-             K2_out     when "011",
-             "00111100" when "100",
-             uPCnext    when others;
-
-    -- Sätt mikrosignalen
-    
-    uM <= u_mem(to_integer(uPC));
+	uM <= u_mem(to_integer(uPC));
 
     -- Installera K1
-
-    U1 : K1 port map (
-      K1_in => IR(18 downto 14),
-      K1_out => K1_out
-      );
+	  
+	K1_out <= K1_mem(to_integer(IR(18 downto 14)));
 
     -- Installera K2
-    
-    U2 : K2 port map (
-      K2_in => IR(13 downto 12),
-      K2_out => K2_out
-      );
+	  
+	K2_out <= K2_mem(to_integer(IR(13 downto 12)));
 
     -- Installera ALU
-
-    -- ALU Kommer att fungera lite olikt den originella Olle roos datorn då vi
-    -- inte kommer att behöva 27 och 33 som signaler om vi har en LOAD funktion
-    -- på ALU:n. För att tillexempel köra en ADD så kör först LOAD på det som
-    -- ligger i TR så TR hamnar i AR. Lägg det du vill ADDA i TR och kör ADD så
-    -- blir AR <= AR + TR.
+    -- Lägg till funktioner eftersom, finns plats för 16 olika
 
     ALU_func : process(clk)
     begin
       if rising_edge(clk) then
-        if rst = '1' then
-          AR <= (others => '0');
-        elsif ALUsig = 28 then
-          AR <= AR + 1;
-        elsif ALUsig = 29 then
-          AR <= AR - 1;
-        elsif ALUsig = 30 then
-          AR <= AR + TR;
-        elsif ALUsig = 31 then
-          AR <= AR - TR;
-        elsif ALUsig = 32 then
-          AR <= TR;
+        if rst = '1' 	 then AR <= (others => '0');
+		elsif FB = 34    then AR <= DATA_BUS(11 downto 0);
+        elsif ALUsig = 1 then AR <= AR + 1;
+        elsif ALUsig = 2 then AR <= AR - 1;
+        elsif ALUsig = 3 then AR <= AR + DATA_BUS(11 downto 0);
+        elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
+		elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
+		elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
+		elsif ALUsig = 7 then AR <= AR * 2;   --logical shift left
+		elsif ALUsig = 8 then AR <= AR srl 1; --logical shift right
+		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
+		elsif ALUsig = 10 then AR <= (others => '0');
+		elsif ALUsig = 11 then AR <= (others => '1');
+		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0); -- kanske fungerar :)
         end if;
       end if;
     end process;
+	
+	-- Flaggornas logik
+	-- Måste vara i samma klockpuls som beräkningen i ALU
+	-- Behöver vi dom resterande flaggorna?
+	
+	Z <= '1' when (AR = 0) else
+		 '0' when (rst = '1') else '0';
+		 
+	N <= '1' when (AR < 0) else
+		 '0' when (rst = '1') else '0';
+		 
+	-- PC funktionalitet
+	-- Avbrotts rutinen har bara fått en random adress
+	
+	PC_func : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				PC <= (others => '0');
+			elsif intr = '1' then
+				PC <= "10000000"; -- Hoppa till avbrottsrutin
+			elsif FB = 13 then
+				PC <= DATA_BUS(11 downto 0);
+			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
+				if N = '1' then
+					PC <= DATA_BUS(11 downto 0);
+				end if;
+			elsif SEQ = 14 then -- vilkorligt hopp Z = 1
+				if Z = '1' then
+					PC <= DATA_BUS(11 downto 0);
+				end if;
+			elsif PCsig = '1' then
+				PC <= PC + 1;
+			end if;
+		end if;
+	end process;
     
   end Behavioral;
   
