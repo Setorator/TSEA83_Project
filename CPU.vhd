@@ -5,6 +5,7 @@
 -- Mikrominnet är 33 bitar brett
 -- Signaler som kan användas fast inte går mellan buss och
 -- register nås genom att endast ange FB
+-- TR, SR och HR är register som är bortagna då vi inte kommer att behöva dom
 
 
 library IEEE;
@@ -72,7 +73,6 @@ architecture Behavioral of cpu is
   signal IR     : unsigned(18 downto 0);     -- Instruktion register
   signal XR     : unsigned(11 downto 0);     -- XR
   signal SP     : unsigned(11 downto 0);     -- Stack pekare
-  signal TR     : unsigned(11 downto 0);     -- Temporära register
   signal AR     : unsigned(11 downto 0);     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0);   -- Bussen 2 byte
 
@@ -82,7 +82,6 @@ architecture Behavioral of cpu is
   signal Z : std_logic := '0';
   signal O : std_logic := '0';
   signal C : std_logic := '0';
-  signal L : std_logic := '0';
 
   component K1
     port(
@@ -110,14 +109,13 @@ begin
     TB <= uM(28 downto 23);
     ALUsig <= uM(32 downto 29);
 
-    -- Installera alla till och från signaler
+    -- Installera alla signaler till bussen
 
     DATA_BUS <= IR when (TB = 8) else
                 DR when (TB = 6) else
                 PC when (TB = 18) else
                 XR when (TB = 20) else
                 SP when (TB = 24) else
-                TR when (TB = 26) else
                 AR when (TB = 37) else 
                 (others => '0') when (rst = '1') else
                 (others => '0');
@@ -163,33 +161,25 @@ begin
       end if;
     end process;
 
-    TR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          TR <= (others => '0');
-        elsif FB = 25 then
-          TR <= DATA_BUS(11 downto 0);
-        elsif FB = 32 then
-          AR <= TR;
-        end if;
-      end if;
-    end process;
-
     DR_reg : process(clk)
     begin
       if rising_edge(clk) then
         if rst = '1' then
           DR <= (others => '0');
         elsif FB = 6 then
-          DR <= DATA_BUS(18 downto 0);
-        elsif (RW = '0') and (FB = 2) then
+          DR <= "000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
+        elsif (RW = '0') and (FB = 2) then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
-        elsif (RW = '1') and (FB = 2) then
+        elsif (RW = '1') and (FB = 2) then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
         end if;
       end if;
     end process;
+	
+	
+	-- Behöver uM vara en process???? är lite osäker . . .
+	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju end
+	-- vippa i sånna fall fast går ju lösa med kombinatorik också eller?
 	
 	uM_reg : process(clk)
 	begin
@@ -232,24 +222,18 @@ begin
 					uPC <= uPC + 1;
 				end if;
 			elsif SEQ = 10 then
-				if L = '1' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 11 then
 				if C = '0' then
 					uPC <= uAddr;
 				else
 					uPC <= uPC + 1;
 				end if;
-			elsif SEQ = 12 then
+			elsif SEQ = 11 then
 				if O = '0' then
 					uPC <= uAddr;
 				else
 					uPC <= uPC + 1;
 				end if;
-			elsif SEQ = 13 then
+			elsif SEQ = 12 then
 				uPC <= (others => '0'); -- HALT
 			end if; 
 		end if;
@@ -272,9 +256,7 @@ begin
       );
 
     -- Installera ALU
-
-    -- ALU Kommer att fungera lite olikt den originella Olle roos datorn då vi
-    -- inte kommer att behöva 27 och 33. ALUsig är 4 bitar så det finns 16 möjliga operationer att definera
+    -- Lägg till funktioner eftersom, finns plats för 16 olika
 
     ALU_func : process(clk)
     begin
@@ -283,11 +265,55 @@ begin
 		elsif FB = 34    then AR <= DATA_BUS(11 downto 0);
         elsif ALUsig = 1 then AR <= AR + 1;
         elsif ALUsig = 2 then AR <= AR - 1;
-        elsif ALUsig = 3 then AR <= AR + TR;
-        elsif ALUsig = 4 then AR <= AR - TR;
+        elsif ALUsig = 3 then AR <= AR + DATA_BUS(11 downto 0);
+        elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
+		elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
+		elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
+		elsif ALUsig = 7 then AR <= AR * 2; --logical shift left
+		elsif ALUsig = 8 then AR <= AR srl 1; --logical shift right
+		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
+		elsif ALUsig = 10 then AR <= (others => '0');
+		elsif ALUsig = 11 then AR <= (others => '1');
+		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0); -- kanske fungerar :)
         end if;
       end if;
     end process;
+	
+	-- Flaggornas logik
+	-- Måste vara i samma klockpuls som beräkningen i ALU
+	-- Behöver vi dom resterande flaggorna?
+	
+	Z <= '1' when (AR = 0) else
+		 '0' when (rst = '1') else '0';
+		 
+	N <= '1' when (AR < 0) else
+		 '0' when (rst = '1') else '0';
+		 
+	-- PC funktionalitet
+	-- Avbrotts rutinen har bara fått en random adress
+	
+	PC_func : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				PC <= (others => '0');
+			elsif intr = '1' then
+				PC <= "10000000"; -- Hoppa till avbrottsrutin
+			elsif FB = 13 then
+				PC <= DATA_BUS(11 downto 0);
+			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
+				if N = '1' then
+					PC <= DATA_BUS(11 downto 0);
+				end if;
+			elsif SEQ = 14 then -- vilkorligt hopp Z = 1
+				if Z = '1' then
+					PC <= DATA_BUS(11 downto 0);
+				end if;
+			elsif PCsig = '1' then
+				PC <= PC + 1;
+			end if;
+		end if;
+	end process;
     
   end Behavioral;
   
