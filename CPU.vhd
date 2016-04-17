@@ -27,12 +27,11 @@ architecture Behavioral of cpu is
   -- micro memory
   
   type u_mem_t is array(0 to 255) of unsigned(32 downto 0);
-
-  -- uM = ALU_TB_FB_PC_I_SEQ_RW_SP_uAddr
   
   -- Skriv mikrominne här
   constant u_mem_c : u_mem_t := 
-				(b"0000_001010_000001_0_0_0000_0_00_00000000", -- ADR <= PC
+		   --      ALU _  TB  _  FB  _P_I_SEQ _R_SP_  uAddr
+				(b"0000_010010_000001_0_0_0000_0_00_00000000", -- ADR <= PC
 				 b"0000_000000_000010_0_0_0000_0_00_00000000", -- DR <= MEM(ADR)
 				 b"0000_000110_001000_0_0_0000_0_00_00000000", -- IR <= DR
 				 b"0000_000000_000000_1_0_0010_0_00_00000000", -- PC++, uPC <= K2
@@ -40,28 +39,28 @@ architecture Behavioral of cpu is
 
   signal u_mem : u_mem_t := u_mem_c;
 
-  signal uM    : unsigned(32 downto 0);        -- micro memory output
-  signal uPC   : unsigned(7 downto 0);         -- micro program counter
+  signal uM    : unsigned(32 downto 0) := (others => '0');        -- micro memory output
+  signal uPC   : unsigned(7 downto 0) := (others => '0');         -- micro program counter
 
   -- Signaler i uM
-  signal uAddr : unsigned(7 downto 0);         -- micro Adress
-  signal TB    : unsigned(5 downto 0);         -- to bus field
-  signal FB    : unsigned(5 downto 0);         -- from bus field
-  signal ALUsig   : unsigned(3 downto 0);
-  signal Isig  : std_logic;                    -- block interrupts
-  signal RW    : std_logic;                    -- Read/write
-  signal SEQ   : unsigned(3 downto 0);
-  signal SPsig : unsigned(1 downto 0);         -- Manipulera stackpekaren
-  signal PCsig : std_logic;                    -- PC++
-  signal I     : std_logic; 				   -- T-vippa
+  signal uAddr : unsigned(7 downto 0)  := (others => '0');         -- micro Adress
+  signal TB    : unsigned(5 downto 0)  := (others => '0');         -- to bus field
+  signal FB    : unsigned(5 downto 0) := (others => '0');          -- from bus field
+  signal ALUsig   : unsigned(3 downto 0) := (others => '0');
+  signal Isig  : std_logic := '0';                   			   -- block interrupts
+  signal RW    : std_logic := '0';                    			   -- Read/write
+  signal SEQ   : unsigned(3 downto 0)  := (others => '0');
+  signal SPsig : unsigned(1 downto 0)  := (others => '0');         -- Manipulera stackpekaren
+  signal PCsig : std_logic := '0';                    			   -- PC++
+  signal I     : std_logic := '0'; 				   				   -- T-vippa
   
   -- K1 out
 
-  signal K1_out : unsigned(7 downto 0);
+  signal K1_out : unsigned(7 downto 0) := (others => '0');
 
   -- K2 out
 
-  signal K2_out : unsigned(7 downto 0);
+  signal K2_out : unsigned(7 downto 0) := (others => '0');
   
   -- K2 minne
   
@@ -83,18 +82,22 @@ architecture Behavioral of cpu is
   
   type p_mem_t is array(0 to 4095) of unsigned(18 downto 0);
   
-  constant p_mem_c : p_mem_t :=  (others => (others => '0')); -- Skriv program minne här    
+  -- Skriv program minne här 
+  constant p_mem_c : p_mem_t :=  
+			-- OP_M_Addr
+			(b"00001_00_111100001111",
+			others => (others => '0'));    
 
   signal p_mem : p_mem_t := p_mem_c;         -- Sätt program minne
 
-  signal DR       : unsigned(18 downto 0);     -- Dataregister
-  signal ADR      : unsigned(11 downto 0);     -- Address register
-  signal PC       : unsigned(11 downto 0);     -- Program räknaren
-  signal IR       : unsigned(18 downto 0);     -- Instruktion register
-  signal XR       : unsigned(11 downto 0);     -- XR
-  signal SP       : unsigned(11 downto 0);     -- Stack pekare
-  signal AR       : unsigned(11 downto 0);     -- Ackumulator register
-  signal DATA_BUS : unsigned(18 downto 0);   -- Bussen 2 byte
+  signal DR       : unsigned(18 downto 0) := (others => '0');     -- Dataregister
+  signal ADR      : unsigned(11 downto 0) := (others => '0');     -- Address register
+  signal PC       : unsigned(11 downto 0) := (others => '0');     -- Program räknaren
+  signal IR       : unsigned(18 downto 0) := (others => '0');     -- Instruktion register
+  signal XR       : unsigned(11 downto 0) := (others => '0');     -- XR
+  signal SP       : unsigned(11 downto 0) := (others => '0');     -- Stack pekare
+  signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
+  signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
 
   -- Flaggorna
   
@@ -121,10 +124,10 @@ begin
 
     DATA_BUS <= IR when (TB = 8) else
                 DR when (TB = 6) else
-                PC when (TB = 18) else
-                XR when (TB = 20) else
-                SP when (TB = 24) else
-                AR when (TB = 37) else 
+				"0000000" & PC when (TB = 18) else
+				"0000000" & XR when (TB = 20) else
+				"0000000" & SP when (TB = 24) else
+				"0000000" & AR when (TB = 37) else 
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
@@ -156,14 +159,10 @@ begin
 			if rst = '1' then
 				IR <= (others => '0');
 			elsif FB = 8 then
-				IR <= DATA_BUS(11 downto 0);
+				IR <= DATA_BUS;
 			end if;
 		end if;
 	end process;
-
-   -- SPsig == 1 => SP++, 
-   --SPsig == 2 => SP--, 
-   --SPsig == 3 => SP = 0
     
     SP_reg : process(clk)
     begin
@@ -213,10 +212,10 @@ begin
 	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju en
 	-- vippa i sånna fall fast går ju lösa med kombinatorik också eller?
 	
-	uM_reg : process(clk)
+	uPC_reg : process(clk)
 	begin
 		if rising_edge(clk) then
-			if rst = '1' then uM <= (others => '0');
+			if rst = '1' then uPC <= (others => '0');
 			elsif (intr = '1') and (I = '0') then uPC <= "000000111100"; --60
 			elsif SEQ = 0 then uPC <= uPC + 1;
 			elsif SEQ = 1 then uPC <= K1_out;
@@ -309,10 +308,10 @@ begin
 	-- Måste vara i samma klockpuls som beräkningen i ALU
 	-- Behöver vi dom resterande flaggorna?
 	
-	Z <= '1' when (AR = 0) else
+	Z <= '1' when (AR = 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
 		 
-	N <= '1' when (AR < 0) else
+	N <= '1' when (AR < 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
 		 
 	-- PC funktionalitet
