@@ -30,7 +30,13 @@ architecture Behavioral of cpu is
 
   -- uM = ALU_TB_FB_PC_I_SEQ_RW_SP_uAddr
   
-  constant u_mem_c : u_mem_t := (others => (others => '0')); -- Skriv mikrominne här
+  -- Skriv mikrominne här
+  constant u_mem_c : u_mem_t := 
+				(b"0000_001010_000001_0_0_0000_0_00_00000000", -- ADR <= PC
+				 b"0000_000000_000010_0_0_0000_0_00_00000000", -- DR <= MEM(ADR)
+				 b"0000_000110_001000_0_0_0000_0_00_00000000", -- IR <= DR
+				 b"0000_000000_000000_1_0_0010_0_00_00000000", -- PC++, uPC <= K2
+				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
 
@@ -143,6 +149,17 @@ begin
         end if;
       end if;
     end process;
+	
+	IR_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				IR <= (others => '0');
+			elsif FB = 8 then
+				IR <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
 
    -- SPsig == 1 => SP++, 
    --SPsig == 2 => SP--, 
@@ -193,7 +210,7 @@ begin
 	end process;
 	
 	-- Behöver uM vara en process???? är lite osäker . . .
-	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju end
+	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju en
 	-- vippa i sånna fall fast går ju lösa med kombinatorik också eller?
 	
 	uM_reg : process(clk)
@@ -307,7 +324,7 @@ begin
 			if rst = '1' then
 				PC <= (others => '0');
 			elsif intr = '1' then
-				PC <= "10000000"; -- Hoppa till avbrottsrutin
+				PC <= "000010000000"; -- Hoppa till avbrottsrutin
 			elsif FB = 13 then
 				PC <= DATA_BUS(11 downto 0);
 			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
