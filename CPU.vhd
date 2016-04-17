@@ -2,7 +2,7 @@
 -- Alla register förrutom DR och IR är 12 bitar breda, DR och IR är 19
 -- Program minnet är 19 bitar brett
 -- Bussen är 19 bitar brett
--- Mikrominnet är 33 bitar brett
+-- Mikrominnet är 28 bitar brett
 -- Signaler som kan användas fast inte går mellan buss och
 -- register nås genom att endast ange FB
 -- TR, SR och HR är register som är bortagna då vi inte kommer att behöva dom
@@ -26,29 +26,45 @@ architecture Behavioral of cpu is
 
   -- micro memory
   
-  type u_mem_t is array(0 to 255) of unsigned(32 downto 0);
+  type u_mem_t is array(0 to 255) of unsigned(27 downto 0);
   
   -- Skriv mikrominne här
   constant u_mem_c : u_mem_t := 
-		   --      ALU _  TB  _  FB  _P_I_SEQ _R_SP_  uAddr
-				(b"0000_010010_000001_0_0_0000_0_00_00000000", -- ADR <= PC
-				 b"0000_000000_000010_0_0_0000_0_00_00000000", -- DR <= MEM(ADR)
-				 b"0000_000110_001000_0_0_0000_0_00_00000000", -- IR <= DR
-				 b"0000_000000_000000_1_0_0010_0_00_00000000", -- PC++, uPC <= K2
+		   --      ALU _ TB_FB _P_I_ SEQ_RW_SP_  uAddr
+				(b"0000_110_001_0_0_0000_00_00_00000000", -- ADR <= PC				0
+				 b"0000_000_000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)			1
+				 b"0000_101_010_0_0_0000_00_00_00000000", -- IR <= DR				2
+				 b"0000_000_000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2		3
+				 -- M = "00" , Direkt addressering
+				 b"0000_010_001_0_0_0000_00_00_00000000", -- ADR <= IR				4
+				 b"0000_000_000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			5
+				 -- M = "01" , Omedelbar operand
+				 b"0000_110_001_0_0_0000_00_00_00000000", -- ADR <= PC				6
+				 b"0000_000_000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			7
+				 -- M = "10" , Indirekt addressering
+				 b"0000_010_001_0_0_0000_00_00_00000000", -- ADR <= IR				8
+				 b"0000_000_000_0_0_0000_01_00_00000000", -- DR <= MEM(ADR)			9
+				 b"0000_101_001_0_0_0000_00_00_00000000", -- ADR <= DR				10
+				 b"0000_000_000_0_0_0001_01_00_00000000", -- DR <= MEM(ADR)			11
+				 -- M = "11" , Indexerad addresering
+				 b"0000_010_111_0_0_0000_00_00_00000000", -- AR <= IR				12
+				 b"0011_100_111_0_0_0000_00_00_00000000", -- AR <= AR + XR			13
+				 b"0000_111_001_0_0_0000_00_00_00000000", -- ADR <= AR				14
+				 b"0000_000_000_0_0_0001_01_00_00000000", -- DR <= MEM(ADR)			15
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
 
-  signal uM    : unsigned(32 downto 0) := (others => '0');        -- micro memory output
+  signal uM    : unsigned(27 downto 0) := (others => '0');        -- micro memory output
   signal uPC   : unsigned(7 downto 0) := (others => '0');         -- micro program counter
 
   -- Signaler i uM
   signal uAddr : unsigned(7 downto 0)  := (others => '0');         -- micro Adress
-  signal TB    : unsigned(5 downto 0)  := (others => '0');         -- to bus field
-  signal FB    : unsigned(5 downto 0) := (others => '0');          -- from bus field
+  signal TB    : unsigned(2 downto 0)  := (others => '0');         -- to bus field
+  signal FB    : unsigned(2 downto 0) := (others => '0');          -- from bus field
   signal ALUsig   : unsigned(3 downto 0) := (others => '0');
   signal Isig  : std_logic := '0';                   			   -- block interrupts
-  signal RW    : std_logic := '0';                    			   -- Read/write
+  signal RW    : unsigned(1 downto 0) := (others => '0');          -- Read/write
   signal SEQ   : unsigned(3 downto 0)  := (others => '0');
   signal SPsig : unsigned(1 downto 0)  := (others => '0');         -- Manipulera stackpekaren
   signal PCsig : std_logic := '0';                    			   -- PC++
@@ -66,7 +82,12 @@ architecture Behavioral of cpu is
   
   type K2_mem_t is array(0 to 3) of unsigned(7 downto 0);
   
-  constant K2_mem_c : K2_mem_t := (others => (others => '0')); -- Skriv K2 minne här
+  -- Skriv K2 minne nedanför
+  constant K2_mem_c : K2_mem_t :=   ("00000100", --Direkt addressering
+									 "00000110", --Omedelbar operand
+									 "00001000", --Indirekt addressering
+									 "00001100", --Indexerad addressering
+									others => (others => '0')); 
   
   signal K2_mem : K2_mem_t := K2_mem_c;
   
@@ -85,7 +106,8 @@ architecture Behavioral of cpu is
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP_M_Addr
-			(b"00001_00_111100001111",
+			(b"00001_01_000000000000",
+			 b"00000_00_000000001111",
 			others => (others => '0'));    
 
   signal p_mem : p_mem_t := p_mem_c;         -- Sätt program minne
@@ -112,22 +134,22 @@ begin
     
     uAddr <= uM(7 downto 0);
     SPsig <= uM(9 downto 8);
-    RW <= uM(10);
-    SEQ <= uM(14 downto 11);
-    Isig <= uM(15);
-    PCsig <= uM(16);
-    FB <= uM(22 downto 17);
-    TB <= uM(28 downto 23);
-    ALUsig <= uM(32 downto 29);
+    RW <= uM(11 downto 10);
+    SEQ <= uM(15 downto 12);
+    Isig <= uM(16);
+    PCsig <= uM(17);
+    FB <= uM(20 downto 18);
+    TB <= uM(23 downto 21);
+    ALUsig <= uM(27 downto 24);
 
     -- Installera alla signaler till bussen
 
-    DATA_BUS <= IR when (TB = 8) else
-                DR when (TB = 6) else
-				"0000000" & PC when (TB = 18) else
-				"0000000" & XR when (TB = 20) else
-				"0000000" & SP when (TB = 24) else
-				"0000000" & AR when (TB = 37) else 
+    DATA_BUS <= IR when (TB = 2) else
+                DR when (TB = 5) else
+				"0000000" & PC when (TB = 6) else
+				"0000000" & XR when (TB = 4) else
+				"0000000" & SP when (TB = 3) else
+				"0000000" & AR when (TB = 7) else 
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
@@ -147,7 +169,7 @@ begin
       if rising_edge(clk) then
         if rst = '1' then
           XR <= (others => '0');
-        elsif FB = 19 then
+        elsif FB = 4 then
           XR <= DATA_BUS(11 downto 0);
         end if;
       end if;
@@ -158,7 +180,7 @@ begin
 		if rising_edge(clk) then
 			if rst = '1' then
 				IR <= (others => '0');
-			elsif FB = 8 then
+			elsif FB = 2 then
 				IR <= DATA_BUS;
 			end if;
 		end if;
@@ -169,7 +191,7 @@ begin
       if rising_edge(clk) then
         if rst = '1' then
           SP <= (others => '0');
-        elsif FB = 21 then
+        elsif FB = 3 then
           SP <= DATA_BUS(11 downto 0);
         elsif SPsig = 1 then
           SP <= SP + 1;
@@ -186,11 +208,11 @@ begin
       if rising_edge(clk) then
         if rst = '1' then
           DR <= (others => '0');
-        elsif FB = 6 then
+        elsif FB = 5 then
           DR <= "000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
-        elsif (RW = '0') and (FB = 2) then -- Läs från minnet
+        elsif RW = "10" then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
-        elsif (RW = '1') and (FB = 2) then -- Skriv till minnet
+        elsif RW = "11" then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
         end if;
       end if;
@@ -287,7 +309,6 @@ begin
     begin
       if rising_edge(clk) then
         if rst = '1' 	 then AR <= (others => '0');
-		elsif FB = 34    then AR <= DATA_BUS(11 downto 0);
         elsif ALUsig = 1 then AR <= AR + 1;
         elsif ALUsig = 2 then AR <= AR - 1;
         elsif ALUsig = 3 then AR <= AR + DATA_BUS(11 downto 0);
@@ -300,6 +321,7 @@ begin
 		elsif ALUsig = 10 then AR <= (others => '0');
 		elsif ALUsig = 11 then AR <= (others => '1');
 		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0); -- kanske fungerar :)
+		elsif FB = 7    then AR <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
@@ -324,7 +346,7 @@ begin
 				PC <= (others => '0');
 			elsif intr = '1' then
 				PC <= "000010000000"; -- Hoppa till avbrottsrutin
-			elsif FB = 13 then
+			elsif FB = 6 then
 				PC <= DATA_BUS(11 downto 0);
 			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
 				if N = '1' then
