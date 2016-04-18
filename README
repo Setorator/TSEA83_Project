@@ -1,1 +1,26 @@
+*** Dokumentation för PacMan
 
+*** CPU
+Mått på CPU:s komponenter:
+  MEM    : 19 bitar
+  DR     : 19 bitar
+  BUSSEN : 19 bitar
+  IR     : 19 bitar
+  ADR    : 12 bitar
+  PC     : 12 bitar
+  XR     : 12 bitar
+  AR     : 12 bitar
+  SP     : 12 bitar
+  uMEM   : 28 bitar
+  
+Styrsignalens struktur: 
+  ALU_TB_FB_PC_I_SEQ_RW_SP_ADDR
+  
+Addresserings noder:
+  M = 00  : Direkt addressering
+  M = 01  : Omedelbar addressering
+  M = 10  : Indirekt addressering
+  M = 11  : Indexerad addressering
+  
+Möjliga kommandon:
+  LDA M,ADDR : AR <= MEM(ADDR)     
