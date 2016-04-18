@@ -64,6 +64,19 @@ architecture Behavioral of cpu is
 				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			23
 				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 24
 				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			26
+				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 27
+				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    28
+				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 29
+				 b"0000_0110_0001_0_0_0101_00_00_00000001", -- ADR <= PC, uPC <= 1		30	
+				 -- OP = 0010, RTE , Hoppa ur avbrottet
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			31
+				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 32
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 33
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					34
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			35
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 36
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  37
+				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					38
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -113,8 +126,9 @@ architecture Behavioral of cpu is
   
   -- Skriv K1 minne nedanför
   constant K1_mem_c : K1_mem_t := 
-				("00010000",
-				 "00010001",
+				("00010000", -- 16 LDA 
+				 "00010001", -- 17 STXR
+				 "00011111", -- 31 RTE
 				others => (others => '0')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -126,9 +140,12 @@ architecture Behavioral of cpu is
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP_M_ADDR
-			(b"00000_11_000000000001",
-			 b"00000_00_000000000011",
-			 b"00000_00_111100001111",
+			(b"00000_11_000000000001", -- 0
+			 b"00000_00_000000000011", -- 1
+			 b"00000_00_111100001111", -- 2
+			 b"00000_01_000000000000", -- 3 LDA (avbrott)
+			 b"00000_00_000011111111", -- 4 
+			 b"00010_00_000000000000", -- 5 RTE
 			others => (others => '0'));    
 
   signal p_mem : p_mem_t := p_mem_c;
@@ -139,6 +156,7 @@ architecture Behavioral of cpu is
   signal IR       : unsigned(18 downto 0) := (others => '0');     -- Instruktion register
   signal XR       : unsigned(11 downto 0) := "000000000001";      -- XR
   signal SP       : unsigned(11 downto 0) := "111111111111";      -- Stack pekare, startar på $FFF
+  signal IV 	  : unsigned(11 downto 0) := "000000000011";	  -- Avbrotts vektorn, startvärde = 3
   signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
@@ -154,13 +172,15 @@ begin
   
 	-- Installera avbrotts vippan
 	
-	INTR_vippan : process(clk)
+	INTR_mode : process(clk)
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
 				intr_vippa <= '0';
 			elsif intr = '1' then
 				intr_vippa <= '1';
+			elsif (intr_vippa = '1') and (I = '0') then 
+				intr_vippa <= '0';
 			end if;
 		end if;
 	end process;
@@ -186,6 +206,7 @@ begin
 				"0000000" & SP when (TB = 3) else
 				"0000000" & AR when (TB = 7) else 
 				"0000000" & SR when (TB = 8) else
+				"0000000" & IV when (TB = 9) else
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
@@ -199,6 +220,17 @@ begin
         end if;
       end if;
     end process;
+	
+	IV_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				IV <= (others => '0');
+			elsif FB = 9 then
+				IV <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
 
     XR_reg : process(clk)
     begin
@@ -238,14 +270,16 @@ begin
       if rising_edge(clk) then
         if rst = '1' then
           SP <= (others => '0');
-        elsif FB = 3 then
-          SP <= DATA_BUS(11 downto 0);
         elsif SPsig = 1 then
           SP <= SP + 1;
         elsif SPsig = 2 then
           SP <= SP - 1;
         elsif SPsig = 3 then
           SP <= (others => '0');
+        end if;
+		
+		if FB = 3 then
+          SP <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
@@ -256,7 +290,7 @@ begin
         if rst = '1' then
           DR <= (others => '0');
         elsif FB = 5 then
-          DR <= "000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
+          DR <= "0000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
         elsif RW = "10" then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
         elsif RW = "11" then -- Skriv till minnet
@@ -285,9 +319,7 @@ begin
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then uPC <= (others => '0');
-			elsif (intr_vippa = '1') and (I = '0') then 
-				uPC <= intr_vector;
-				intr_vippa <= '0';
+			elsif (intr_vippa = '1') and (I = '0') then uPC <= intr_vector;
 			elsif SEQ = 0 then uPC <= uPC + 1;
 			elsif SEQ = 1 then uPC <= K1_out;
 			elsif SEQ = 2 then uPC <= K2_out;
@@ -398,8 +430,6 @@ begin
 		if rising_edge(clk) then
 			if rst = '1' then
 				PC <= (others => '0');
-			elsif intr = '1' then
-				PC <= "000010000000"; -- Hoppa till avbrottsrutin
 			elsif FB = 6 then
 				PC <= DATA_BUS(11 downto 0);
 			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
