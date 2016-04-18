@@ -77,6 +77,8 @@ architecture Behavioral of cpu is
 				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 35
 				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  36
 				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					37
+				 -- OP = 0011, HALT, Stanna programmet
+				 b"0000_0000_0000_0_0_0101_00_00_00100110", -- uPC <= uPC  				38
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -129,6 +131,7 @@ architecture Behavioral of cpu is
 				("00010000", -- 16 LDA 
 				 "00010001", -- 17 STXR
 				 "00011110", -- 31 RTE
+				 "00100110", -- 38 HALT
 				others => (others => '0')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -311,10 +314,6 @@ begin
 		end if;
 	end process;
 	
-	-- Behöver uM vara en process???? är lite osäker . . .
-	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju en
-	-- vippa i sånna fall fast går ju lösa med kombinatorik också eller?
-	
 	uPC_reg : process(clk)
 	begin
 		if rising_edge(clk) then
@@ -368,7 +367,7 @@ begin
 					uPC <= uPC + 1;
 				end if;
 			elsif SEQ = 12 then
-				uPC <= (others => '0'); -- HALT
+				uPC <= "000000100110"; -- HALT
 			end if; 
 		end if;
 	end process;
@@ -401,7 +400,7 @@ begin
 		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
 		elsif ALUsig = 10 then AR <= (others => '0');
 		elsif ALUsig = 11 then AR <= (others => '1');
-		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0); -- kanske fungerar :)
+		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0);
 		elsif FB = 7    then AR <= DATA_BUS(11 downto 0);
         end if;
       end if;
@@ -411,16 +410,14 @@ begin
 	-- Måste vara i samma klockpuls som beräkningen i ALU
 	-- Behöver vi dom resterande flaggorna?
 	
-	Z <= '1' when (AR = 0 and ALUsig /= 0) else
+	SR(0) <= '1' when (AR = 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
 		 
-	N <= '1' when (AR < 0 and ALUsig /= 0) else
+	SR(1) <= '1' when (AR < 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
 		 
-	SR(0) <= Z;
-	SR(1) <= N;
-	SR(2) <= O;
-	SR(3) <= C;
+	Z <= SR(0);
+	N <= SR(1);
 		 
 	-- PC funktionalitet
 	-- Avbrotts rutinen har bara fått en random adress
