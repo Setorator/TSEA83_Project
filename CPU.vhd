@@ -63,20 +63,20 @@ architecture Behavioral of cpu is
 				 b"0000_1000_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= SR 22
 				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			23
 				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 24
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			26
-				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 27
-				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    28
-				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 29
-				 b"0000_0110_0001_0_0_0101_00_00_00000001", -- ADR <= PC, uPC <= 1		30	
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			25
+				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 26
+				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    27
+				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 28
+				 b"0000_0110_0001_0_0_0101_00_00_00000001", -- ADR <= PC, uPC <= 1		29	
 				 -- OP = 0010, RTE , Hoppa ur avbrottet
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			31
-				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 32
-				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 33
-				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					34
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			35
-				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 36
-				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  37
-				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					38
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			30
+				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 31
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 32
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					33
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			34
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 35
+				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  36
+				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					37
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -128,7 +128,7 @@ architecture Behavioral of cpu is
   constant K1_mem_c : K1_mem_t := 
 				("00010000", -- 16 LDA 
 				 "00010001", -- 17 STXR
-				 "00011111", -- 31 RTE
+				 "00011110", -- 31 RTE
 				others => (others => '0')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -160,7 +160,7 @@ architecture Behavioral of cpu is
   signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
-
+  
   -- Flaggorna
   
   signal N : std_logic := '0';
@@ -264,22 +264,20 @@ begin
 			end if;
 		end if;
 	end process;
-    
+	
     SP_reg : process(clk)
     begin
       if rising_edge(clk) then
         if rst = '1' then
           SP <= (others => '0');
+		elsif FB = 3 then
+          SP <= DATA_BUS(11 downto 0);
         elsif SPsig = 1 then
           SP <= SP + 1;
         elsif SPsig = 2 then
           SP <= SP - 1;
         elsif SPsig = 3 then
           SP <= (others => '0');
-        end if;
-		
-		if FB = 3 then
-          SP <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
@@ -291,9 +289,11 @@ begin
           DR <= (others => '0');
         elsif FB = 5 then
           DR <= "0000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
-        elsif RW = "10" then -- Läs från minnet
+		elsif RW = "10" then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
-        elsif RW = "11" then -- Skriv till minnet
+		end if;
+		
+        if RW = "11" then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
         end if;
       end if;
