@@ -7,7 +7,6 @@
 -- register nås genom att endast ange FB
 -- TR, SR och HR är register som är bortagna då vi inte kommer att behöva dom
 
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -30,10 +29,10 @@ architecture Behavioral of cpu is
   
   -- Skriv mikrominne här
   constant u_mem_c : u_mem_t := 
-		   --      ALU _ TB_FB _P_I_ SEQ_RW_SP_  uAddr
+	    --      ALU _ TB_FB _P_I_ SEQ_RW_SP_  uAddr
 				(b"0000_110_001_0_0_0000_00_00_00000000", -- ADR <= PC				0
 				 b"0000_000_000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)			1
-				 b"0000_101_010_0_0_0000_00_00_00000000", -- IR <= DR				2
+				 b"0000_101_010_0_0_0000_00_00_00000000", -- IR <= DR					2
 				 b"0000_000_000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2		3
 				 -- M = "00" , Direkt addressering
 				 b"0000_010_001_0_0_0000_00_00_00000000", -- ADR <= IR				4
@@ -47,7 +46,7 @@ architecture Behavioral of cpu is
 				 b"0000_101_001_0_0_0000_00_00_00000000", -- ADR <= DR				10
 				 b"0000_000_000_0_0_0001_01_00_00000000", -- DR <= MEM(ADR)			11
 				 -- M = "11" , Indexerad addresering
-				 b"0000_010_111_0_0_0000_00_00_00000000", -- AR <= IR				12
+				 b"0000_010_111_0_0_0000_00_00_00000000", -- AR <= IR					12
 				 b"0011_100_111_0_0_0000_00_00_00000000", -- AR <= AR + XR			13
 				 b"0000_111_001_0_0_0000_00_00_00000000", -- ADR <= AR				14
 				 b"0000_000_000_0_0_0001_01_00_00000000", -- DR <= MEM(ADR)			15
