@@ -5,7 +5,7 @@
 -- Mikrominnet är 28 bitar brett
 -- Signaler som kan användas fast inte går mellan buss och
 -- register nås genom att endast ange FB
--- TR, SR och HR är register som är bortagna då vi inte kommer att behöva dom
+-- TR och HR är register som är bortagna då vi inte kommer att behöva dom
 
 
 library IEEE;
@@ -18,7 +18,8 @@ entity cpu is
   port (
     clk         :  in std_logic;
     rst         :  in std_logic;
-    intr        :  in std_logic
+    intr        :  in std_logic; -- Avbrotts nivå 1
+	intr2		:  in std_logic  -- Avbrotts nivå 2
   );
 end cpu;
 
@@ -67,18 +68,33 @@ architecture Behavioral of cpu is
 				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 26
 				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    27
 				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 28
-				 b"0000_0110_0001_0_0_0101_00_00_00000001", -- ADR <= PC, uPC <= 1		29	
+				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC				29	
+				 b"0000_0000_1100_0_0_0101_00_00_00000001", -- SR <= IL, uPC <= 1		30
 				 -- OP = 0010, RTE , Hoppa ur avbrottet
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			30
-				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 31
-				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 32
-				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					33
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			34
-				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 35
-				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  36
-				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					37
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			31
+				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 32
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 33
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					34
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			35
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 36
+				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  37
+				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR					38
+				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR					39
 				 -- OP = 0011, HALT, Stanna programmet
-				 b"0000_0000_0000_0_0_0101_00_00_00100110", -- uPC <= uPC  				38
+				 b"0000_0000_0000_0_0_0101_00_00_00100110", -- uPC <= uPC  				40
+				 -- OP = 0100, LDXR M,ADDR, Ladda XR med ADDR
+				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR                 41
+				 -- OP = 0101, JMP M,ADDR, Hoppa till bestämd address
+				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					42
+				 -- OP = 0110, ADD M,ADDR, AR <= AR + DR								
+				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 			43
+				 -- OP = 0111, MULP M,ADDR, AR <= AR * DR (Multiplikation)
+				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR			44
+				 -- OP = 1000, SUB M,ADDR, AR <= AR - DR
+				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR			45
+				 -- OP = 1001, STORE M,ADDR, MEM(ADDR) <= AR
+				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR					46
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR			47
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -97,7 +113,9 @@ architecture Behavioral of cpu is
   signal SPsig : unsigned(1 downto 0)  := (others => '0');         -- Manipulera stackpekaren
   signal PCsig : std_logic := '0';                    			   -- PC++
   signal I     : std_logic := '0'; 				   				   -- T-vippa
-  signal intr_vippa : std_logic := '0';							   -- Vippa som säger om ett avbrott ska ske 
+  
+  signal intr_1: std_logic := '0';
+  signal intr_2: std_logic := '0';
   
   -- K1 out
 
@@ -130,8 +148,14 @@ architecture Behavioral of cpu is
   constant K1_mem_c : K1_mem_t := 
 				("00010000", -- 16 LDA 
 				 "00010001", -- 17 STXR
-				 "00011110", -- 31 RTE
-				 "00100110", -- 38 HALT
+				 "00011111", -- 31 RTE
+				 "00101000", -- 40 HALT
+				 "00101001", -- 41 LDXR
+				 "00101010", -- 42 JMP
+				 "00101011", -- 43 ADD
+				 "00101100", -- 44 MULP
+				 "00101101", -- 45 SUB
+				 "00101110", -- 46 STORE
 				others => (others => '0')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -159,7 +183,10 @@ architecture Behavioral of cpu is
   signal IR       : unsigned(18 downto 0) := (others => '0');     -- Instruktion register
   signal XR       : unsigned(11 downto 0) := "000000000001";      -- XR
   signal SP       : unsigned(11 downto 0) := "111111111111";      -- Stack pekare, startar på $FFF
-  signal IV 	  : unsigned(11 downto 0) := "000000000011";	  -- Avbrotts vektorn, startvärde = 3
+  signal IV 	  : unsigned(11 downto 0) := (others => '0');	  -- Avbrotts vektorn, startvärde = 3
+  signal IL       : unsigned(1 downto 0)  := (others => '0');     -- Avbrotts nivå
+  signal IV1	  : unsigned(11 downto 0) := "000000000011";      -- Avbrotts vektor för nivå 1
+  signal IV2	  : unsigned(11 downto 0) := "000000000011";     -- Avbrotts vektor för nivå 2
   signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
@@ -173,17 +200,23 @@ architecture Behavioral of cpu is
 
 begin 
   
-	-- Installera avbrotts vippan
+	-- Installera avbrotts vippor
 	
-	INTR_mode : process(clk)
+	intr_vippor : process(clk)
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
-				intr_vippa <= '0';
-			elsif intr = '1' then
-				intr_vippa <= '1';
-			elsif (intr_vippa = '1') and (I = '0') then 
-				intr_vippa <= '0';
+				intr_1 <= '0';
+			elsif intr = '1' or intr2 = '1' then
+				if intr = '1' then intr_1 <= '1';
+				end if;
+				
+				if intr2 = '1' then intr_2 <= '1';
+				end if;
+			elsif intr_2 = '1' and I = '0' and IL < 2 then
+				intr_2 <= '0';
+			elsif intr_1 = '1' and I = '0' and IL < 1 then
+				intr_1 <= '0';
 			end if;
 		end if;
 	end process;
@@ -210,6 +243,8 @@ begin
 				"0000000" & AR when (TB = 7) else 
 				"0000000" & SR when (TB = 8) else
 				"0000000" & IV when (TB = 9) else
+				"0000000" & IV1 when (TB = 10) else
+				"0000000" & IV2 when (TB = 11) else
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
@@ -224,16 +259,49 @@ begin
       end if;
     end process;
 	
-	IV_reg : process(clk)
+	IV1_reg : process(clk)
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
-				IV <= (others => '0');
-			elsif FB = 9 then
-				IV <= DATA_BUS(11 downto 0);
+				IV1 <= (others => '0');
+			elsif FB = 10 then
+				IV1 <= DATA_BUS(11 downto 0);
 			end if;
 		end if;
 	end process;
+	
+	IV2_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				IV2 <= (others => '0');
+			elsif FB = 11 then
+				IV2 <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
+	
+	-- Logiken för Interrupt vector registret
+		  
+	IL_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then 
+				IL <= "00";
+			elsif TB = 12 then
+				IL <= SR(1 downto 0);
+			elsif intr_2 = '1' and I = '0' and IL < 2 then
+				IL <= "10";
+			elsif intr_1 = '1' and I = '0' and IL < 1 then
+				IL <= "01";
+			end if;
+		end if;
+	end process;
+	
+	IV <= (others => '0') when (rst = '1') else
+		  (others => '0') when (IL = 0)    else
+		  IV1 			  when (IL = 1)    else
+		  IV2 			  when (IL = 2)    else IV;
 
     XR_reg : process(clk)
     begin
@@ -264,6 +332,8 @@ begin
 				SR <= (others => '0');
 			elsif FB = 8 then
 				SR <= DATA_BUS(11 downto 0);
+			elsif FB = 12 then
+				SR(1 downto 0) <= IL;
 			end if;
 		end if;
 	end process;
@@ -318,7 +388,7 @@ begin
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then uPC <= (others => '0');
-			elsif (intr_vippa = '1') and (I = '0') then uPC <= intr_vector;
+			elsif I = '0' and ((intr_1 = '1' and IL < 1) or (intr_2 = '1' and IL < 2))  then uPC <= intr_vector;
 			elsif SEQ = 0 then uPC <= uPC + 1;
 			elsif SEQ = 1 then uPC <= K1_out;
 			elsif SEQ = 2 then uPC <= K2_out;
@@ -410,14 +480,14 @@ begin
 	-- Måste vara i samma klockpuls som beräkningen i ALU
 	-- Behöver vi dom resterande flaggorna?
 	
-	SR(0) <= '1' when (AR = 0 and ALUsig /= 0) else
+	SR(11) <= '1' when (AR = 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
 		 
-	SR(1) <= '1' when (AR < 0 and ALUsig /= 0) else
+	SR(10) <= '1' when (AR < 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
 		 
-	Z <= SR(0);
-	N <= SR(1);
+	Z <= SR(11);
+	N <= SR(10);
 		 
 	-- PC funktionalitet
 	-- Avbrotts rutinen har bara fått en random adress
