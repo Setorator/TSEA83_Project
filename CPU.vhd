@@ -334,6 +334,18 @@ begin
 				SR <= DATA_BUS(11 downto 0);
 			elsif FB = 12 then
 				SR(1 downto 0) <= IL;
+                        elsif ALUsig /= 0 then
+                                if AR = 0 then
+                                  SR(11) <= '1';
+                                else
+                                  SR(11) <= '0';
+                                end if;
+
+                                if AR < 0 then
+                                  SR(10) <= '1';
+                                else
+                                  SR(10) <= '0';
+                                end if;
 			end if;
 		end if;
 	end process;
@@ -437,7 +449,7 @@ begin
 					uPC <= uPC + 1;
 				end if;
 			elsif SEQ = 12 then
-				uPC <= "000000100110"; -- HALT
+				uPC <= "00100110"; -- HALT
 			end if; 
 		end if;
 	end process;
@@ -465,26 +477,16 @@ begin
         elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
 		elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
 		elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
-		elsif ALUsig = 7 then AR <= AR * 2;   --logical shift left
+--		elsif ALUsig = 7 then AR <= AR * 2;   --logical shift left
 		elsif ALUsig = 8 then AR <= AR srl 1; --logical shift right
 		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
 		elsif ALUsig = 10 then AR <= (others => '0');
 		elsif ALUsig = 11 then AR <= (others => '1');
-		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0);
+--		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0);
 		elsif FB = 7    then AR <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
-	
-	-- Flaggornas logik
-	-- Måste vara i samma klockpuls som beräkningen i ALU
-	-- Behöver vi dom resterande flaggorna?
-	
-	SR(11) <= '1' when (AR = 0 and ALUsig /= 0) else
-		 '0' when (rst = '1') else '0';
-		 
-	SR(10) <= '1' when (AR < 0 and ALUsig /= 0) else
-		 '0' when (rst = '1') else '0';
 		 
 	Z <= SR(11);
 	N <= SR(10);
