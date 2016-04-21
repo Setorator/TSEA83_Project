@@ -44,7 +44,7 @@ architecture Behavioral of Pac_Man is
 		port (
 			clk                    : in std_logic;                      	-- System clock
 			rst                    : in std_logic;                      	-- reset button
-			data	 					  : in std_logic_vector(7 downto 0);		-- Data to be read from MEM
+			tile_type				  : in std_logic_vector(1 downto 0);		-- Data to be read from MEM
 	 		addr						  : out unsigned(10 downto 0);				-- Adress to the tile in MEM
 			Hsync                  : out std_logic;                     	-- horizontal sync
 			Vsync                  : out std_logic;                     	-- vertical sync
@@ -64,13 +64,13 @@ architecture Behavioral of Pac_Man is
 			x1 							: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
 			y1 							: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 			we 							: in std_logic;								-- Write enable
-			data1							: in std_logic_vector(7 downto 0);		-- Data to be written
+			data1							: in std_logic_vector(1 downto 0);		-- Data to be written
 
 			-- port 2
 			x2 							: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
 			y2 							: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 			re 							: in std_logic;								-- Read enable
-			data2							: out std_logic_vector(7 downto 0)		-- Data to be read		
+			data2							: out std_logic_vector(1 downto 0)		-- Data to be read		
 		);
 	end component;
 		
@@ -82,8 +82,8 @@ architecture Behavioral of Pac_Man is
   signal write_enable		: std_logic;
   signal read_addr			: unsigned(10 downto 0);
   signal write_addr			: unsigned(10 downto 0);
-  signal read_data			: std_logic_vector(7 downto 0);
-  signal write_data			: std_logic_vector(7 downto 0);
+  signal read_data			: std_logic_vector(1 downto 0);
+  signal write_data			: std_logic_vector(1 downto 0);
 
 
 begin 
@@ -92,9 +92,8 @@ begin
 	U1 : RAM port map(clk=>clk, we=>write_enable, data1=>write_data, x1=>write_addr(5 downto 0), y1=>write_addr(10 downto 6), 
 							re=>read_enable, data2=>read_data, x2=>read_addr(5 downto 0), y2=>read_addr(10 downto 6));
 
-	U2 : PIX_GEN port map(clk=>clk, rst=>reset, 
-									Hsync=>Hsync, Vsync=>Vsync,
-									data=>data_tmp, addr=>addr_tmp,
+	U2 : PIX_GEN port map(clk=>clk, rst=>reset, tile_type=>read_data,
+									Hsync=>Hsync, Vsync=>Vsync, addr=>read_addr,
 									vgaRed(2)=>vgaRed(2),
 									vgaRed(1)=>vgaRed(1),
 									vgaRed(0)=>vgaRed(0),
