@@ -1,4 +1,5 @@
 library IEEE;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_1164.ALL;                     -- Basic IEEE library
 use IEEE.NUMERIC_STD.ALL;                        -- IEEE library for the unsigned type
                                                  -- and various arithmetic operations
@@ -26,24 +27,24 @@ end PIX_GEN;
 -- architecture
 architecture Behavioral of PIX_GEN is
 
-	signal Xpixel        : unsigned(9 downto 0);  				-- Horizontal pixel counter
-  	signal Ypixel        : unsigned(9 downto 0);  				-- Vertical pixel counter
-  	signal blank			: std_logic;		 						-- blanking signal
+	signal Xpixel        : unsigned(9 downto 0) := (others => '0');  				-- Horizontal pixel counter
+  	signal Ypixel        : unsigned(9 downto 0) := (others => '0');  				-- Vertical pixel counter
+  	signal blank			: std_logic := '0'; 												-- blanking signal
   	
-  	signal tmpX, tmpY		: unsigned(4 downto 0);					-- Used for tileX and tileY
-  	signal tileX			: unsigned(5 downto 0);					-- X-coordinate of the tile
-  	signal tileY			: unsigned(4 downto 0);					-- Y-coordinate of the tile
+  	signal tmpX, tmpY		: unsigned(4 downto 0) := (others => '0');				-- Used for tileX and tileY
+  	signal tileX			: unsigned(5 downto 0) := (others => '0');				-- X-coordinate of the tile
+  	signal tileY			: unsigned(4 downto 0) := (others => '0');				-- Y-coordinate of the tile
   
-  	signal ClkDiv			: unsigned(1 downto 0);					-- Clock divisor, to generate
-                                                 				-- 25 MHz clock
-  	signal Clk25			: std_logic;		 						-- One pulse width 25 MHz sign
+  	signal ClkDiv			: unsigned(1 downto 0) := (others => '0');				-- Clock divisor, to generate
+                                                 										-- 25 MHz clock
+  	signal Clk25			: std_logic := '0';		 										-- One pulse width 25 MHz sign
   	
-	signal tileData     	: std_logic_vector(7 downto 0);		-- Tile pixel data
-	signal tileAddr		: unsigned(10 downto 0);				-- Tile address							-- NOT NEEDED???
+	signal tileData     	: std_logic_vector(7 downto 0) := (others => '0');		-- Tile pixel data
+	signal tileAddr		: unsigned(10 downto 0) := (others => '0');				-- Tile address							-- NOT NEEDED???
 	
-	signal TilePixel		: std_logic_vector(7 downto 0);		-- Color of chosen tile pixel
-	signal PacPixel		: std_logic_vector(7 downto 0);		-- Color of chosen Pac_Man pixel
-	signal GhostPixel		: std_logic_vector(7 downto 0);		-- Color of chosen Ghost pixel
+	signal TilePixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen tile pixel
+	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
+	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
 	
   
   	-- Tile memory type
@@ -254,37 +255,61 @@ begin
 
 	big_pixel_xcounter : process(clk)
 	begin
-		if (rst = '1' or Xpixel > 639 or tmpX = 15) then
-			tmpX <= (others => '0');
-		else
-			tmpX <= tmpX + 1;
+		if rising_edge(clk) then
+			if rst = '1' then
+				tmpX <= (others => '0');
+			elsif Clk25 = '1' then
+				if (Xpixel < 640 and tmpX < 15) then
+					tmpX <= tmpX + 1;
+				else 
+					tmpX <= (others => '0');
+				end if;
+			end if;
 		end if;
 	end process;
 	
 	big_pixel_xcoord : process(clk)
 	begin
-		if rst = '1' or tileX > 39 then
-			tileX <= (others => '0');
-		else
-			tileX <= tileX +1;
+		if rising_edge(clk) then
+			if rst = '1' then
+				tileX <= (others => '0');
+			elsif Clk25 = '1' then
+				if tileX > 39 then
+					tileX <= (others => '0');
+				elsif tmpX = 15 then
+					tileX <= tileX +1;
+				end if;
+			end if;
 		end if;
 	end process;
 	
 	big_pixel_ycounter : process(clk)
 	begin
-		if (rst = '1' or Ypixel > 479 or tmpY = 15) then
-			tmpY <= (others => '0');
-		else
-			tmpY <= tmpY + 1;
+		if rising_edge(clk) then
+			if rst = '1' then
+				tmpY <= (others => '0');
+			elsif Clk25 = '1' then
+				if (Ypixel < 480 and tmpY < 15) then
+					tmpY <= tmpY + 1;
+				else
+					tmpY <= (others => '0');
+				end if;
+			end if;
 		end if;
 	end process;
 	
 	big_pixel_ycoord : process(clk)
 	begin
-		if rst = '1' or tileY > 29 then
-			tileY <= (others => '0');
-		else
-			tileY <= tileY +1;
+		if rising_edge(clk) then
+			if rst = '1' then
+				tileY <= (others => '0');
+			elsif Clk25 = '1' then
+				if tileY > 29 then
+					tileY <= (others => '0');
+				elsif tmpY = 15 then
+					tileY <= tileY +1;
+				end if;
+			end if;
 		end if;
 	end process;
 	
