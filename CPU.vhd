@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 -- Detta är en CPU av Olle roos typ med avbrott
 -- Alla register förrutom DR och IR är 12 bitar breda, DR och IR är 19
 -- Program minnet är 19 bitar brett
@@ -50,17 +51,125 @@ architecture Behavioral of cpu is
 				 b"0011_100_111_0_0_0000_00_00_00000000", -- AR <= AR + XR			13
 				 b"0000_111_001_0_0_0000_00_00_00000000", -- ADR <= AR				14
 				 b"0000_000_000_0_0_0001_01_00_00000000", -- DR <= MEM(ADR)			15
+=======
+-- Detta är en CPU av Olle roos typ med avbrott
+-- Alla register förrutom DR och IR är 12 bitar breda, DR och IR är 19
+-- Program minnet är 19 bitar brett
+-- Bussen är 19 bitar brett
+-- Mikrominnet är 28 bitar brett
+-- Signaler som kan användas fast inte går mellan buss och
+-- register nås genom att endast ange FB
+-- TR och HR är register som är bortagna då vi inte kommer att behöva dom
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+-- CPU Interface
+
+entity cpu is 
+  port (
+    clk         :  in std_logic;
+    rst         :  in std_logic;
+    intr        :  in std_logic; -- Avbrotts nivå 1
+	intr2		:  in std_logic  -- Avbrotts nivå 2
+  );
+end cpu;
+
+architecture Behavioral of cpu is 
+
+  -- micro memory
+  
+  type u_mem_t is array(0 to 255) of unsigned(29 downto 0);
+  
+  -- Skriv mikrominne här
+  constant u_mem_c : u_mem_t := 
+		   --      ALU _ TB _ FB _P_I_ SEQ_RW_SP_  uAddr
+				(b"0000_0110_0001_0_1_0000_00_00_00000000", -- ADR <= PC				0
+				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)			1
+				 b"0000_0101_0010_0_0_0000_00_00_00000000", -- IR <= DR					2
+				 b"0000_0000_0000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2			3
+				 -- M = "00" , Direkt addressering
+				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR				4
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			5
+				 -- M = "01" , Omedelbar operand
+				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC				6
+				 b"0000_0000_0000_1_0_0001_10_00_00000000", -- DR <= MEM(ADR), PC++ 	7
+				 -- M = "10" , Indirekt addressering
+				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR				8
+				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)			9
+				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR				10
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			11
+				 -- M = "11" , Indexerad addresering
+				 b"0000_0010_0111_0_0_0000_00_00_00000000", -- AR <= IR					12
+				 b"0011_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR + XR			13
+				 b"0000_0111_0001_0_0_0000_00_00_00000000", -- ADR <= AR				14
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			15
+				 -- OP = 00000, LDA M,ADDR  , AR <= MEM(ADDR)			
+				 b"0000_0101_0111_0_1_0011_00_00_00000000", -- AR <= DR, uPC <= 0		16
+				 -- OP = 00001, STXR M,ADDR , MEM(DR) <= XR
+				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR      			17
+				 b"0000_0100_0101_0_0_0000_00_00_00000000", -- DR <= XR					18
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADR) <= XR,uPC <= 0	19
+				 -- Avbrottsrutin, Lägg undan alla register i minnet
+				 b"0000_0110_0101_0_0_0000_00_00_00000000", -- DR <= PC					20
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			21
+				 b"0000_1000_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= SR 22
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			23
+				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 24
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			25
+				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 26
+				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    27
+				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 28
+				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC				29	
+				 b"0000_0000_1100_0_0_0101_00_00_00000001", -- SR <= IL, uPC <= 1		30
+				 -- OP = 0010, RTE , Hoppa ur avbrottet
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			31
+				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 32
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 33
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					34
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			35
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 36
+				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  37
+				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR					38
+				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR					39
+				 -- OP = 0011, HALT, Stanna programmet
+				 b"0000_0000_0000_0_0_0101_00_00_00101000", -- uPC <= uPC  				40
+				 -- OP = 0100, LDXR M,ADDR, Ladda XR med ADDR
+				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR                 41
+				 -- OP = 0101, JMP M,ADDR, Hoppa till bestämd address
+				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					42
+				 -- OP = 0110, ADD M,ADDR, AR <= AR + DR								
+				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 			43
+				 -- OP = 0111, MULP M,ADDR, AR <= AR * DR (Multiplikation)
+				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR			44
+				 -- OP = 1000, SUB M,ADDR, AR <= AR - DR
+				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR			45
+				 -- OP = 1001, STORE M,ADDR, MEM(ADDR) <= AR
+				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR					46
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR			47
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
 
+<<<<<<< HEAD
   signal uM    : unsigned(27 downto 0) := (others => '0');        -- micro memory output
+=======
+  signal uM    : unsigned(29 downto 0) := (others => '0');        -- micro memory output
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
   signal uPC   : unsigned(7 downto 0) := (others => '0');         -- micro program counter
 
   -- Signaler i uM
   signal uAddr : unsigned(7 downto 0)  := (others => '0');         -- micro Adress
+<<<<<<< HEAD
   signal TB    : unsigned(2 downto 0)  := (others => '0');         -- to bus field
   signal FB    : unsigned(2 downto 0) := (others => '0');          -- from bus field
+=======
+  signal TB    : unsigned(3 downto 0)  := (others => '0');         -- to bus field
+  signal FB    : unsigned(3 downto 0) := (others => '0');          -- from bus field
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
   signal ALUsig   : unsigned(3 downto 0) := (others => '0');
   signal Isig  : std_logic := '0';                   			   -- block interrupts
   signal RW    : unsigned(1 downto 0) := (others => '0');          -- Read/write
@@ -69,6 +178,12 @@ architecture Behavioral of cpu is
   signal PCsig : std_logic := '0';                    			   -- PC++
   signal I     : std_logic := '0'; 				   				   -- T-vippa
   
+<<<<<<< HEAD
+=======
+  signal intr_1: std_logic := '0';
+  signal intr_2: std_logic := '0';
+  
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
   -- K1 out
 
   signal K1_out : unsigned(7 downto 0) := (others => '0');
@@ -80,6 +195,11 @@ architecture Behavioral of cpu is
   -- K2 minne
   
   type K2_mem_t is array(0 to 3) of unsigned(7 downto 0);
+<<<<<<< HEAD
+=======
+  
+  constant intr_vector : unsigned(7 downto 0) := "00010100"; -- 20
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
   
   -- Skriv K2 minne nedanför
   constant K2_mem_c : K2_mem_t :=   ("00000100", --Direkt addressering
@@ -93,8 +213,25 @@ architecture Behavioral of cpu is
   -- K1 minne
   
   type K1_mem_t is array(0 to 31) of unsigned(7 downto 0);
+<<<<<<< HEAD
   
   constant K1_mem_c : K1_mem_t := (others => (others => '0')); -- Skriv K1 minne här
+=======
+  
+  -- Skriv K1 minne nedanför
+  constant K1_mem_c : K1_mem_t := 
+				("00010000", -- 16 LDA 
+				 "00010001", -- 17 STXR
+				 "00011111", -- 31 RTE
+				 "00101000", -- 40 HALT
+				 "00101001", -- 41 LDXR
+				 "00101010", -- 42 JMP
+				 "00101011", -- 43 ADD
+				 "00101100", -- 44 MULP
+				 "00101101", -- 45 SUB
+				 "00101110", -- 46 STORE
+				others => (others => '0')); 
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
   
@@ -104,22 +241,48 @@ architecture Behavioral of cpu is
   
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
+<<<<<<< HEAD
 			-- OP_M_Addr
 			(b"00001_01_000000000000",
 			 b"00000_00_000000001111",
 			others => (others => '0'));    
 
   signal p_mem : p_mem_t := p_mem_c;         -- Sätt program minne
+=======
+			-- OP_M_ADDR
+			(b"00000_00_000000000101", -- 0 LDA 00,101
+			 b"00011_00_000000000000", -- 1 HALT
+			 b"00000_01_000000000000", -- 2 LDA (avbrott)
+			 b"00000_00_000011111111", -- 3 
+			 b"00010_00_000000000000", -- 4 RTE
+			 b"00000_00_111111111111", -- 5
+			others => (others => '0'));    
+
+  signal p_mem : p_mem_t := p_mem_c;
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 
   signal DR       : unsigned(18 downto 0) := (others => '0');     -- Dataregister
   signal ADR      : unsigned(11 downto 0) := (others => '0');     -- Address register
   signal PC       : unsigned(11 downto 0) := (others => '0');     -- Program räknaren
   signal IR       : unsigned(18 downto 0) := (others => '0');     -- Instruktion register
+<<<<<<< HEAD
   signal XR       : unsigned(11 downto 0) := (others => '0');     -- XR
   signal SP       : unsigned(11 downto 0) := (others => '0');     -- Stack pekare
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
 
+=======
+  signal XR       : unsigned(11 downto 0) := "000000000001";      -- XR
+  signal SP       : unsigned(11 downto 0) := "111111111111";      -- Stack pekare, startar på $FFF
+  signal IV 	  : unsigned(11 downto 0) := (others => '0');	  -- Avbrotts vektorn, startvärde = 3
+  signal IL       : unsigned(1 downto 0)  := (others => '0');     -- Avbrotts nivå
+  signal IV1	  : unsigned(11 downto 0) := "000000000011";      -- Avbrotts vektor för nivå 1
+  signal IV2	  : unsigned(11 downto 0) := "000000000011";     -- Avbrotts vektor för nivå 2
+  signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
+  signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
+  signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
+  
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
   -- Flaggorna
   
   signal N : std_logic := '0';
@@ -129,6 +292,30 @@ architecture Behavioral of cpu is
 
 begin 
   
+<<<<<<< HEAD
+=======
+	-- Installera avbrotts vippor
+	
+	intr_vippor : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				intr_1 <= '0';
+			elsif intr = '1' or intr2 = '1' then
+				if intr = '1' then intr_1 <= '1';
+				end if;
+				
+				if intr2 = '1' then intr_2 <= '1';
+				end if;
+			elsif intr_2 = '1' and I = '0' and IL < 2 then
+				intr_2 <= '0';
+			elsif intr_1 = '1' and I = '0' and IL < 1 then
+				intr_1 <= '0';
+			end if;
+		end if;
+	end process;
+  
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
     -- Kombinatorik för avläsning uM
     
     uAddr <= uM(7 downto 0);
@@ -137,9 +324,15 @@ begin
     SEQ <= uM(15 downto 12);
     Isig <= uM(16);
     PCsig <= uM(17);
+<<<<<<< HEAD
     FB <= uM(20 downto 18);
     TB <= uM(23 downto 21);
     ALUsig <= uM(27 downto 24);
+=======
+    FB <= uM(21 downto 18);
+    TB <= uM(25 downto 22);
+    ALUsig <= uM(29 downto 26);
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 
     -- Installera alla signaler till bussen
 
@@ -148,7 +341,15 @@ begin
 				"0000000" & PC when (TB = 6) else
 				"0000000" & XR when (TB = 4) else
 				"0000000" & SP when (TB = 3) else
+<<<<<<< HEAD
 				"0000000" & AR when (TB = 7) else 
+=======
+				"0000000" & AR when (TB = 7) else 
+				"0000000" & SR when (TB = 8) else
+				"0000000" & IV when (TB = 9) else
+				"0000000" & IV1 when (TB = 10) else
+				"0000000" & IV2 when (TB = 11) else
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
@@ -162,6 +363,53 @@ begin
         end if;
       end if;
     end process;
+<<<<<<< HEAD
+=======
+	
+	IV1_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				IV1 <= (others => '0');
+			elsif FB = 10 then
+				IV1 <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
+	
+	IV2_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				IV2 <= (others => '0');
+			elsif FB = 11 then
+				IV2 <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
+	
+	-- Logiken för Interrupt vector registret
+		  
+	IL_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then 
+				IL <= "00";
+			elsif TB = 12 then
+				IL <= SR(1 downto 0);
+			elsif intr_2 = '1' and I = '0' and IL < 2 then
+				IL <= "10";
+			elsif intr_1 = '1' and I = '0' and IL < 1 then
+				IL <= "01";
+			end if;
+		end if;
+	end process;
+	
+	IV <= (others => '0') when (rst = '1') else
+		  (others => '0') when (IL = 0)    else
+		  IV1 			  when (IL = 1)    else
+		  IV2 			  when (IL = 2)    else IV;
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 
     XR_reg : process(clk)
     begin
@@ -183,14 +431,48 @@ begin
 				IR <= DATA_BUS;
 			end if;
 		end if;
+<<<<<<< HEAD
 	end process;
     
+=======
+	end process;
+	
+	SR_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				SR <= (others => '0');
+			elsif FB = 8 then
+				SR <= DATA_BUS(11 downto 0);
+			elsif FB = 12 then
+				SR(1 downto 0) <= IL;
+                        elsif ALUsig /= 0 then
+                                if AR = 0 then
+                                  SR(11) <= '1';
+                                else
+                                  SR(11) <= '0';
+                                end if;
+
+                                if AR < 0 then
+                                  SR(10) <= '1';
+                                else
+                                  SR(10) <= '0';
+                                end if;
+			end if;
+		end if;
+	end process;
+	
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
     SP_reg : process(clk)
     begin
       if rising_edge(clk) then
         if rst = '1' then
           SP <= (others => '0');
+<<<<<<< HEAD
         elsif FB = 3 then
+=======
+		elsif FB = 3 then
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
           SP <= DATA_BUS(11 downto 0);
         elsif SPsig = 1 then
           SP <= SP + 1;
@@ -208,10 +490,19 @@ begin
         if rst = '1' then
           DR <= (others => '0');
         elsif FB = 5 then
+<<<<<<< HEAD
           DR <= "000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
         elsif RW = "10" then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
         elsif RW = "11" then -- Skriv till minnet
+=======
+          DR <= "0000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
+		elsif RW = "10" then -- Läs från minnet
+          DR <= p_mem(to_integer(ADR));
+		end if;
+		
+        if RW = "11" then -- Skriv till minnet
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
           p_mem(to_integer(ADR)) <= DR;
         end if;
       end if;
@@ -229,15 +520,22 @@ begin
 		end if;
 	end process;
 	
+<<<<<<< HEAD
 	-- Behöver uM vara en process???? är lite osäker . . .
 	-- Tror det eftersom att vi ska kunna köra uPC <= uPC + 1, behövs ju en
 	-- vippa i sånna fall fast går ju lösa med kombinatorik också eller?
 	
+=======
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 	uPC_reg : process(clk)
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then uPC <= (others => '0');
+<<<<<<< HEAD
 			elsif (intr = '1') and (I = '0') then uPC <= "000000111100"; --60
+=======
+			elsif I = '0' and ((intr_1 = '1' and IL < 1) or (intr_2 = '1' and IL < 2))  then uPC <= intr_vector;
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 			elsif SEQ = 0 then uPC <= uPC + 1;
 			elsif SEQ = 1 then uPC <= K1_out;
 			elsif SEQ = 2 then uPC <= K2_out;
@@ -286,7 +584,11 @@ begin
 					uPC <= uPC + 1;
 				end if;
 			elsif SEQ = 12 then
+<<<<<<< HEAD
 				uPC <= (others => '0'); -- HALT
+=======
+				uPC <= "00100110"; -- HALT
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 			end if; 
 		end if;
 	end process;
@@ -314,16 +616,25 @@ begin
         elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
 		elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
 		elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
+<<<<<<< HEAD
 		elsif ALUsig = 7 then AR <= AR * 2;   --logical shift left
+=======
+--		elsif ALUsig = 7 then AR <= AR * 2;   --logical shift left
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 		elsif ALUsig = 8 then AR <= AR srl 1; --logical shift right
 		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
 		elsif ALUsig = 10 then AR <= (others => '0');
 		elsif ALUsig = 11 then AR <= (others => '1');
+<<<<<<< HEAD
 		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0); -- kanske fungerar :)
+=======
+--		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0);
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 		elsif FB = 7    then AR <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
+<<<<<<< HEAD
 	
 	-- Flaggornas logik
 	-- Måste vara i samma klockpuls som beräkningen i ALU
@@ -334,6 +645,11 @@ begin
 		 
 	N <= '1' when (AR < 0 and ALUsig /= 0) else
 		 '0' when (rst = '1') else '0';
+=======
+		 
+	Z <= SR(11);
+	N <= SR(10);
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 		 
 	-- PC funktionalitet
 	-- Avbrotts rutinen har bara fått en random adress
@@ -343,8 +659,11 @@ begin
 		if rising_edge(clk) then
 			if rst = '1' then
 				PC <= (others => '0');
+<<<<<<< HEAD
 			elsif intr = '1' then
 				PC <= "000010000000"; -- Hoppa till avbrottsrutin
+=======
+>>>>>>> f6b619fd576c41b8bb38342cc4baa1f655dd47b7
 			elsif FB = 6 then
 				PC <= DATA_BUS(11 downto 0);
 			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
