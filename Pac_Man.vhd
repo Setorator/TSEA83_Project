@@ -4,20 +4,24 @@
 
 
 library IEEE;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.STD_LOGIC_1164.ALL;                     -- Basic IEEE library
 use IEEE.NUMERIC_STD.ALL;                        -- IEEE library for the unsigned type
                                                  -- and various arithmetic operations
+
+                                                 
 
 -- entity
 entity Pac_Man is
   
   port (
-    clock            : in std_logic;                         	-- System clock
-    reset            : in std_logic;                         	-- Reset button
-    horizontalSync	: out std_logic;								 	-- H-sync for monitor
-    verticalSync		: out std_logic;									-- V-sync for monitor
-    video         	: out std_logic_vector(7 downto 0)			-- RGB-signal
-    																				-- to monitor
+    clk            : in std_logic;                         	-- System clock
+    reset          : in std_logic;                         	-- Reset button
+    Hsync			 : out std_logic;								 	-- H-sync for monitor
+    Vsync			 : out std_logic;									-- V-sync for monitor
+    vgaRed			 : out std_logic_vector(2 downto 0);
+    vgaGreen		 : out std_logic_vector(2 downto 0);
+    vgaBlue			 : out std_logic_vector(2 downto 1)
          );
     
 end Pac_Man;
@@ -30,70 +34,75 @@ architecture Behavioral of Pac_Man is
 		port (
 			clk						  : in std_logic;								-- System clock
 			rst						  : in std_logic;								-- Reset button
-			intr						  : in std_logic								-- Interupt signal
+			intr						  : in std_logic;								-- Interupt signal
+			intr2						  : in std_logic
 		);
 	end component;
 	
 
 	component PIX_GEN
 		port (
-			clk                    : in std_logic;                      -- System clock
-			rst                    : in std_logic;                      -- reset button
-			data	 					  : in std_logic_vector(7 downto 0);	-- Data to be read from MEM
-	 		addr						  : out std_logic_vector(10 downto 0);			-- Adress to the tile in MEM
-			Hsync                  : out std_logic;                     -- horizontal sync
-			Vsync                  : out std_logic;                     -- vertical sync
-			vgaRed                 : out std_logic_vector(2 downto 0);  -- VGA red
-			vgaGreen               : out std_logic_vector(2 downto 0);  -- VGA green
-			vgaBlue                : out std_logic_vector(2 downto 1);  -- VGA blue
-			colision					  : out std_logic								-- Interupt 
+			clk                    : in std_logic;                      	-- System clock
+			rst                    : in std_logic;                      	-- reset button
+			data	 					  : in std_logic_vector(7 downto 0);		-- Data to be read from MEM
+	 		addr						  : out unsigned(10 downto 0);				-- Adress to the tile in MEM
+			Hsync                  : out std_logic;                     	-- horizontal sync
+			Vsync                  : out std_logic;                     	-- vertical sync
+			vgaRed                 : out std_logic_vector(2 downto 0);  	-- VGA red
+			vgaGreen               : out std_logic_vector(2 downto 0);  	-- VGA green
+			vgaBlue                : out std_logic_vector(2 downto 1);  	-- VGA blue
+			colision					  : out std_logic									-- Interupt 
 		);
   	end component;
   
   
 	component RAM
 		port (
-			clk							: in std_logic;							-- System clock
+			clk							: in std_logic;								-- System clock
 
 			-- port 1
-			x1 							: in std_logic_vector(5 downto 0);	-- 64 columns, only 40 is used
-			y1 							: in std_logic_vector(4 downto 0);	-- 32 rows, only 30 used
-			rw1 							: in std_logic;							-- READ/WRITE
-			ce1							: in std_logic;							-- Count enable
-			data1_in						: in std_logic_vector(7 downto 0);	-- Data to be written
-			data1_out					: out std_logic_vector(7 downto 0);	-- Data to be read
+			x1 							: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
+			y1 							: in unsigned(4 downto 0);					-- 32 rows, only 30 used
+			we 							: in std_logic;								-- Write enable
+			data1							: in std_logic_vector(7 downto 0);		-- Data to be written
+
 			-- port 2
-			x2 							: in std_logic_vector(5 downto 0);	-- 64 columns, only 40 is used
-			y2 							: in std_logic_vector(4 downto 0);	-- 32 rows, only 30 used
-			rw2 							: in std_logic;							-- READ/WRITE
-			ce2							: in std_logic;							-- Count enable
-			data2							: out std_logic_vector(7 downto 0)-- Data to be read/written		
+			x2 							: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
+			y2 							: in unsigned(4 downto 0);					-- 32 rows, only 30 used
+			re 							: in std_logic;								-- Read enable
+			data2							: out std_logic_vector(7 downto 0)		-- Data to be read		
 		);
 	end component;
 		
   
-  signal interupt				: std_logic;									-- Signal between CPU and PIX_GEN
+  signal interupt				: std_logic;											-- Signal between CPU and PIX_GEN
+  signal intr2 				: std_logic := '0';
   
-  signal addr_tmp				: std_logic_vector(10 downto 0);
-  signal data_tmp				: std_logic_vector(7 downto 0);
+  signal read_enable			: std_logic;
+  signal write_enable		: std_logic;
+  signal read_addr			: unsigned(10 downto 0);
+  signal write_addr			: unsigned(10 downto 0);
+  signal read_data			: std_logic_vector(7 downto 0);
+  signal write_data			: std_logic_vector(7 downto 0);
+
 
 begin 
 
-	U0 : CPU port map(clk=>clock, rst=>reset, intr=>interupt);
-	U1 : RAM port map(clk=>clock, ce1=>'1', rw1=>'0', data1_in=>"00000000", x1=>"000000", y1=>"00000", 
-							ce2=>'0', rw2=>'1', data2=>data_tmp, x2=>addr_tmp(5 downto 0), y2=>addr_tmp(10 downto 6));
+	U0 : CPU port map(clk=>clk, rst=>reset, intr=>interupt, intr2=>intr2);
+	U1 : RAM port map(clk=>clk, we=>write_enable, data1=>write_data, x1=>write_addr(5 downto 0), y1=>write_addr(10 downto 6), 
+							re=>read_enable, data2=>read_data, x2=>read_addr(5 downto 0), y2=>read_addr(10 downto 6));
 
-	U2 : PIX_GEN port map(clk=>clock, rst=>reset, 
-									Hsync=>horizontalSync, Vsync=>verticalSync,
+	U2 : PIX_GEN port map(clk=>clk, rst=>reset, 
+									Hsync=>Hsync, Vsync=>Vsync,
 									data=>data_tmp, addr=>addr_tmp,
-									vgaRed(2)=>video(7),
-									vgaRed(1)=>video(6),
-									vgaRed(0)=>video(5),
-									vgaGreen(2)=>video(4),
-									vgaGreen(1)=>video(3),
-									vgaGreen(0)=>video(2),
-									vgaBlue(2)=>video(1),
-									vgaBlue(1)=>video(0),
+									vgaRed(2)=>vgaRed(2),
+									vgaRed(1)=>vgaRed(1),
+									vgaRed(0)=>vgaRed(0),
+									vgaGreen(2)=>vgaGreen(2),
+									vgaGreen(1)=>vgaGreen(1),
+									vgaGreen(0)=>vgaGreen(0),
+									vgaBlue(2)=>vgaBlue(2),
+									vgaBlue(1)=>vgaBlue(1),
 									colision=>interupt);
 
 

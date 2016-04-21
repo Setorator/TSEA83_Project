@@ -33,9 +33,9 @@ XILINX_INIT = source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh;
 PART=xc6slx16-3-csg324
 
 
-proj.%: S=Pac_Man.vhd CPU.vhd PIX_GEN.vhd RAM.vhd
-proj.%: T=Pac_man_tb.vhd
-proj.%: U=Nexys3.ucf
+Pac_Man.%: S=Pac_Man.vhd CPU.vhd PIX_GEN.vhd RAM.vhd
+Pac_Man.%: T=Pac_Man_tb.vhd
+Pac_Man.%: U=Nexys3.ucf
 
 
 # Det här är ett exempel på hur man kan skriva en testbänk som är

@@ -9,8 +9,8 @@ entity PIX_GEN is
 	port (
 		clk            : in std_logic;                         -- system clock
     	rst            : in std_logic;                         -- reset
-		data	 			: in std_logic_vector(7 downto 0);		 -- Data to be written to MEM
-	 	addr				: out unsigned(10 downto 0);				 -- Adress to the tile in MEM
+	 	addr				: out unsigned(10 downto 0);				 -- Adress to the tile pixel in RAM
+	 	read				: out std_logic;								 -- Read enable for RAM
     	Hsync          : out std_logic;                        -- horizontal sync
     	Vsync          : out std_logic;                        -- vertical sync
     	vgaRed         : out std_logic_vector(2 downto 0);     -- VGA red
@@ -25,9 +25,12 @@ end PIX_GEN;
 -- architecture
 architecture Behavioral of PIX_GEN is
 
-	signal Xpixel         : unsigned(9 downto 0);  				-- Horizontal pixel counter
-  	signal Ypixel         : unsigned(9 downto 0);  				-- Vertical pixel counter
-  	signal blank			 : std_logic;		 						-- blanking signal
+	signal Xpixel        : unsigned(9 downto 0);  				-- Horizontal pixel counter
+  	signal Ypixel        : unsigned(9 downto 0);  				-- Vertical pixel counter
+  	signal blank			: std_logic;		 						-- blanking signal
+  	
+  	signal tileX			: unsigned(5 downto 0);					-- X-coordinate of the tile
+  	signal tileY			: unsigned(4 downto 0);					-- Y-coordinate of the tile
   
   	signal ClkDiv			: unsigned(1 downto 0);					-- Clock divisor, to generate
                                                  				-- 25 MHz clock
@@ -35,14 +38,19 @@ architecture Behavioral of PIX_GEN is
   	
 	signal tilePixel     : std_logic_vector(7 downto 0);		-- Tile pixel data
 	signal tileAddr		: unsigned(10 downto 0);				-- Tile address
-  
+	
+	signal tilePixel		: std_logic_vector(7 downto 0);		-- Color of chosen tile pixel
+	signal PacPixel		: std_logic_vector(7 downto 0);		-- Color of chosen Pac_Man pixel
+	signal GhostPixel		: std_logic_vector(7 downto 0);		-- Color of chosen Ghost pixel
+	
   
   	-- Tile memory type
-  	type ram_t is array (0 to 2047) of std_logic_vector(7 downto 0);  
+  	type tile_t is array (0 to 2047) of std_logic_vector(7 downto 0);  
+  	type sprite is array (0 to 255) of std_logic_vector(7 downto 0);
   
 	-- Tile memory
-  	signal tileMem : ram_t := 
-		( x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Floor
+  	signal tileMem : tile_t := 
+		( x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Floor (Start adress 0)
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
@@ -50,6 +58,7 @@ architecture Behavioral of PIX_GEN is
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
+		  
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
@@ -59,7 +68,7 @@ architecture Behavioral of PIX_GEN is
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", 
 		  
-		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Food
+		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Food (Start adress 256)
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
@@ -67,6 +76,7 @@ architecture Behavioral of PIX_GEN is
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"8C",x"8C", x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"8C",x"8C", x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",x"00",
+		  
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"8C",x"8C", x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",x"00",  
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"8C",x"8C", x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
@@ -76,28 +86,70 @@ architecture Behavioral of PIX_GEN is
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", 
 		  
-  		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",  	-- Wall
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",  
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02",
-		  x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"02", 
+		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Wall (Start adress 512)
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",  
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"02",x"02",x"02",x"02",x"02",x"02",x"02", x"02",x"02",x"02",x"02",x"02",x"02",x"02",x"00",
+		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
 		  others => (others => '1'));
 		  
 		  
+	signal Pac_Man : sprite :=
+		( x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Pac_Man (Start adress 0)
+		  x"00",x"00",x"00",x"00",x"00",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",
+		  x"00",x"00",x"00",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"00",x"00",x"00",
+		  x"00",x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00",x"00",
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00",
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00",
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",
+		  
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00",
+		  x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00",
+		  x"00",x"00",x"8C",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"8C",x"00",x"00",
+		  x"00",x"00",x"00",x"8C",x"8C",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"8C",x"8C",x"00",x"00",x"00",
+		  x"00",x"00",x"00",x"00",x"00",x"8C",x"8C",x"8C", x"8C",x"8C",x"8C",x"00",x"00",x"00",x"00",x"00",
+		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00");
+		  
+	signal Ghost : sprite :=
+		( x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00",  -- Ghost (Start adress 0)
+		  x"00",x"00",x"00",x"00",x"00",x"70",x"70",x"70", x"70",x"70",x"70",x"00",x"00",x"00",x"00",x"00",
+		  x"00",x"00",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"00",x"00",
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"00",x"00",x"00",x"70",x"70", x"70",x"70",x"00",x"00",x"00",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"00",x"00",x"00",x"70",x"70", x"70",x"70",x"00",x"00",x"00",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"00",x"00",x"00",x"70",x"70", x"70",x"70",x"00",x"00",x"00",x"70",x"70",x"00",
+		  
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"70",x"70",x"70",x"70",x"70", x"70",x"70",x"70",x"70",x"70",x"70",x"70",x"00",
+		  x"00",x"70",x"70",x"00",x"70",x"70",x"70",x"00", x"00",x"70",x"70",x"70",x"00",x"70",x"70",x"00", 
+		  x"00",x"70",x"00",x"00",x"00",x"70",x"00",x"00", x"00",x"00",x"70",x"00",x"00",x"00",x"70",x"00", 
+		  x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00", x"00",x"00",x"00",x"00",x"00",x"00",x"00",x"00"); 
 		  
 
 begin
+
+------------------------------------------------------------------------
+---------------------VGA_MOTOR------------------------------------------
+------------------------------------------------------------------------
 
   -- Horizontal pixel counter
   X_Counter : process(clk)
@@ -182,14 +234,46 @@ begin
   begin
     if rising_edge(clk) then
       if rst='1' then
-	ClkDiv <= (others => '0');
+			ClkDiv <= (others => '0');
       else
-	ClkDiv <= ClkDiv + 1;
+			ClkDiv <= ClkDiv + 1;
       end if;
     end if;
   end process;
   -- 25 MHz clock (one system clock pulse width)
   Clk25 <= '1' when (ClkDiv = 3) else '0';
+  
+  
+  
+-------------------------------------------------------------------------
+----------------------------------PIXEL_GEN------------------------------
+-------------------------------------------------------------------------
+
+
+	-- Tile X-coordinate
+  tileX : process(clk)
+  begin
+    if rising_edge(clk) then
+      if rst = '1' then
+        tileX <= "0000000000";
+      elsif clk25 = '1' and Xpixel = 799 then 
+        if Ypixel = 520 then         -- Counts 0 -> 480+10+2+29 - 1 = 520
+          Ypixel <= "0000000000";
+        else
+          Ypixel <= Ypixel + 1;
+        end if;
+      end if;
+    end if;
+  end process;
+
+
+	-- Tile-pixel gen
+	Tile_pixel : process(clk)
+	begin
+		if rising_edge(clk) then
+		
+			 
+
   
   
   
