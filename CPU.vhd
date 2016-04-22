@@ -31,70 +31,80 @@ architecture Behavioral of cpu is
   
   -- Skriv mikrominne här
   constant u_mem_c : u_mem_t := 
-		   --      ALU _ TB _ FB _P_I_ SEQ_RW_SP_  uAddr
-				(b"0000_0110_0001_0_1_0000_00_00_00000000", -- ADR <= PC				0
-				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)			1
-				 b"0000_0101_0010_0_0_0000_00_00_00000000", -- IR <= DR					2
-				 b"0000_0000_0000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2			3
+		   --      ALU _ TB _ FB _ P _I_ SEQ_RW_SP_  uAddr
+				(b"0000_0110_0001_0_1_0000_00_00_00000000", -- ADR <= PC					0
+				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)				1
+				 b"0000_0101_0010_0_0_0000_00_00_00000000", -- IR <= DR						2
+				 b"0000_0000_0000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2				3
 				 -- M = "00" , Direkt addressering
-				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR				4
-				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			5
+				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR					4
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)				5
 				 -- M = "01" , Omedelbar operand
-				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC				6
-				 b"0000_0000_0000_1_0_0001_10_00_00000000", -- DR <= MEM(ADR), PC++ 	7
+				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC					6
+				 b"0000_0000_0000_1_0_0001_10_00_00000000", -- DR <= MEM(ADR), PC++ 		7
 				 -- M = "10" , Indirekt addressering
-				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR				8
-				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)			9
-				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR				10
-				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			11
+				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR					8
+				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)				9
+				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR					10
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)				11
 				 -- M = "11" , Indexerad addresering
-				 b"0000_0010_0111_0_0_0000_00_00_00000000", -- AR <= IR					12
-				 b"0011_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR + XR			13
-				 b"0000_0111_0001_0_0_0000_00_00_00000000", -- ADR <= AR				14
-				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)			15
+				 b"0000_0010_0111_0_0_0000_00_00_00000000", -- AR <= IR						12
+				 b"0011_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR + XR				13
+				 b"0000_0111_0001_0_0_0000_00_00_00000000", -- ADR <= AR					14
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)				15
 				 -- OP = 00000, LDA M,ADDR  , AR <= MEM(ADDR)			
-				 b"0000_0101_0111_0_1_0011_00_00_00000000", -- AR <= DR, uPC <= 0		16
+				 b"0000_0101_0111_0_1_0011_00_00_00000000", -- AR <= DR, uPC <= 0			16
 				 -- OP = 00001, STXR M,ADDR , MEM(DR) <= XR
-				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR      			17
-				 b"0000_0100_0101_0_0_0000_00_00_00000000", -- DR <= XR					18
-				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADR) <= XR,uPC <= 0	19
+				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR      				17
+				 b"0000_0100_0101_0_0_0000_00_00_00000000", -- DR <= XR						18
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADR) <= XR,uPC <= 0		19
 				 -- Avbrottsrutin, Lägg undan alla register i minnet
-				 b"0000_0110_0101_0_0_0000_00_00_00000000", -- DR <= PC					20
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			21
-				 b"0000_1000_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= SR 22
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			23
-				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 24
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			25
-				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 26
-				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    27
-				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 28
-				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC				29	
-				 b"0000_0000_1100_0_0_0101_00_00_00000001", -- SR <= IL, uPC <= 1		30
+				 b"0000_0110_0101_0_0_0000_00_00_00000000", -- DR <= PC						20
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				21
+				 b"0000_1000_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= SR 	22
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				23
+				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 	24
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				25
+				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 	26
+				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    	27
+				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 	28
+				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC					29	
+				 b"0000_0000_1100_0_0_0101_00_00_00000001", -- SR <= IL, uPC <= 1			30
 				 -- OP = 0010, RTE , Hoppa ur avbrottet
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			31
-				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 32
-				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 33
-				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					34
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++			35
-				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 36
-				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  37
-				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR					38
-				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR					39
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				31
+				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 	32
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 	33
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR						34
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				35
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 	36
+				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  	37
+				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR						38
+				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR						39
 				 -- OP = 0011, HALT, Stanna programmet
-				 b"0000_0000_0000_0_0_0101_00_00_00101000", -- uPC <= uPC  				40
+				 b"0000_0000_0000_0_0_0101_00_00_00101000", -- uPC <= uPC	  				40
 				 -- OP = 0100, LDXR M,ADDR, Ladda XR med ADDR
-				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR                 41
+				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR 	                41
 				 -- OP = 0101, JMP M,ADDR, Hoppa till bestämd address
-				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR					42
+				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR						42
 				 -- OP = 0110, ADD M,ADDR, AR <= AR + DR								
-				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 			43
-				 -- OP = 0111, MULP M,ADDR, AR <= AR * DR (Multiplikation)
-				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR			44
+				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 				43
+				 -- OP = 0111, MULP M,ADDR, AR <= AR * DR (Multiplikation),
+				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR				44
 				 -- OP = 1000, SUB M,ADDR, AR <= AR - DR
-				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR			45
+				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR				45
 				 -- OP = 1001, STORE M,ADDR, MEM(ADDR) <= AR
-				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR					46
-				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR			47
+				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR						46
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR				47
+				 -- OP = 1010, EQU M,ADDR , AR == MEM(ADDR)
+				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				48
+				 b"0000_0000_0000_0_0_0110_00_00_00110011", --								49
+				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						50
+				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			51
+				 -- OP = 1011, NEQU M,ADDR , AR != MEM(ADDR)
+				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				52
+				 b"0000_0000_0000_0_0_0100_00_00_00110111", --								53
+				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						54
+				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			55
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -103,15 +113,15 @@ architecture Behavioral of cpu is
   signal uPC   : unsigned(7 downto 0) := (others => '0');         -- micro program counter
 
   -- Signaler i uM
-  signal uAddr : unsigned(7 downto 0)  := (others => '0');         -- micro Adress
-  signal TB    : unsigned(3 downto 0)  := (others => '0');         -- to bus field
-  signal FB    : unsigned(3 downto 0) := (others => '0');          -- from bus field
+  signal uAddr : unsigned(7 downto 0)    := (others => '0');         -- micro Adress
+  signal TB    : unsigned(3 downto 0)    := (others => '0');         -- to bus field
+  signal FB    : unsigned(3 downto 0)    := (others => '0');          -- from bus field
   signal ALUsig   : unsigned(3 downto 0) := (others => '0');
   signal Isig  : std_logic := '0';                   			   -- block interrupts
-  signal RW    : unsigned(1 downto 0) := (others => '0');          -- Read/write
+  signal RW    : unsigned(1 downto 0)  := (others => '0');          -- Read/write
   signal SEQ   : unsigned(3 downto 0)  := (others => '0');
   signal SPsig : unsigned(1 downto 0)  := (others => '0');         -- Manipulera stackpekaren
-  signal PCsig : std_logic := '0';                    			   -- PC++
+  signal PCsig : std_logic  := '0';                    			   -- PC++
   signal I     : std_logic := '0'; 				   				   -- T-vippa
   
   signal intr_1: std_logic := '0';
@@ -156,6 +166,8 @@ architecture Behavioral of cpu is
 				 "00101100", -- 44 MULP
 				 "00101101", -- 45 SUB
 				 "00101110", -- 46 STORE
+				 "00110000", -- 48 EQU
+				 "00110100", -- 52 NEQU
 				others => (others => '0')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -167,12 +179,19 @@ architecture Behavioral of cpu is
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP_M_ADDR
-			(b"00000_00_000000000101", -- 0 LDA 00,101
-			 b"00011_00_000000000000", -- 1 HALT
-			 b"00000_01_000000000000", -- 2 LDA (avbrott)
-			 b"00000_00_000011111111", -- 3 
-			 b"00010_00_000000000000", -- 4 RTE
-			 b"00000_00_111111111111", -- 5
+			(b"00000_00_000000000111", -- 0 LDA  00,111
+			 b"01000_00_000000000111", -- 1 SUB  00,111
+			 b"01000_00_000000000111", -- 2 SUB  00,111
+			 b"00100_00_000000000111", -- 3 LDXR 00,111
+			 b"01010_00_000000001100", -- 4 NEQU  00,111
+			 b"00011_00_000000000000", -- 5 HALT
+			 b"00000_01_000000000000", -- 6 LDA  01,000 (avbrott)
+			 b"00000_00_111111111111", -- 7 
+			 b"00010_00_000000000000", -- 8 RTE
+			 b"00000_01_000000000000", -- 9 LDA  01,000 (avbrott)
+			 b"00000_00_111100000000", -- 10
+			 b"00010_00_000000000000", -- 11 RTE
+			 b"00011_00_000000000000", -- 12 HALT
 			others => (others => '0'));    
 
   signal p_mem : p_mem_t := p_mem_c;
@@ -185,8 +204,8 @@ architecture Behavioral of cpu is
   signal SP       : unsigned(11 downto 0) := "111111111111";      -- Stack pekare, startar på $FFF
   signal IV 	  : unsigned(11 downto 0) := (others => '0');	  -- Avbrotts vektorn, startvärde = 3
   signal IL       : unsigned(1 downto 0)  := (others => '0');     -- Avbrotts nivå
-  signal IV1	  : unsigned(11 downto 0) := "000000000011";      -- Avbrotts vektor för nivå 1
-  signal IV2	  : unsigned(11 downto 0) := "000000000011";     -- Avbrotts vektor för nivå 2
+  signal IV1	  : unsigned(11 downto 0) := "000000000110";      -- Avbrotts vektor för nivå 1
+  signal IV2	  : unsigned(11 downto 0) := "000000001001";      -- Avbrotts vektor för nivå 2
   signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
@@ -334,18 +353,41 @@ begin
 				SR <= DATA_BUS(11 downto 0);
 			elsif FB = 12 then
 				SR(1 downto 0) <= IL;
-                        elsif ALUsig /= 0 then
-                                if AR = 0 then
-                                  SR(11) <= '1';
-                                else
-                                  SR(11) <= '0';
-                                end if;
-
-                                if AR < 0 then
-                                  SR(10) <= '1';
-                                else
-                                  SR(10) <= '0';
-                                end if;
+			else
+				-- Sätt O och C flaggorna
+				if ((ALUsig = 1) and (AR = 4095)) then
+					SR(9) <= '1';
+				elsif ((ALUsig = 2) and (AR = 0)) then
+					SR(9) <= '1';
+				elsif ((ALUsig = 3) and (to_integer(AR) + to_integer(DATA_BUS(11 downto 0)) > 4095)) then
+					SR(9) <= '1';  -- Orsakade AR + DATA_BUS spill?
+				elsif ((ALUsig = 4) and (to_integer(AR) < to_integer(DATA_BUS(11 downto 0)))) then
+					SR(9) <= '1';  -- Orsakade AR - DATA_BUS spill?
+				else
+					SR(9) <= '0';
+				end if;
+				
+				if ALUsig = 7 then
+					SR(8) <= AR(11);
+				elsif ALUsig = 8 then
+					SR(8) <= AR(0);
+				else
+					SR(8) <= '0';
+				end if;
+				
+				-- Sätt Z flaggan
+				if AR = 0 then
+					SR(11) <= '1';
+				else
+					SR(11) <= '0';
+				end if;
+				
+				--Sätt N flaggan
+				if AR < 0 then
+					SR(10) <= '1';
+				else
+					SR(10) <= '0';
+				end if;
 			end if;
 		end if;
 	end process;
@@ -401,55 +443,19 @@ begin
 		if rising_edge(clk) then
 			if rst = '1' then uPC <= (others => '0');
 			elsif I = '0' and ((intr_1 = '1' and IL < 1) or (intr_2 = '1' and IL < 2))  then uPC <= intr_vector;
-			elsif SEQ = 0 then uPC <= uPC + 1;
 			elsif SEQ = 1 then uPC <= K1_out;
 			elsif SEQ = 2 then uPC <= K2_out;
 			elsif SEQ = 3 then uPC <= (others => '0');
-			elsif SEQ = 4 then 
-				if Z = '0' then 
-					uPC <= uAddr;
-				else     
-					uPC <= uPC + 1;
-				end if;
 			elsif SEQ = 5 then uPC <= uAddr;
-			elsif SEQ = 6 then
-				if Z = '1' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 7 then
-				if N = '1' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 8 then
-				if C = '1' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 9 then
-				if O = '1' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 10 then
-				if C = '0' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 11 then
-				if O = '0' then
-					uPC <= uAddr;
-				else
-					uPC <= uPC + 1;
-				end if;
-			elsif SEQ = 12 then
-				uPC <= "00100110"; -- HALT
+			elsif SEQ = 4 and Z = '0' then uPC <= uAddr;
+			elsif SEQ = 6 and Z = '1' then uPC <= uAddr;
+			elsif SEQ = 7 and N = '1' then uPC <= uAddr;
+			elsif SEQ = 8 and C = '1' then uPC <= uAddr;
+			elsif SEQ = 9 and O = '1' then uPC <= uAddr;
+			elsif SEQ = 10 and C = '0' then uPC <= uAddr;
+			elsif SEQ = 11 and O = '0' then uPC <= uAddr;
+			elsif SEQ = 12 then uPC <= "00100110"; -- HALT
+			else uPC <= uPC + 1;
 			end if; 
 		end if;
 	end process;
@@ -477,19 +483,23 @@ begin
         elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
 		elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
 		elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
---		elsif ALUsig = 7 then AR <= AR * 2;   --logical shift left
-		elsif ALUsig = 8 then AR <= AR srl 1; --logical shift right
+		elsif ALUsig = 7 then AR <= AR(10 downto 0) & '0';   --logical shift left
+		elsif ALUsig = 8 then AR <= '0' & AR(11 downto 1);   --logical shift right
 		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
 		elsif ALUsig = 10 then AR <= (others => '0');
 		elsif ALUsig = 11 then AR <= (others => '1');
---		elsif ALUsig = 12 then AR <= AR * DATA_BUS(11 downto 0);
-		elsif FB = 7    then AR <= DATA_BUS(11 downto 0);
+		elsif ALUsig = 12 then AR <= AR(5 downto 0) * DATA_BUS(5 downto 0);
+		elsif FB = 7      then AR <= DATA_BUS(11 downto 0);
         end if;
       end if;
     end process;
 		 
+	-- Sätt flaggorna 	 
+	
 	Z <= SR(11);
 	N <= SR(10);
+	O <= SR(9);
+	C <= SR(8);
 		 
 	-- PC funktionalitet
 	-- Avbrotts rutinen har bara fått en random adress
@@ -501,14 +511,6 @@ begin
 				PC <= (others => '0');
 			elsif FB = 6 then
 				PC <= DATA_BUS(11 downto 0);
-			elsif SEQ = 13 then -- Vilkorligt hopp N = 1
-				if N = '1' then
-					PC <= DATA_BUS(11 downto 0);
-				end if;
-			elsif SEQ = 14 then -- vilkorligt hopp Z = 1
-				if Z = '1' then
-					PC <= DATA_BUS(11 downto 0);
-				end if;
 			elsif PCsig = '1' then
 				PC <= PC + 1;
 			end if;
