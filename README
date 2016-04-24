@@ -1,11 +1,15 @@
-Address busy in CPU:
+Addresses busy in CPU:
   $FFF - $FF9 : Interrupts
   $FF8        : Joystick direction 
-  $FF7        : PacMan Position
-  $FF6        : PacMan Direction
-  $FF5        : PacMan velocity
-  $FF4        : PacMan old position (If kollision, then jump back to this coordinate)
-  $FF3        : Ghost1 Position
-  $FF2        : Ghost1 Direction
-  $FF1        : Ghost1 velocity
-  $FF0        : Ghost1 old position (If kollision, then jump back to this coordinate)
+  $FF7        : PacMan PositionX
+  $FF6        : PacMan PositionY
+  $FF5        : PacMan Direction
+  $FF4        : PacMan velocity
+  $FF3        : PacMan old positionX (If kollision, then jump back to this coordinate)
+  $FF2        : PacMan old positionY
+  $FF1        : Ghost1 PositionX
+  $FF0        : Ghost1 PositionY
+  $FEF        : Ghost1 Direction
+  $FEE        : Ghost1 velocity
+  $FED        : Ghost1 old positionX (If kollision, then jump back to this coordinate)
+  $FEC        : Ghost1 old positionY
