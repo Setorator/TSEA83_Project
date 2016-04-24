@@ -1,1 +1,3 @@
-
+Address busy in CPU:
+  $FFF - $FF9 : Interrupts
+  $FF8        : PacMan Position
