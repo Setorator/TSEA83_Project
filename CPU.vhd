@@ -191,8 +191,8 @@ architecture Behavioral of cpu is
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_111100000000", -- 0  LDV1  11,$F00
-			 b"01101_11_111101010000", -- 1  LDV2  11,$F50
+			(b"01100_11_000000011100", -- 0  LDV1  11,$01C
+			 b"01101_11_000000011111", -- 1  LDV2  11,31
 			 b"01110_11_111111111111", -- 2  LDSP  11,$FFF
 			 b"00100_00_111111110101", -- 3  LDXR  00,PacMan_dir
 			 b"00000_11_000000000000", -- 4  LDA   11,left
@@ -219,6 +219,12 @@ architecture Behavioral of cpu is
 			 b"00110_00_111111110100", -- 25 ADD   00,PacMan_Speed
 			 b"01001_00_111111110110", -- 26 STORE 00,PacMan_Y
 			 b"00101_11_000000000011", -- 27 JMP   11,$003
+			 b"00000_11_000000000000", -- 28 LDA   11,$000
+			 b"01001_00_111111110100", -- 29 STORE 00,PacMan_Speed
+			 b"00010_00_000000000000", -- 30 RTE
+			 b"00000_11_000000000001", -- 31 LDA 11,$001
+			 b"01001_00_111111110100", -- 32 STORE 00,PacMan_Speed
+			 b"00010_00_000000000000", -- 33 RTE
 			 others => (others => '0'));
 
   signal p_mem : p_mem_t := p_mem_c;
