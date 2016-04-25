@@ -5,11 +5,11 @@ Addresses busy in CPU:
   $FF6        : PacMan PositionY
   $FF5        : PacMan Direction
   $FF4        : PacMan velocity
-  $FF3        : PacMan old positionX (If kollision, then jump back to this coordinate)
-  $FF2        : PacMan old positionY
+  $FF3        : EMPTY
+  $FF2        : EMPTY
   $FF1        : Ghost1 PositionX
   $FF0        : Ghost1 PositionY
   $FEF        : Ghost1 Direction
   $FEE        : Ghost1 velocity
-  $FED        : Ghost1 old positionX (If kollision, then jump back to this coordinate)
-  $FEC        : Ghost1 old positionY
+  $FED        : EMPTY
+  $FEC        : EMPTY
