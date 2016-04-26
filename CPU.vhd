@@ -16,18 +16,6 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity cpu is 
   port (
-<<<<<<< HEAD
-    clk      	   :  in std_logic;
-    rst      	   :  in std_logic;
-    intr     	   :  in std_logic; 				-- Avbrotts nivå 1
-	 intr2			 	:  in std_logic;  				-- Avbrotts nivå 2
-	 intr_code    	:  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
-	 joystick_poss	: in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
-	 output1 			:  out unsigned(18 downto 0);   -- Output 1  : Address $FF7 i minnet
-	 output2     	:  out unsigned(18 downto 0);	-- Output 2  : Address $FF6 i minnet
-	 output3			:  out unsigned(18 downto 0);	-- Output 3  : Address $FF1 i minnet
-	 output4 			:  out unsigned(18 downto 0)   -- Output 4  : Address $FF0 i minnet
-=======
     clk         :  in std_logic;
     rst         :  in std_logic;
     intr        :  in std_logic; 				-- Avbrotts nivå 1
@@ -38,7 +26,6 @@ entity cpu is
 	output2     :  out unsigned(18 downto 0);	-- Output 2  : Address $FF6 i minnet
 	output3		:  out unsigned(18 downto 0);	-- Output 3  : Address $FF1 i minnet
 	output4 	:  out unsigned(18 downto 0)    -- Output 4  : Address $FF0 i minnet
->>>>>>> 722689b2c6fde6994ef0b06bf46d16515c770d10
   );
 end cpu;
 
@@ -273,17 +260,10 @@ begin
 	signals_OUT : process(clk)
 	begin
 		if rising_edge(clk) then
-<<<<<<< HEAD
-			output1 <= p_mem(4087); 	--$FF7
-			output2 <= p_mem(4086); 	--$FF6
-			output3 <= p_mem(4081); 	--$FF1
-			output4 <= p_mem(4080); 	--$FF0
-=======
 			output1 <= p_mem(4086); 	--$FF6
 			output2 <= p_mem(4085); 	--$FF5
 			output3 <= p_mem(4080); 	--$FF0
 			output4 <= p_mem(4079); 	--$FEF
->>>>>>> 722689b2c6fde6994ef0b06bf46d16515c770d10
 		end if;
 	end process;
   
@@ -490,17 +470,10 @@ begin
 		
         if RW = "11" then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
-<<<<<<< HEAD
-        end if;
-        
-        p_mem(4088) <= "00000000000000000" & joystick_poss; --$FF8
-        p_mem(4085) <= "00000000000000000" & joystick_poss; --$FF5 , PacMan direction = Joystick direction
-=======
         end if;
 		
 		p_mem(4087) <= "00000000000000000" & joystick_poss; --$FF7
 		p_mem(4084) <= "00000000000000000" & joystick_poss; --$FF4 , PacMan direction = Joystick direction
->>>>>>> 722689b2c6fde6994ef0b06bf46d16515c770d10
       end if;
     end process;
 	
