@@ -10,7 +10,8 @@ entity PIX_GEN is
 	port (
 		clk            : in std_logic;                         -- system clock
     	rst            : in std_logic;                         -- reset
-	 	tile_type		: in std_logic_vector(1 downto 0);		 -- Type of tile from RAM				
+	 	tile_type		: in std_logic_vector(1 downto 0);		 -- Type of tile from RAM	
+--	 	Pac_koord		: in unsigned(19 downto 0);				 -- Pac_Man koord in pixel size			
 	 	addr				: out unsigned(10 downto 0);				 -- Adress to the tile pixel in RAM
 	 	read				: out std_logic;								 -- Read enable for RAM
     	Hsync          : out std_logic;                        -- horizontal sync
@@ -29,7 +30,7 @@ architecture Behavioral of PIX_GEN is
 
 	signal Xpixel        : unsigned(9 downto 0) := (others => '1');  				-- Horizontal pixel counter
   	signal Ypixel        : unsigned(9 downto 0) := (others => '1');  				-- Vertical pixel counter
-  	signal blank			: std_logic; 												-- blanking signal
+  	signal blank			: std_logic; 														-- blanking signal
   	
   	signal tmpX, tmpY		: unsigned(3 downto 0) := (others => '1');				-- Used for tileX and tileY
   	signal tileX			: unsigned(5 downto 0) := (others => '1');				-- X-coordinate of the tile
@@ -45,6 +46,9 @@ architecture Behavioral of PIX_GEN is
 	signal TilePixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen tile pixel
 	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
 	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
+	
+	signal Pac_Man_X		: unsigned(9 downto 0)	:= (others => '0');				-- Pac Mans X-koord in pixel size
+	signal Pac_Man_Y		: unsigned(9 downto 0)	:= (others => '0');				-- Pac Mans y-koord in pixel size
 	
   
   	-- Tile memory type
@@ -222,21 +226,7 @@ begin
   end process;
 
   
-  -- Video blanking signal
-
---  Blank_Signal : process(clk)
---  begin
---  	if rising_edge(clk) then
---    if Xpixel > 639 or Ypixel > 479 then
---      blank <= '1';
---    else
---     blank <= '0';
---    end if;
---   end if;
---  end process;
-  
-  blank <= '1' when (Xpixel > 639 or Ypixel > 479) else
-  				'0';
+  blank <= '1' when (Xpixel > 639 or Ypixel > 479) else '0';
  
 		    -- Clock divisor
   -- divide system clock (100 MHz) by 4
@@ -259,23 +249,10 @@ begin
 ----------------------------------PIXEL_GEN------------------------------
 -------------------------------------------------------------------------
 
-
---	big_pixel_xcounter : process(clk)
---	begin
---		if rising_edge(clk) then
---			if rst = '1' then
---				tmpX <= (others => '0');
---			elsif Clk25 = '1' then
---				if (Xpixel < 640 and Ypixel < 480) then
---					tmpX <= Xpixel(3 downto 0);
---				else 
---					tmpX <= (others => '0');
---				end if;
---			end if;
---		end if;
---	end process;
 	
 	tmpX <= Xpixel(3 downto 0);
+	
+	tmpY <= Ypixel(3 downto 0);
 	
 	big_pixel_xcoord : process(clk)
 	begin
@@ -293,25 +270,6 @@ begin
 		end if;
 	end process;
 	
---	big_pixel_ycounter : process(clk)
---	begin
---		if rising_edge(clk) then
---			if rst = '1' then
---				tmpY <= (others => '0');
---			elsif Clk25 = '1' then
---				if (Xpixel < 640 and Ypixel < 480) then							-- Can we remove the Xpixel and Ypixel conditions? Since they are already used when updating tmpX?
---					tmpY <= Ypixel(3 downto 0);
---					if Xpixel = 799 then
---						tmpY <= tmpY + 1;
---					end if;																		
---				else
---					tmpY <= (others => '0');
---				end if;
---			end if;
---		end if;
---	end process;
-
-	tmpY <= Ypixel(3 downto 0);
 	
 	big_pixel_ycoord : process(clk)
 	begin
@@ -339,26 +297,16 @@ begin
   					tileMem( 512 + (to_integer(tmpY)*16) + to_integer(tmpX))  when (tile_type = "11" and blank = '0') else			-- Wall
   					tileMem(0) when (blank = '1') else																										-- For blanking
   					tileMem(555);																																	-- Yellow (for debugging)
+  					
+  					
+  					
+  					
+  				
   
   
   tileData <= TilePixel;									-- For now	
   																									
-    -- Tile memory
-  --process(clk)
-  --begin
-   -- if rising_edge(clk) then
-    --  if (blank = '0') then
-     --   tileData <= tileMem(to_integer(tileAddr));
-     -- else
-      --  tileData <= (others => '0');
-     -- end if;
-    --end if;
-  --end process;
-	
 
-
-  -- Picture memory address composite
- -- addr <= to_unsigned(20, 7) * Ypixel(8 downto 5) + Xpixel(9 downto 5);
 
 
   -- VGA generation
