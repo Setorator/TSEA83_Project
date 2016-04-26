@@ -27,13 +27,13 @@ end PIX_GEN;
 -- architecture
 architecture Behavioral of PIX_GEN is
 
-	signal Xpixel        : unsigned(9 downto 0) := (others => '0');  				-- Horizontal pixel counter
-  	signal Ypixel        : unsigned(9 downto 0) := (others => '0');  				-- Vertical pixel counter
-  	signal blank			: std_logic := '0'; 												-- blanking signal
+	signal Xpixel        : unsigned(9 downto 0) := (others => '1');  				-- Horizontal pixel counter
+  	signal Ypixel        : unsigned(9 downto 0) := (others => '1');  				-- Vertical pixel counter
+  	signal blank			: std_logic; 												-- blanking signal
   	
-  	signal tmpX, tmpY		: unsigned(4 downto 0) := (others => '0');				-- Used for tileX and tileY
-  	signal tileX			: unsigned(5 downto 0) := (others => '0');				-- X-coordinate of the tile
-  	signal tileY			: unsigned(4 downto 0) := (others => '0');				-- Y-coordinate of the tile
+  	signal tmpX, tmpY		: unsigned(3 downto 0) := (others => '1');				-- Used for tileX and tileY
+  	signal tileX			: unsigned(5 downto 0) := (others => '1');				-- X-coordinate of the tile
+  	signal tileY			: unsigned(4 downto 0) := (others => '1');				-- Y-coordinate of the tile
   
   	signal ClkDiv			: unsigned(1 downto 0) := (others => '0');				-- Clock divisor, to generate
                                                  										-- 25 MHz clock
@@ -176,13 +176,15 @@ begin
   H_Sync : process(clk)
   begin
   	if rising_edge(clk) then
-    if Xpixel > 655 and Xpixel < 752 then   -- During 96 cycles we should
-                                            -- refresh the display. Check the
-                                            -- bottom of lab4-PM
-      Hsync <= '0';
-    else
-      Hsync <= '1';
-    end if;
+ 		if clk25 = '1' then
+    		if Xpixel > 655 and Xpixel < 752 then   -- During 96 cycles we should
+                		                            -- refresh the display. Check the
+				                                      -- bottom of lab4-PM
+				Hsync <= '0';
+			 else
+				Hsync <= '1';
+			 end if;
+		end if;
    end if;
   end process;
 
@@ -209,27 +211,32 @@ begin
   V_sync : process(clk)
   begin
   	if rising_edge(clk) then
-    if Ypixel > 489 and Ypixel < 492 then
-      Vsync <= '0';
-    else
-      Vsync <= '1';
-    end if;
+  		if clk25 = '1' then
+			 if Ypixel > 489 and Ypixel < 492 then
+				Vsync <= '0';
+			 else
+				Vsync <= '1';
+			 end if;
+		end if;
    end if;
   end process;
 
   
   -- Video blanking signal
 
-  Blank_Signal : process(clk)
-  begin
-  	if rising_edge(clk) then
-    if Xpixel > 639 or Ypixel > 479 then
-      blank <= '1';
-    else
-      blank <= '0';
-    end if;
-   end if;
-  end process;
+--  Blank_Signal : process(clk)
+--  begin
+--  	if rising_edge(clk) then
+--    if Xpixel > 639 or Ypixel > 479 then
+--      blank <= '1';
+--    else
+--     blank <= '0';
+--    end if;
+--   end if;
+--  end process;
+  
+  blank <= '1' when (Xpixel > 639 or Ypixel > 479) else
+  				'0';
  
 		    -- Clock divisor
   -- divide system clock (100 MHz) by 4
@@ -253,20 +260,22 @@ begin
 -------------------------------------------------------------------------
 
 
-	big_pixel_xcounter : process(clk)
-	begin
-		if rising_edge(clk) then
-			if rst = '1' then
-				tmpX <= (others => '0');
-			elsif Clk25 = '1' then
-				if (Xpixel < 640 and tmpX < 15) then
-					tmpX <= tmpX + 1;
-				else 
-					tmpX <= (others => '0');
-				end if;
-			end if;
-		end if;
-	end process;
+--	big_pixel_xcounter : process(clk)
+--	begin
+--		if rising_edge(clk) then
+--			if rst = '1' then
+--				tmpX <= (others => '0');
+--			elsif Clk25 = '1' then
+--				if (Xpixel < 640 and Ypixel < 480) then
+--					tmpX <= Xpixel(3 downto 0);
+--				else 
+--					tmpX <= (others => '0');
+--				end if;
+--			end if;
+--		end if;
+--	end process;
+	
+	tmpX <= Xpixel(3 downto 0);
 	
 	big_pixel_xcoord : process(clk)
 	begin
@@ -274,29 +283,35 @@ begin
 			if rst = '1' then
 				tileX <= (others => '0');
 			elsif Clk25 = '1' then
-				if tileX > 39 then
+				if tileX > 39 or Xpixel > 639 then
 					tileX <= (others => '0');
 				elsif tmpX = 15 then
-					tileX <= tileX +1;
+					tileX <= tileX + 1;
+
 				end if;
 			end if;
 		end if;
 	end process;
 	
-	big_pixel_ycounter : process(clk)
-	begin
-		if rising_edge(clk) then
-			if rst = '1' then
-				tmpY <= (others => '0');
-			elsif Clk25 = '1' then
-				if (Ypixel < 480 and tmpY < 15) then
-					tmpY <= tmpY + 1;
-				else
-					tmpY <= (others => '0');
-				end if;
-			end if;
-		end if;
-	end process;
+--	big_pixel_ycounter : process(clk)
+--	begin
+--		if rising_edge(clk) then
+--			if rst = '1' then
+--				tmpY <= (others => '0');
+--			elsif Clk25 = '1' then
+--				if (Xpixel < 640 and Ypixel < 480) then							-- Can we remove the Xpixel and Ypixel conditions? Since they are already used when updating tmpX?
+--					tmpY <= Ypixel(3 downto 0);
+--					if Xpixel = 799 then
+--						tmpY <= tmpY + 1;
+--					end if;																		
+--				else
+--					tmpY <= (others => '0');
+--				end if;
+--			end if;
+--		end if;
+--	end process;
+
+	tmpY <= Ypixel(3 downto 0);
 	
 	big_pixel_ycoord : process(clk)
 	begin
@@ -304,9 +319,9 @@ begin
 			if rst = '1' then
 				tileY <= (others => '0');
 			elsif Clk25 = '1' then
-				if tileY > 29 then
+				if tileY > 29 or Ypixel > 479 then
 					tileY <= (others => '0');
-				elsif tmpY = 15 then
+				elsif tmpY = 15 and Xpixel = 799 then
 					tileY <= tileY +1;
 				end if;
 			end if;
@@ -314,34 +329,31 @@ begin
 	end process;
 	
   
-  addr <= tileY & tileX;
-						
-
-	get_tile_pixel : process(clk)
-	begin
-		if rising_edge(clk) then
-			if tile_type = "00" then
-				
-			elsif tile_type = "01" then
-			
-			elsif tile_type = "10" then
-			
-			end if;
-		end if;
-	end process;	
+  addr <= tileY & tileX;							-- addr(10 downto 6) = tiles y-position
+  															-- addr(5 downto 0) = tiles x-position
+  															
+  										
+  										
+  TilePixel <= tileMem((to_integer(tmpY)*16) + to_integer(tmpX))  when (tile_type = "00" and blank = '0') else						-- Floor
+  					tileMem( 256 + (to_integer(tmpY)*16) + to_integer(tmpX))  when (tile_type = "01" and blank = '0') else			-- Food
+  					tileMem( 512 + (to_integer(tmpY)*16) + to_integer(tmpX))  when (tile_type = "11" and blank = '0') else			-- Wall
+  					tileMem(0) when (blank = '1') else																										-- For blanking
+  					tileMem(555);																																	-- Yellow (for debugging)
   
   
+  tileData <= TilePixel;									-- For now	
+  																									
     -- Tile memory
-  process(clk)
-  begin
-    if rising_edge(clk) then
-      if (blank = '0') then
-        tileData <= tileMem(to_integer(tileAddr));
-      else
-        tileData <= (others => '0');
-      end if;
-    end if;
-  end process;
+  --process(clk)
+  --begin
+   -- if rising_edge(clk) then
+    --  if (blank = '0') then
+     --   tileData <= tileMem(to_integer(tileAddr));
+     -- else
+      --  tileData <= (others => '0');
+     -- end if;
+    --end if;
+  --end process;
 	
 
 

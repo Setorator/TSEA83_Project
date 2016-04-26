@@ -35,7 +35,13 @@ architecture Behavioral of Pac_Man is
 			clk						  : in std_logic;								-- System clock
 			rst						  : in std_logic;								-- Reset button
 			intr						  : in std_logic;								-- Interupt signal
-			intr2						  : in std_logic
+			intr2						  : in std_logic;
+			intr_code				  : in unsigned(3 downto 0);
+			joystick_poss			  : in unsigned(1 downto 0);
+			output1					  : out unsigned(18 downto 0);
+			output2 					  : out unsigned(18 downto 0);
+			output3					  : out unsigned(18 downto 0);
+			output4					  : out unsigned(18 downto 0)
 		);
 	end component;
 	
@@ -77,8 +83,14 @@ architecture Behavioral of Pac_Man is
   
   signal interupt				: std_logic;											-- Signal between CPU and PIX_GEN
   signal intr2 				: std_logic := '0';
+  signal intr_code			: unsigned(3 downto 0)  := (others => '0');
+  signal joystick_poss		: unsigned(1 downto 0)  := (others => '0');
+  signal output1				: unsigned(18 downto 0)  := (others => '0');
+  signal output2 				: unsigned(18 downto 0)  := (others => '0');
+  signal output3				: unsigned(18 downto 0)  := (others => '0');
+  signal output4				: unsigned(18 downto 0)  := (others => '0');
   
-  signal read_enable			: std_logic;
+  signal read_enable			: std_logic := '0';
   signal write_enable		: std_logic;
   signal read_addr			: unsigned(10 downto 0);
   signal write_addr			: unsigned(10 downto 0);
@@ -88,7 +100,9 @@ architecture Behavioral of Pac_Man is
 
 begin 
 
-	U0 : CPU port map(clk=>clk, rst=>reset, intr=>interupt, intr2=>intr2);
+	U0 : CPU port map(clk=>clk, rst=>reset, intr=>interupt, intr2=>intr2, intr_code => intr_code, joystick_poss => joystick_poss,
+							 output1 => output1, output2 => output2, output3 => output3, output4 => output4);
+							 
 	U1 : RAM port map(clk=>clk, we=>write_enable, data1=>write_data, x1=>write_addr(5 downto 0), y1=>write_addr(10 downto 6), 
 							re=>read_enable, data2=>read_data, x2=>read_addr(5 downto 0), y2=>read_addr(10 downto 6));
 
