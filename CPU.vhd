@@ -22,10 +22,10 @@ entity cpu is
 	intr2		:  in std_logic;  				-- Avbrotts nivå 2
 	intr_code   :  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
 	joystick_poss : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
-	output1 	:  out unsigned(18 downto 0);   -- Output 1  : Address $FF7 i minnet
-	output2     :  out unsigned(18 downto 0);	-- Output 2  : Address $FF6 i minnet
-	output3		:  out unsigned(18 downto 0);	-- Output 3  : Address $FF1 i minnet
-	output4 	:  out unsigned(18 downto 0)    -- Output 4  : Address $FF0 i minnet
+	output1 	:  out unsigned(18 downto 0);   -- Output 1  : Address $F7 i minnet
+	output2     :  out unsigned(18 downto 0);	-- Output 2  : Address $F6 i minnet
+	output3		:  out unsigned(18 downto 0);	-- Output 3  : Address $F1 i minnet
+	output4 	:  out unsigned(18 downto 0)    -- Output 4  : Address $F0 i minnet
   );
 end cpu;
 
@@ -127,17 +127,17 @@ architecture Behavioral of cpu is
   signal u_mem : u_mem_t := u_mem_c;
 
   signal uM    : unsigned(29 downto 0) := (others => '0');        -- micro memory output
-  signal uPC   : unsigned(7 downto 0) := (others => '0');         -- micro program counter
+  signal uPC   : unsigned(7 downto 0)  := (others => '0');         -- micro program counter
 
   -- Signaler i uM
-  signal uAddr : unsigned(7 downto 0)    := (others => '0');         -- micro Adress
-  signal TB    : unsigned(3 downto 0)    := (others => '0');         -- to bus field
-  signal FB    : unsigned(3 downto 0)    := (others => '0');          -- from bus field
+  signal uAddr : unsigned(7 downto 0)  := (others => '0');         -- micro Adress
+  signal TB    : unsigned(3 downto 0)  := (others => '0');         -- to bus field
+  signal FB    : unsigned(3 downto 0)  := (others => '0');          -- from bus field
   signal ALUsig   : unsigned(3 downto 0) := (others => '0');
   signal Isig  : std_logic := '0';                   			   -- block interrupts
-  signal RW    : unsigned(1 downto 0)  := (others => '0');          -- Read/write
-  signal SEQ   : unsigned(3 downto 0)  := (others => '0');
-  signal SPsig : unsigned(1 downto 0)  := (others => '0');         -- Manipulera stackpekaren
+  signal RW    : unsigned(1 downto 0) := (others => '0');          -- Read/write
+  signal SEQ   : unsigned(3 downto 0) := (others => '0');
+  signal SPsig : unsigned(1 downto 0) := (others => '0');         -- Manipulera stackpekaren
   signal PCsig : std_logic  := '0';                    			   -- PC++
   signal I     : std_logic := '0'; 				   				   -- T-vippa
   
@@ -195,45 +195,45 @@ architecture Behavioral of cpu is
   
   -- program memory
   
-  type p_mem_t is array(0 to 4095) of unsigned(18 downto 0);
+  type p_mem_t is array(0 to 255) of unsigned(18 downto 0);
   
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
 			(b"01100_11_000000011101", -- 0  LDV1  11,$01C
 			 b"01101_11_000000100000", -- 1  LDV2  11,31
-			 b"01110_11_111111111111", -- 2  LDSP  11,$FFF
-			 b"00100_00_111111110100", -- 3  LDXR  00,PacMan_dir
+			 b"01110_11_000011111111", -- 2  LDSP  11,$0FF
+			 b"00100_00_000011110100", -- 3  LDXR  00,PacMan_dir
 			 b"00000_11_000000000000", -- 4  LDA   11,left
 			 b"01011_11_000000001010", -- 5  NEQU  11,TEST_UP
-			 b"00000_00_111111110110", -- 6  LDA   00,PacMan_X
-			 b"01000_00_111111110011", -- 7  SUB   00,PacMan_Speed
-			 b"01001_00_111111110110", -- 8  STORE 00,PacMan_X
+			 b"00000_00_000011110110", -- 6  LDA   00,PacMan_X
+			 b"01000_00_000011110011", -- 7  SUB   00,PacMan_Speed
+			 b"01001_00_000011110110", -- 8  STORE 00,PacMan_X
 			 b"00101_11_000000011011", -- 9  JMP   11,NEXT_STEP
 			 b"00000_11_000000000001", -- 10 LDA   11,up
 			 b"01011_11_000000010000", -- 11 NEQU  11,TEST_RIGHT
-			 b"00000_00_111111110101", -- 12 LDA   00,PacMan_Y
-			 b"01000_00_111111110011", -- 13 SUB   00,PacMan_Speed
-			 b"01001_00_111111110101", -- 14 STORE 00,PacMan_Y
+			 b"00000_00_000011110101", -- 12 LDA   00,PacMan_Y
+			 b"01000_00_000011110011", -- 13 SUB   00,PacMan_Speed
+			 b"01001_00_000011110101", -- 14 STORE 00,PacMan_Y
 			 b"00101_11_000000011011", -- 15 JMP   11,NEXT_STEP
 			 b"00000_01_000000000010", -- 16 LDA   01,right
 			 b"01011_11_000000010110", -- 17 NEQU  11,TEST_DOWN
-			 b"00000_00_111111110110", -- 18 LDA   00,PacMan_X
-			 b"00110_00_111111110011", -- 19 ADD   00,PacMan_Speed
-			 b"01001_00_111111110110", -- 20 STORE 00,PacMan_X
+			 b"00000_00_000011110110", -- 18 LDA   00,PacMan_X
+			 b"00110_00_000011110011", -- 19 ADD   00,PacMan_Speed
+			 b"01001_00_000011110110", -- 20 STORE 00,PacMan_X
 			 b"00101_11_000000011011", -- 21 JMP   11,NEXT_STEP
 			 b"00000_11_000000000011", -- 22 LDA   01,down
 			 b"01011_11_000000011011", -- 23 NEQU  11,NEXT_STEP
-			 b"00000_00_111111110101", -- 24 LDA   00,PacMan_Y
-			 b"00110_00_111111110011", -- 25 ADD   00,PacMan_Speed
-			 b"01001_00_111111110101", -- 26 STORE 00,PacMan_Y
+			 b"00000_00_000011110101", -- 24 LDA   00,PacMan_Y
+			 b"00110_00_000011110011", -- 25 ADD   00,PacMan_Speed
+			 b"01001_00_000011110101", -- 26 STORE 00,PacMan_Y
 			 b"01111_11_010011111111", -- 27 SLEEP 11,$4FF
 			 b"00101_11_000000000011", -- 28 JMP   11,$003
 			 b"00000_11_000000000000", -- 29 LDA   11,$000
-			 b"01001_00_111111110011", -- 30 STORE 00,PacMan_Speed
+			 b"01001_00_000011110011", -- 30 STORE 00,PacMan_Speed
 			 b"00010_00_000000000000", -- 31 RTE
 			 b"00000_11_000000000001", -- 32 LDA   11,$001
-			 b"01001_00_111111110011", -- 33 STORE 00,PacMan_Speed
+			 b"01001_00_000011110011", -- 33 STORE 00,PacMan_Speed
 			 b"00010_00_000000000000", -- 34 RTE
 			 others => (others => '0'));
 
@@ -245,10 +245,10 @@ architecture Behavioral of cpu is
   signal IR       : unsigned(18 downto 0) := (others => '0');     -- Instruktion register
   signal XR       : unsigned(11 downto 0) := (others => '0');     -- XR
   signal SP       : unsigned(11 downto 0) := (others => '0');     -- Stack pekare, startar på $FFF
-  signal IV 	  : unsigned(11 downto 0) := (others => '0');	  -- Avbrotts vektorn, startvärde = 3
+  signal IV 	  : unsigned(11 downto 0)  := (others => '0');	  -- Avbrotts vektorn, startvärde = 3
   signal IL       : unsigned(1 downto 0)  := (others => '0');     -- Avbrotts nivå
-  signal IV1	  : unsigned(11 downto 0) := (others => '0');     -- Avbrotts vektor för nivå 1
-  signal IV2	  : unsigned(11 downto 0) := (others => '0');     -- Avbrotts vektor för nivå 2
+  signal IV1	  : unsigned(11 downto 0)  := (others => '0');     -- Avbrotts vektor för nivå 1
+  signal IV2	  : unsigned(11 downto 0)  := (others => '0');     -- Avbrotts vektor för nivå 2
   signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
@@ -267,10 +267,10 @@ begin
 	signals_OUT : process(clk)
 	begin
 		if rising_edge(clk) then
-			output1 <= p_mem(4086); 	--$FF6
-			output2 <= p_mem(4085); 	--$FF5
-			output3 <= p_mem(4080); 	--$FF0
-			output4 <= p_mem(4079); 	--$FEF
+			output1 <= p_mem(246); 	--$F6
+			output2 <= p_mem(245); 	--$F5
+			output3 <= p_mem(240); 	--$F0
+			output4 <= p_mem(239); 	--$EF
 		end if;
 	end process;
   
@@ -479,8 +479,8 @@ begin
           p_mem(to_integer(ADR)) <= DR;
         end if;
 		
-		p_mem(4087) <= "00000000000000000" & joystick_poss; --$FF7
-		p_mem(4084) <= "00000000000000000" & joystick_poss; --$FF4 , PacMan direction = Joystick direction
+		p_mem(247) <= "00000000000000000" & joystick_poss; --$F7
+		p_mem(244) <= "00000000000000000" & joystick_poss; --$F4 , PacMan direction = Joystick direction
       end if;
     end process;
 	
