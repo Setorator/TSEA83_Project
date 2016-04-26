@@ -265,17 +265,12 @@ architecture Behavioral of cpu is
 
 begin 
 
-	-- Installera output signalerna samt joysticks riktning, ska vara klockade
-	
-	signals_OUT : process(clk)
-	begin
-		if rising_edge(clk) then
-			output1 <= p_mem(246); 	--$F6
-			output2 <= p_mem(245); 	--$F5
-			output3 <= p_mem(240); 	--$F0
-			output4 <= p_mem(239); 	--$EF
-		end if;
-	end process;
+	-- Installera output signalerna
+
+	output1 <= p_mem(246); 	--$F6
+	output2 <= p_mem(245); 	--$F5
+	output3 <= p_mem(240); 	--$F0
+	output4 <= p_mem(239); 	--$EF
   
 	-- Installera avbrotts vippor
 	
