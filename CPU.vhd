@@ -16,6 +16,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity cpu is 
   port (
+<<<<<<< HEAD
     clk      	   :  in std_logic;
     rst      	   :  in std_logic;
     intr     	   :  in std_logic; 				-- Avbrotts nivå 1
@@ -26,6 +27,18 @@ entity cpu is
 	 output2     	:  out unsigned(18 downto 0);	-- Output 2  : Address $FF6 i minnet
 	 output3			:  out unsigned(18 downto 0);	-- Output 3  : Address $FF1 i minnet
 	 output4 			:  out unsigned(18 downto 0)   -- Output 4  : Address $FF0 i minnet
+=======
+    clk         :  in std_logic;
+    rst         :  in std_logic;
+    intr        :  in std_logic; 				-- Avbrotts nivå 1
+	intr2		:  in std_logic;  				-- Avbrotts nivå 2
+	intr_code   :  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
+	joystick_poss : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
+	output1 	:  out unsigned(18 downto 0);   -- Output 1  : Address $FF7 i minnet
+	output2     :  out unsigned(18 downto 0);	-- Output 2  : Address $FF6 i minnet
+	output3		:  out unsigned(18 downto 0);	-- Output 3  : Address $FF1 i minnet
+	output4 	:  out unsigned(18 downto 0)    -- Output 4  : Address $FF0 i minnet
+>>>>>>> 722689b2c6fde6994ef0b06bf46d16515c770d10
   );
 end cpu;
 
@@ -69,51 +82,54 @@ architecture Behavioral of cpu is
 				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 	21
 				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				22
 				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 	23
-				 b"0000_0011_0001_0_0_0000_00_00_00000000", -- ADR <= SP			    	24
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			    24
 				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 	25
 				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC					26	
-				 b"0000_0000_1100_0_0_0101_00_00_00000001", -- SR <= IL, uPC <= 1			27
+				 b"0000_0000_1100_0_0_0101_00_00_00000000", -- SR <= IL, uPC <= 1			27
 				 -- OP = 0010, RTE , Hoppa ur avbrottet
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				28
-				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 	29
-				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 	30
-				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR						31
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				32
-				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 	33
-				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  	34
-				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR						35
-				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR						36
+				 b"0000_0000_0000_0_0_0000_00_01_00000000", -- SP ++						28
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				29
+				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR <= MEM(ADR) 	30
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 	31
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR						32
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				33
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 	34
+				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  	35
+				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR						36
+				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR						37
 				 -- OP = 0011, HALT, Stanna programmet
-				 b"0000_0000_0000_0_0_0101_00_00_00100101", -- uPC <= uPC	  				37
+				 b"0000_0000_0000_0_0_0101_00_00_00100110", -- uPC <= uPC	  				38
 				 -- OP = 0100, LDXR M,ADDR, Ladda XR med ADDR
-				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR 	                38
+				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR 	                39
 				 -- OP = 0101, JMP M,ADDR, Hoppa till bestämd address
-				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR						39
+				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR						40
 				 -- OP = 0110, ADD M,ADDR, AR <= AR + DR								
-				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 				40
+				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 				41
 				 -- OP = 0111, MULP M,ADDR, AR <= AR * DR (Multiplikation),
-				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR				41
+				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR				42
 				 -- OP = 1000, SUB M,ADDR, AR <= AR - DR
-				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR				42
+				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR				43
 				 -- OP = 1001, STORE M,ADDR, MEM(ADDR) <= AR
-				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR						43
-				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR				44
+				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR						44
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR				45
 				 -- OP = 1010, EQU M,ADDR , AR == MEM(ADDR)
-				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				45
-				 b"0000_0000_0000_0_0_0110_00_00_00110000", --								46
-				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						47
-				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			48
+				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				46
+				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- Blank rad för ladda Z		47
+				 b"0000_0000_0000_0_0_0110_00_00_00110010", --								48
+				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						49
+				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			50
 				 -- OP = 1011, NEQU M,ADDR , AR != MEM(ADDR)
-				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				49
-				 b"0000_0000_0000_0_0_0100_00_00_00110100", --								50
-				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						51
-				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			52
+				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				51
+				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- Blank rad för ladda Z		52
+				 b"0000_0000_0000_0_0_0100_00_00_00110111", --								53
+				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						54
+				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			55
 				 -- OP = 1100, LDV1 M,ADDR , IV1 <= MEM(ADDR)
-				 b"0000_0101_1010_0_1_0011_00_00_00000000", -- IV1 <= MEM(ADDR)				53
+				 b"0000_0101_1010_0_1_0011_00_00_00000000", -- IV1 <= MEM(ADDR)				56
 				 -- OP = 1101, LDV2 M,ADDR , IV2 <= MEM(ADDR)
-				 b"0000_0101_1011_0_1_0011_00_00_00000000", -- IV2 <= MEM(ADDR)				54
+				 b"0000_0101_1011_0_1_0011_00_00_00000000", -- IV2 <= MEM(ADDR)				57
 				 -- OP = 1110, LDSP M,ADDR , SP <= MEM(ADDR)
-				 b"0000_0101_0011_0_1_0011_00_00_00000000", -- SP <= MEM(ADDR)				55
+				 b"0000_0101_0011_0_1_0011_00_00_00000000", -- SP <= MEM(ADDR)				58
 				 others => (others => '0'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -154,7 +170,7 @@ architecture Behavioral of cpu is
   constant K2_mem_c : K2_mem_t :=   ("00000100", --Direkt addressering
 									 "00000110", --Omedelbar operand
 									 "00001000", --Indirekt addressering
-									 "00001100", --Indexerad addressering
+									 "00001100", --Absolut addressering
 									others => (others => '0')); 
   
   signal K2_mem : K2_mem_t := K2_mem_c;
@@ -168,18 +184,18 @@ architecture Behavioral of cpu is
 				("00001101", -- LDA   13
 				 "00001110", -- STXR  14
 				 "00011100", -- RTE   28
-				 "00100101", -- HALT  37
-				 "00100110", -- LDXR  38
-				 "00100111", -- JMP	  39
-				 "00101000", -- ADD   40
-				 "00101001", -- MULP  41
-				 "00101010", -- SUB   42
-				 "00101011", -- STORE 43
-				 "00101101", -- EQU   45
-				 "00110001", -- NEQU  49
-				 "00110101", -- LDV1  53
-				 "00110110", -- LDV2  54
-				 "00110111", -- LDSP  55
+				 "00100110", -- HALT  37
+				 "00100111", -- LDXR  38
+				 "00101000", -- JMP	  39
+				 "00101001", -- ADD   40
+				 "00101010", -- MULP  41
+				 "00101011", -- SUB   42
+				 "00101100", -- STORE 43
+				 "00101110", -- EQU   45
+				 "00110011", -- NEQU  50
+				 "00111000", -- LDV1  55
+				 "00111001", -- LDV2  56
+				 "00111010", -- LDSP  57
 				others => (others => '0')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -194,36 +210,36 @@ architecture Behavioral of cpu is
 			(b"01100_11_000000011100", -- 0  LDV1  11,$01C
 			 b"01101_11_000000011111", -- 1  LDV2  11,31
 			 b"01110_11_111111111111", -- 2  LDSP  11,$FFF
-			 b"00100_00_111111110101", -- 3  LDXR  00,PacMan_dir
+			 b"00100_00_111111110100", -- 3  LDXR  00,PacMan_dir
 			 b"00000_11_000000000000", -- 4  LDA   11,left
 			 b"01011_11_000000001010", -- 5  NEQU  11,TEST_UP
-			 b"00000_00_111111110111", -- 6  LDA   00,PacMan_X
-			 b"01000_00_111111110100", -- 7  SUB   00,PacMan_Speed
-			 b"01001_00_111111110111", -- 8  STORE 00,PacMan_X
+			 b"00000_00_111111110110", -- 6  LDA   00,PacMan_X
+			 b"01000_00_111111110011", -- 7  SUB   00,PacMan_Speed
+			 b"01001_00_111111110110", -- 8  STORE 00,PacMan_X
 			 b"00101_11_000000011011", -- 9  JMP   11,NEXT_STEP
 			 b"00000_11_000000000001", -- 10 LDA   11,up
 			 b"01011_11_000000010000", -- 11 NEQU  11,TEST_RIGHT
-			 b"00000_00_111111110110", -- 12 LDA   00,PacMan_Y
-			 b"01000_00_111111110100", -- 13 SUB   00,PacMan_Speed
-			 b"01001_00_111111110110", -- 14 STORE 00,PacMan_Y
+			 b"00000_00_111111110101", -- 12 LDA   00,PacMan_Y
+			 b"01000_00_111111110011", -- 13 SUB   00,PacMan_Speed
+			 b"01001_00_111111110101", -- 14 STORE 00,PacMan_Y
 			 b"00101_11_000000011011", -- 15 JMP   11,NEXT_STEP
 			 b"00000_01_000000000010", -- 16 LDA   01,right
 			 b"01011_11_000000010110", -- 17 NEQU  11,TEST_DOWN
-			 b"00000_00_111111110111", -- 18 LDA   00,PacMan_X
-			 b"00110_00_111111110100", -- 19 ADD   00,PacMan_Speed
-			 b"01001_00_111111110111", -- 20 STORE 00,PacMan_X
+			 b"00000_00_111111110110", -- 18 LDA   00,PacMan_X
+			 b"00110_00_111111110011", -- 19 ADD   00,PacMan_Speed
+			 b"01001_00_111111110110", -- 20 STORE 00,PacMan_X
 			 b"00101_11_000000011011", -- 21 JMP   11,NEXT_STEP
 			 b"00000_11_000000000011", -- 22 LDA   01,down
 			 b"01011_11_000000011011", -- 23 NEQU  11,NEXT_STEP
-			 b"00000_00_111111110110", -- 24 LDA   00,PacMan_Y
-			 b"00110_00_111111110100", -- 25 ADD   00,PacMan_Speed
-			 b"01001_00_111111110110", -- 26 STORE 00,PacMan_Y
+			 b"00000_00_111111110101", -- 24 LDA   00,PacMan_Y
+			 b"00110_00_111111110011", -- 25 ADD   00,PacMan_Speed
+			 b"01001_00_111111110101", -- 26 STORE 00,PacMan_Y
 			 b"00101_11_000000000011", -- 27 JMP   11,$003
 			 b"00000_11_000000000000", -- 28 LDA   11,$000
-			 b"01001_00_111111110100", -- 29 STORE 00,PacMan_Speed
+			 b"01001_00_111111110011", -- 29 STORE 00,PacMan_Speed
 			 b"00010_00_000000000000", -- 30 RTE
-			 b"00000_11_000000000001", -- 31 LDA 11,$001
-			 b"01001_00_111111110100", -- 32 STORE 00,PacMan_Speed
+			 b"00000_11_000000000001", -- 31 LDA   11,$001
+			 b"01001_00_111111110011", -- 32 STORE 00,PacMan_Speed
 			 b"00010_00_000000000000", -- 33 RTE
 			 others => (others => '0'));
 
@@ -254,13 +270,20 @@ begin
 
 	-- Installera output signalerna samt joysticks riktning, ska vara klockade
 	
-	signals_IO : process(clk)
+	signals_OUT : process(clk)
 	begin
 		if rising_edge(clk) then
+<<<<<<< HEAD
 			output1 <= p_mem(4087); 	--$FF7
 			output2 <= p_mem(4086); 	--$FF6
 			output3 <= p_mem(4081); 	--$FF1
 			output4 <= p_mem(4080); 	--$FF0
+=======
+			output1 <= p_mem(4086); 	--$FF6
+			output2 <= p_mem(4085); 	--$FF5
+			output3 <= p_mem(4080); 	--$FF0
+			output4 <= p_mem(4079); 	--$FEF
+>>>>>>> 722689b2c6fde6994ef0b06bf46d16515c770d10
 		end if;
 	end process;
   
@@ -467,10 +490,17 @@ begin
 		
         if RW = "11" then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
+<<<<<<< HEAD
         end if;
         
         p_mem(4088) <= "00000000000000000" & joystick_poss; --$FF8
         p_mem(4085) <= "00000000000000000" & joystick_poss; --$FF5 , PacMan direction = Joystick direction
+=======
+        end if;
+		
+		p_mem(4087) <= "00000000000000000" & joystick_poss; --$FF7
+		p_mem(4084) <= "00000000000000000" & joystick_poss; --$FF4 , PacMan direction = Joystick direction
+>>>>>>> 722689b2c6fde6994ef0b06bf46d16515c770d10
       end if;
     end process;
 	

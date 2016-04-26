@@ -1,15 +1,15 @@
 Addresses busy in CPU:
-  $FFF - $FF9 : Interrupts
-  $FF8        : Joystick direction 
-  $FF7        : PacMan PositionX
-  $FF6        : PacMan PositionY
-  $FF5        : PacMan Direction
-  $FF4        : PacMan velocity
-  $FF3        : EMPTY
+  $FFF - $FF8 : Interrupts
+  $FF7        : Joystick direction 
+  $FF6        : PacMan PositionX
+  $FF5        : PacMan PositionY
+  $FF4        : PacMan Direction
+  $FF3        : PacMan velocity
   $FF2        : EMPTY
-  $FF1        : Ghost1 PositionX
-  $FF0        : Ghost1 PositionY
-  $FEF        : Ghost1 Direction
-  $FEE        : Ghost1 velocity
-  $FED        : EMPTY
+  $FF1        : EMPTY
+  $FF0        : Ghost1 PositionX
+  $FEF        : Ghost1 PositionY
+  $FEE        : Ghost1 Direction
+  $FED        : Ghost1 velocity
   $FEC        : EMPTY
+  $FEB        : EMPTY
