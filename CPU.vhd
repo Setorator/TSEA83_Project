@@ -22,10 +22,10 @@ entity cpu is
 	intr2		:  in std_logic;  				-- Avbrotts nivå 2
 	intr_code   :  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
 	joystick_poss : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
-	output1 	:  out unsigned(18 downto 0);   -- Output 1  : Address $F7 i minnet
-	output2     :  out unsigned(18 downto 0);	-- Output 2  : Address $F6 i minnet
-	output3		:  out unsigned(18 downto 0);	-- Output 3  : Address $F1 i minnet
-	output4 	:  out unsigned(18 downto 0)    -- Output 4  : Address $F0 i minnet
+	output1 	:  out unsigned(9 downto 0);   -- Output 1  : Address $77 i minnet
+	output2     :  out unsigned(9 downto 0);	-- Output 2  : Address $76 i minnet
+	output3		:  out unsigned(9 downto 0);	-- Output 3  : Address $71 i minnet
+	output4 	:  out unsigned(9 downto 0)    -- Output 4  : Address $70 i minnet
   );
 end cpu;
 
@@ -33,7 +33,7 @@ architecture Behavioral of cpu is
 
   -- micro memory
   
-  type u_mem_t is array(0 to 255) of unsigned(29 downto 0);
+  type u_mem_t is array(0 to 63) of unsigned(29 downto 0);
   
   -- Skriv mikrominne här
   constant u_mem_c : u_mem_t := 
@@ -122,7 +122,7 @@ architecture Behavioral of cpu is
 				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- BLANK RAD					60
 				 b"0010_0000_0000_0_0_0100_00_00_00111101", -- AR <= AR - 1					61
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						62
-				 others => (others => '0'));
+				 others => (others => '1'));
 
   signal u_mem : u_mem_t := u_mem_c;
 
@@ -163,13 +163,13 @@ architecture Behavioral of cpu is
 									 "00000110", --Omedelbar operand
 									 "00001000", --Indirekt addressering
 									 "00001100", --Absolut addressering
-									others => (others => '0')); 
+									others => (others => '1')); 
   
   signal K2_mem : K2_mem_t := K2_mem_c;
   
   -- K1 minne
   
-  type K1_mem_t is array(0 to 31) of unsigned(7 downto 0);
+  type K1_mem_t is array(0 to 16) of unsigned(7 downto 0);
   
   -- Skriv K1 minne nedanför
   constant K1_mem_c : K1_mem_t := 
@@ -178,7 +178,7 @@ architecture Behavioral of cpu is
 				 "00011100", -- RTE   28
 				 "00100110", -- HALT  37
 				 "00100111", -- LDXR  38
-				 "00101000", -- JMP	  39
+				 "00101000", -- JMP   39
 				 "00101001", -- ADD   40
 				 "00101010", -- MULP  41
 				 "00101011", -- SUB   42
@@ -189,55 +189,58 @@ architecture Behavioral of cpu is
 				 "00111001", -- LDV2  56
 				 "00111010", -- LDSP  57
 				 "00111011", -- SLEEP 59
-				others => (others => '0')); 
+				others => (others => '1')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
   
   -- program memory
   
-  type p_mem_t is array(0 to 255) of unsigned(18 downto 0);
+  type p_mem_t is array(0 to 127) of unsigned(18 downto 0);
   
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_000000100000", -- 0  LDV1  11,$01C
-			 b"01101_11_000000100011", -- 1  LDV2  11,31
-			 b"01110_11_000011111111", -- 2  LDSP  11,$0FF
+			(b"01100_11_000000100011", -- 0  LDV1  11,$01C
+			 b"01101_11_000000100110", -- 1  LDV2  11,31
+			 b"01110_11_000001111111", -- 2  LDSP  11,$07F
 			 b"00000_11_000000100000", -- 3	 LDA   11,$020
-			 b"01001_00_000011110110", -- 4	 STORE 11,PacMan_X
-			 b"01001_00_000011110101", -- 5  STORE 11,PacMan_Y
-			 b"00100_00_000011110100", -- 6  LDXR  00,PacMan_dir
+			 b"01001_00_000001110110", -- 4	 STORE 11,PacMan_X
+			 b"01001_00_000001110101", -- 5  STORE 11,PacMan_Y
+			 b"00100_00_000001110100", -- 6  LDXR  00,PacMan_dir
 			 b"00000_11_000000000000", -- 7  LDA   11,left
 			 b"01011_11_000000001101", -- 8  NEQU  11,TEST_UP
-			 b"00000_00_000011110110", -- 9  LDA   00,PacMan_X
-			 b"01000_00_000011110011", -- 10 SUB   00,PacMan_Speed
-			 b"01001_00_000011110110", -- 11 STORE 00,PacMan_X
+			 b"00000_00_000001110110", -- 9  LDA   00,PacMan_X
+			 b"01000_00_000001110011", -- 10 SUB   00,PacMan_Speed
+			 b"01001_00_000001110110", -- 11 STORE 00,PacMan_X
 			 b"00101_11_000000011110", -- 12 JMP   11,NEXT_STEP
 			 b"00000_11_000000000001", -- 13 LDA   11,up
 			 b"01011_11_000000010011", -- 14 NEQU  11,TEST_RIGHT
-			 b"00000_00_000011110101", -- 15 LDA   00,PacMan_Y
-			 b"01000_00_000011110011", -- 16 SUB   00,PacMan_Speed
-			 b"01001_00_000011110101", -- 17 STORE 00,PacMan_Y
+			 b"00000_00_000001110101", -- 15 LDA   00,PacMan_Y
+			 b"01000_00_000001110011", -- 16 SUB   00,PacMan_Speed
+			 b"01001_00_000001110101", -- 17 STORE 00,PacMan_Y
 			 b"00101_11_000000011110", -- 18 JMP   11,NEXT_STEP
 			 b"00000_01_000000000010", -- 19 LDA   01,right
 			 b"01011_11_000000011001", -- 20 NEQU  11,TEST_DOWN
-			 b"00000_00_000011110110", -- 21 LDA   00,PacMan_X
-			 b"00110_00_000011110011", -- 22 ADD   00,PacMan_Speed
-			 b"01001_00_000011110110", -- 23 STORE 00,PacMan_X
+			 b"00000_00_000001110110", -- 21 LDA   00,PacMan_X
+			 b"00110_00_000001110011", -- 22 ADD   00,PacMan_Speed
+			 b"01001_00_000001110110", -- 23 STORE 00,PacMan_X
 			 b"00101_11_000000011110", -- 24 JMP   11,NEXT_STEP
 			 b"00000_11_000000000011", -- 25 LDA   01,down
 			 b"01011_11_000000011110", -- 26 NEQU  11,NEXT_STEP
-			 b"00000_00_000011110101", -- 27 LDA   00,PacMan_Y
-			 b"00110_00_000011110011", -- 28 ADD   00,PacMan_Speed
-			 b"01001_00_000011110101", -- 29 STORE 00,PacMan_Y
-			 b"01111_11_010011111111", -- 30 SLEEP 11,$4FF
-			 b"00101_11_000000000110", -- 31 JMP   11,$006
-			 b"00000_11_000000000000", -- 32 LDA   11,$000
-			 b"01001_00_000011110011", -- 33 STORE 00,PacMan_Speed
-			 b"00010_00_000000000000", -- 34 RTE
-			 b"00000_11_000000000001", -- 35 LDA   11,$001
-			 b"01001_00_000011110011", -- 36 STORE 00,PacMan_Speed
+			 b"00000_00_000001110101", -- 27 LDA   00,PacMan_Y
+			 b"00110_00_000001110011", -- 28 ADD   00,PacMan_Speed
+			 b"01001_00_000001110101", -- 29 STORE 00,PacMan_Y
+			 b"01111_11_111111111111", -- 30 SLEEP 11,$FFF
+			 b"01111_11_111111111111", -- 31 SLEEP 11,$FFF
+			 b"01111_11_111111111111", -- 32 SLEEP 11,$FFF
+			 b"01111_11_111111111111", -- 33 SLEEP 11,$FFF
+			 b"00101_11_000000000110", -- 34 JMP   11,$006
+			 b"00000_11_000000000000", -- 35 LDA   11,$000
+			 b"01001_00_000001110011", -- 36 STORE 00,PacMan_Speed
 			 b"00010_00_000000000000", -- 37 RTE
+			 b"00000_11_000000000001", -- 38 LDA   11,$001
+			 b"01001_00_000001110011", -- 39 STORE 00,PacMan_Speed
+			 b"00010_00_000000000000", -- 40 RTE
 			 others => (others => '0'));
 
   signal p_mem : p_mem_t := p_mem_c;
@@ -257,20 +260,18 @@ architecture Behavioral of cpu is
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
   
   -- Flaggorna
-  
-  signal N : std_logic := '0';
+ 
   signal Z : std_logic := '0';
-  signal O : std_logic := '0';
-  signal C : std_logic := '0';
 
 begin 
 
 	-- Installera output signalerna
 
-	output1 <= p_mem(246); 	--$F6
-	output2 <= p_mem(245); 	--$F5
-	output3 <= p_mem(240); 	--$F0
-	output4 <= p_mem(239); 	--$EF
+
+	output1 <= p_mem(118)(9 downto 0); 	--$76
+	output2 <= p_mem(117)(9 downto 0); 	--$75
+	output3 <= p_mem(112)(9 downto 0); 	--$70
+	output4 <= p_mem(111)(9 downto 0); 	--$6F
   
 	-- Installera avbrotts vippor
 	
@@ -279,6 +280,7 @@ begin
 		if rising_edge(clk) then
 			if rst = '1' then
 				intr_1 <= '0';
+				intr_2 <= '0';
 			elsif intr = '1' or intr2 = '1' then
 				if intr = '1' then intr_1 <= '1';
 				end if;
@@ -373,7 +375,7 @@ begin
 	IV <= (others => '0') when (rst = '1') else
 		  (others => '0') when (IL = 0)    else
 		  IV1 			  when (IL = 1)    else
-		  IV2 			  when (IL = 2)    else IV;
+		  IV2 			  when (IL = 2)    else (others => '0');
 
     XR_reg : process(clk)
     begin
@@ -406,41 +408,10 @@ begin
 				SR <= DATA_BUS(11 downto 0);
 			elsif FB = 12 then
 				SR(1 downto 0) <= IL;
+			elsif AR = 0 then 
+				SR(11) <= '1'; -- Sätt Z flaggan
 			else
-				-- Sätt O och C flaggorna
-				if ((ALUsig = 1) and (AR = 4095)) then
-					SR(9) <= '1';
-				elsif ((ALUsig = 2) and (AR = 0)) then
-					SR(9) <= '1';
-				elsif ((ALUsig = 3) and (to_integer(AR) + to_integer(DATA_BUS(11 downto 0)) > 4095)) then
-					SR(9) <= '1';  -- Orsakade AR + DATA_BUS spill?
-				elsif ((ALUsig = 4) and (to_integer(AR) < to_integer(DATA_BUS(11 downto 0)))) then
-					SR(9) <= '1';  -- Orsakade AR - DATA_BUS spill?
-				else
-					SR(9) <= '0';
-				end if;
-				
-				if ALUsig = 7 then
-					SR(8) <= AR(11);
-				elsif ALUsig = 8 then
-					SR(8) <= AR(0);
-				else
-					SR(8) <= '0';
-				end if;
-				
-				-- Sätt Z flaggan
-				if AR = 0 then
-					SR(11) <= '1';
-				else
-					SR(11) <= '0';
-				end if;
-				
-				--Sätt N flaggan
-				if AR < 0 then
-					SR(10) <= '1';
-				else
-					SR(10) <= '0';
-				end if;
+				SR(11) <= '0';
 			end if;
 		end if;
 	end process;
@@ -477,8 +448,8 @@ begin
           p_mem(to_integer(ADR)) <= DR;
         end if;
 		
-		p_mem(247) <= "00000000000000000" & joystick_poss; --$F7
-		p_mem(244) <= "00000000000000000" & joystick_poss; --$F4 , PacMan direction = Joystick direction
+	p_mem(119) <= "00000000000000000" & joystick_poss; --$77
+	p_mem(116) <= "00000000000000000" & joystick_poss; --$74 , PacMan direction = Joystick direction
       end if;
     end process;
 	
@@ -505,11 +476,6 @@ begin
 			elsif SEQ = 5 then uPC <= uAddr;
 			elsif SEQ = 4 and Z = '0' then uPC <= uAddr;
 			elsif SEQ = 6 and Z = '1' then uPC <= uAddr;
-			elsif SEQ = 7 and N = '1' then uPC <= uAddr;
-			elsif SEQ = 8 and C = '1' then uPC <= uAddr;
-			elsif SEQ = 9 and O = '1' then uPC <= uAddr;
-			elsif SEQ = 10 and C = '0' then uPC <= uAddr;
-			elsif SEQ = 11 and O = '0' then uPC <= uAddr;
 			elsif SEQ = 12 then uPC <= "00100110"; -- HALT
 			else uPC <= uPC + 1;
 			end if; 
@@ -553,9 +519,6 @@ begin
 	-- Sätt flaggorna 	 
 	
 	Z <= SR(11);
-	N <= SR(10);
-	O <= SR(9);
-	C <= SR(8);
 		 
 	-- PC funktionalitet
 	-- Avbrotts rutinen har bara fått en random adress
