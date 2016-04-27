@@ -37,10 +37,10 @@ architecture Behavioral of Pac_Man is
 			intr2						  : in std_logic;
 			intr_code				  : in unsigned(3 downto 0);
 			joystick_poss			  : in unsigned(1 downto 0);
-			output1					  : out unsigned(18 downto 0);
-			output2 					  : out unsigned(18 downto 0);
-			output3					  : out unsigned(18 downto 0);
-			output4					  : out unsigned(18 downto 0)
+			output1					  : out unsigned(9 downto 0);
+			output2 					  : out unsigned(9 downto 0);
+			output3					  : out unsigned(9 downto 0);
+			output4					  : out unsigned(9 downto 0)
 		);
 	end component;
 	
@@ -50,7 +50,8 @@ architecture Behavioral of Pac_Man is
 			clk                    : in std_logic;                      	-- System clock
 			rst                    : in std_logic;                      	-- reset button
 			tile_type				  : in std_logic_vector(1 downto 0);		-- Data to be read from MEM
---			Pac_koord				  : in unsigned(19 downto 0);					-- Pac_Mans pixel koords (y = 19-10, x = 9-0)
+			Pac_Man_X				  : in unsigned(9 downto 0);					-- Pac_Mans X-pixel koords
+			Pac_Man_Y				  : in unsigned(9 downto 0);					-- Pac_Mans Y-pixel koords  
 	 		addr						  : out unsigned(10 downto 0);				-- Adress to the tile in MEM
 			Hsync                  : out std_logic;                     	-- horizontal sync
 			Vsync                  : out std_logic;                     	-- vertical sync
@@ -85,10 +86,10 @@ architecture Behavioral of Pac_Man is
   signal intr2 				: std_logic := '0';
   signal intr_code			: unsigned(3 downto 0)  := (others => '0');
   signal joystick_poss		: unsigned(1 downto 0)  := "10";
-  signal output1				: unsigned(18 downto 0)  := (others => '0');
-  signal output2 				: unsigned(18 downto 0)  := (others => '0');
-  signal output3				: unsigned(18 downto 0)  := (others => '0');
-  signal output4				: unsigned(18 downto 0)  := (others => '0');
+  signal output1				: unsigned(9 downto 0)  := (others => '0');
+  signal output2 				: unsigned(9 downto 0)  := (others => '0');
+  signal output3				: unsigned(9 downto 0)  := (others => '0');
+  signal output4				: unsigned(9 downto 0)  := (others => '0');
   
   signal read_enable			: std_logic := '0';
   signal write_enable		: std_logic := '0';
@@ -96,13 +97,10 @@ architecture Behavioral of Pac_Man is
   signal write_addr			: unsigned(10 downto 0);
   signal read_data			: std_logic_vector(1 downto 0);
   signal write_data			: std_logic_vector(1 downto 0);
-  
-  signal Pac_Man_koord		: unsigned(19 downto 0) := (others => '0');
 
 
 begin 
 
-	Pac_Man_koord <= (output2(9 downto 0) & output1(9 downto 0));
 
 	U0 : CPU port map(clk=>clk, rst=>reset, intr=>interupt, intr2=>intr2, intr_code => intr_code, joystick_poss => joystick_poss,
 							 output1 => output1, output2 => output2, output3 => output3, output4 => output4);
@@ -112,7 +110,7 @@ begin
 
 	U2 : PIX_GEN port map(clk=>clk, rst=>reset, tile_type=>read_data,
 									Hsync=>Hsync, Vsync=>Vsync, addr=>read_addr,
---									Pac_koord => Pac_Man_koord,
+									Pac_Man_X => output1, Pac_Man_Y => output2,
 									vgaRed(2)=>vgaRed(2),
 									vgaRed(1)=>vgaRed(1),
 									vgaRed(0)=>vgaRed(0),
