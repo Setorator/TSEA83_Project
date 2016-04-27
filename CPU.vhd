@@ -266,12 +266,27 @@ architecture Behavioral of cpu is
 begin 
 
 	-- Installera output signalerna
-
-
-	output1 <= p_mem(118)(9 downto 0); 	--$76
-	output2 <= p_mem(117)(9 downto 0); 	--$75
-	output3 <= p_mem(112)(9 downto 0); 	--$70
-	output4 <= p_mem(111)(9 downto 0); 	--$6F
+	-- Output registren
+	
+	output_regs : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				output1 <= (others => '0');
+				output2 <= (others => '0');
+				output3 <= (others => '0');
+				output4 <= (others => '0');
+			elsif ADR = 118 and RW = "11" then
+				output1 <= DR(9 downto 0); -- $76
+			elsif ADR = 117 and RW = "11" then
+				output2 <= DR(9 downto 0); -- $75
+			elsif ADR = 112 and RW = "11" then
+				output3 <= DR(9 downto 0); -- $70
+			elsif ADR = 111 and RW = "11" then
+				output4 <= DR(9 downto 0); -- $6F
+			end if;
+		end if;
+	end process;
   
 	-- Installera avbrotts vippor
 	
@@ -448,8 +463,8 @@ begin
           p_mem(to_integer(ADR)) <= DR;
         end if;
 		
-	p_mem(119) <= "00000000000000000" & joystick_poss; --$77
-	p_mem(116) <= "00000000000000000" & joystick_poss; --$74 , PacMan direction = Joystick direction
+		p_mem(119) <= "00000000000000000" & joystick_poss; --$77
+		p_mem(116) <= "00000000000000000" & joystick_poss; --$74 , PacMan direction = Joystick direction
       end if;
     end process;
 	
