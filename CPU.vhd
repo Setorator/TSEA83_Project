@@ -122,6 +122,8 @@ architecture Behavioral of cpu is
 				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- BLANK RAD					60
 				 b"0010_0000_0000_0_0_0100_00_00_00111101", -- AR <= AR - 1					61
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						62
+				 -- OP = 10000, LDJOY M,ADDR , XR <= JOY
+				 b"0000_1101_0100_0_1_0011_00_00_00000000", -- AR <= JOY					63
 				 others => (others => '1'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -189,6 +191,7 @@ architecture Behavioral of cpu is
 				 "00111001", -- LDV2  56
 				 "00111010", -- LDSP  57
 				 "00111011", -- SLEEP 59
+				 "00111111", -- LDJOY 63
 				others => (others => '1')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -206,7 +209,7 @@ architecture Behavioral of cpu is
 			 b"00000_11_000000100000", -- 3	 LDA   11,$020
 			 b"01001_00_000001110110", -- 4	 STORE 11,PacMan_X
 			 b"01001_00_000001110101", -- 5  STORE 11,PacMan_Y
-			 b"00100_00_000001110100", -- 6  LDXR  00,PacMan_dir
+			 b"10000_00_000000000000", -- 6  LDJOY 00,$000
 			 b"00000_11_000000000000", -- 7  LDA   11,left
 			 b"01011_11_000000001101", -- 8  NEQU  11,TEST_UP
 			 b"00000_00_000001110110", -- 9  LDA   00,PacMan_X
@@ -258,6 +261,11 @@ architecture Behavioral of cpu is
   signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
   signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
   signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
+  signal JOY	  : unsigned(11 downto 0) := (others => '0');	  -- Joystickens position
+  signal OUTPUT_REG1 : unsigned(9 downto 0) := (others => '0');  
+  signal OUTPUT_REG2 : unsigned(9 downto 0) := (others => '0');  
+  signal OUTPUT_REG3 : unsigned(9 downto 0) := (others => '0');  
+  signal OUTPUT_REG4 : unsigned(9 downto 0) := (others => '0');  
   
   -- Flaggorna
  
@@ -267,23 +275,40 @@ begin
 
 	-- Installera output signalerna
 	-- Output registren
+
+	output1 <= OUTPUT_REG1;
+	output2 <= OUTPUT_REG2;
+	output3 <= OUTPUT_REG3;
+	output4 <= OUTPUT_REG4;
 	
 	output_regs : process(clk)
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
-				output1 <= (others => '0');
-				output2 <= (others => '0');
-				output3 <= (others => '0');
-				output4 <= (others => '0');
+				OUTPUT_REG1 <= (others => '0');
+				OUTPUT_REG2 <= (others => '0');
+				OUTPUT_REG3 <= (others => '0');
+				OUTPUT_REG4 <= (others => '0');
 			elsif ADR = 118 and RW = "11" then
-				output1 <= DR(9 downto 0); -- $76
+				OUTPUT_REG1 <= DR(9 downto 0); -- $76
 			elsif ADR = 117 and RW = "11" then
-				output2 <= DR(9 downto 0); -- $75
+				OUTPUT_REG2 <= DR(9 downto 0); -- $75
 			elsif ADR = 112 and RW = "11" then
-				output3 <= DR(9 downto 0); -- $70
+				OUTPUT_REG3 <= DR(9 downto 0); -- $70
 			elsif ADR = 111 and RW = "11" then
-				output4 <= DR(9 downto 0); -- $6F
+				OUTPUT_REG4 <= DR(9 downto 0); -- $6F
+			end if;
+		end if;
+	end process;
+
+	-- Installera joystickens register
+
+	joystick_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then 	JOY <= (others => '0');
+			elsif FB = 13 then	JOY <= DATA_BUS(11 downto 0);
+			else 			JOY <= "0000000000" & joystick_poss;				
 			end if;
 		end if;
 	end process;
@@ -334,6 +359,7 @@ begin
 				"0000000" & IV when (TB = 9) else
 				"0000000" & IV1 when (TB = 10) else
 				"0000000" & IV2 when (TB = 11) else
+				"0000000" & JOY when (TB = 13) else
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
@@ -436,7 +462,7 @@ begin
       if rising_edge(clk) then
         if rst = '1' then
           SP <= (others => '0');
-		elsif FB = 3 then
+	elsif FB = 3 then
           SP <= DATA_BUS(11 downto 0);
         elsif SPsig = 1 then
           SP <= SP + 1;
@@ -455,16 +481,13 @@ begin
           DR <= (others => '0');
         elsif FB = 5 then
           DR <= "0000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
-		elsif RW = "10" then -- Läs från minnet
+	elsif RW = "10" then -- Läs från minnet
           DR <= p_mem(to_integer(ADR));
-		end if;
+	end if;
 		
         if RW = "11" then -- Skriv till minnet
           p_mem(to_integer(ADR)) <= DR;
         end if;
-		
-		p_mem(119) <= "00000000000000000" & joystick_poss; --$77
-		p_mem(116) <= "00000000000000000" & joystick_poss; --$74 , PacMan direction = Joystick direction
       end if;
     end process;
 	
