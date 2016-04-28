@@ -43,12 +43,14 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity PmodJSTK_Master is
     Port ( clk : in  STD_LOGIC;								-- 100Mhz onboard clock
            RST : in  STD_LOGIC;								-- Button D
-           MISO : in  STD_LOGIC;								-- Master In Slave Out, JA3
-           SW : in  STD_LOGIC_VECTOR (2 downto 0);		-- Switches 2, 1, and 0
+           MISO : in  STD_LOGIC;							-- Master In Slave Out, JA3
+           SW : in  STD_LOGIC_VECTOR (2 downto 0);			-- Switches 2, 1, and 0
            SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
            MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
            SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
-           LED : out  STD_LOGIC_VECTOR (7 downto 0));	-- LEDs 7 to 0
+           LED : out  STD_LOGIC_VECTOR (7 downto 0);		-- LEDs 7 to 0
+		   intr : out STD_LOGIC;
+		   pos : out STD_LOGIC_VECTOR(1 downto 0));
 end PmodJSTK_Master;
 
 architecture Behavioral of PmodJSTK_Master is
@@ -62,7 +64,7 @@ architecture Behavioral of PmodJSTK_Master is
 		-- **********************************************
 		component PmodJSTK
 
-			 Port ( clk : in  STD_LOGIC;
+			 Port (   clk : in  STD_LOGIC;
 					  RST : in  STD_LOGIC;
 					  sndRec : in  STD_LOGIC;
 					  DIN : in  STD_LOGIC_VECTOR (7 downto 0);
@@ -110,8 +112,7 @@ architecture Behavioral of PmodJSTK_Master is
 
 			signal xposData : STD_LOGIC_VECTOR(9 downto 0);
 			signal yposData : STD_LOGIC_VECTOR(9 downto 0);
-			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "00";
-			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "00";
+			
 			
 --  ===================================================================================
 -- 							  				Implementation
@@ -153,35 +154,51 @@ begin
 
 			yposData <= (jstkData(25 downto 24) & jstkData(39 downto 32));
 
-			process(sndRec) begin
+			--process(sndRec, xposData, RST) begin
+			--	if(RST = '1') then
+			--		pos <= "00";
+			--	elsif rising_edge(clk) then
+			--		if sndRec = '1' then
+			--			if xposData <= "1010111100" then
+			--				pos <= "00"; 						--höger
+			--				intr <= '1';
+			--			elsif xposData >= "0100101100" then
+			--				pos <= "01"; 						--vänster
+			--				intr <= '1';
+			--			end if;
+			--		else 
+			--			intr <= '0';
+			--		end if;
+			--	end if;
+			--end process;
+
+			process(sndRec, yposData, RST, clk) begin
 				if(RST = '1') then
-					xPos <= "00";
-				elsif sndRec = '1' then
-					if xposData >= "1010111100" then
-						xPos <= "01"; 						--höger
-					elsif xposData <= "0100101100" then
-						xPos <= "10"; 						--vänster
+					pos <= "00";
+				elsif rising_edge(clk) then
+					if sndRec = '1' then
+						if yposData >= "1010001010" then
+							pos <= "10"; 						--upp
+							intr <= '1';
+						elsif yposData <= "0101011110" then
+							pos <= "11"; 						--ner
+							intr <= '1';
+						elsif xposData <= "0101011110" then
+							pos <= "00"; 						--höger
+							intr <= '1';
+						elsif xposData >= "1010001010" then
+							pos <= "01"; 						--vänster
+							intr <= '1';
+						end if;
 					else
-						xPos <= "00";
+						intr <= '0';
 					end if;
+				--else
+					--yPos <= "00";
 				end if;
 			end process;
 
-			process(sndRec) begin
-				if(RST = '1') then
-					yPos <= "00";
-				elsif sndRec = '1' then
-					if yposData >= "1010111100" then
-						yPos <= "01"; 						--upp
-					elsif yposData <= "0100101100" then
-						yPos <= "10"; 						--ner
-					else
-						yPos <= "00";
-					end if;
-				end if;
-			end process;
-
-			LED <= ("000000" & yPos);
+			-- LED <= ("000000" & pos);
 
 			-- väljer antingen x eller y värden som ska visas beroende på vilken knapp som trycks ner på joysticken
 			--process(sndRec) begin

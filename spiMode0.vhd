@@ -44,12 +44,12 @@ entity spiMode0 is
     Port ( clk : in  STD_LOGIC;									-- 100Mhz clock
            RST : in  STD_LOGIC;									-- Reset
            sndRec : in  STD_LOGIC;								-- Send receive, initializes data read/write
-           DIN : in  STD_LOGIC_VECTOR (7 downto 0);		-- Data that is to be sent to the slave
-           MISO : in  STD_LOGIC;									-- Master input slave output
+           DIN : in  STD_LOGIC_VECTOR (7 downto 0);				-- Data that is to be sent to the slave
+           MISO : in  STD_LOGIC;								-- Master input slave output
            MOSI : out  STD_LOGIC;								-- Master out slave in
            SCLK : out  STD_LOGIC;								-- Serial clock
            BUSY : out  STD_LOGIC;								-- Busy if sending/receiving data
-           DOUT : out  STD_LOGIC_VECTOR (7 downto 0));	-- Data read from the slave
+           DOUT : out  STD_LOGIC_VECTOR (7 downto 0));			-- Data read from the slave
 end spiMode0;
 
 architecture Behavioral of spiMode0 is
@@ -68,8 +68,10 @@ architecture Behavioral of spiMode0 is
 		signal rSR : STD_LOGIC_VECTOR(7 downto 0) := X"00";					-- Read shift register
 		signal wSR : STD_LOGIC_VECTOR(7 downto 0) := X"00";					-- Write shift register
 
-		signal CE : STD_LOGIC := '0';													-- Clock enable, controls serial
-																								-- clock signal sent to slave
+		signal CE : STD_LOGIC := '0';										-- Clock enable, controls serial
+																			-- clock signal sent to slave
+
+		signal control : STD_LOGIC := '0';
 			
 --  ===================================================================================
 -- 							  				Implementation
@@ -82,6 +84,15 @@ begin
 			MOSI <= wSR(7);
 			-- Connect data output bus to read shift register
 			DOUT <= rSR;
+
+
+			process(clk, RST) begin
+				if(RST = '1') then
+					control <= '0';
+				elsif rising_edge(clk) then
+					control <= not(control);
+				end if;
+			end process;
 	
 			---------------------------------------
 			--			 Write Shift Register
@@ -92,6 +103,7 @@ begin
 					if(RST = '1') then
 							wSR <= X"00";
 					elsif rising_edge(clk) then				-- bytte ut falling_edge(CLK)
+						--if control = '1' then
 							-- Enable shift during RxTx state only
 							case(STATE) is
 									when Idle =>
@@ -108,6 +120,7 @@ begin
 									when Done =>
 											wSR <= wSR;
 							end case;
+						--end if;
 					end if;
 			end process;
 
@@ -123,6 +136,7 @@ begin
 					if(RST = '1') then
 							rSR <= X"00";
 					elsif rising_edge(clk) then
+						--if control = '0' then
 							-- Enable shift during RxTx state only
 							case(STATE) is
 									when Idle =>
@@ -139,6 +153,7 @@ begin
 									when Done =>
 											rSR <= rSR;
 							end case;
+						--end if;
 					end if;
 			end process;
 			
@@ -168,7 +183,7 @@ begin
 						bitCount <= X"0";								-- Clear #bits read/written
 						
 				elsif rising_edge(clk) then			-- bytte ut falling_edge(CLK)
-
+					--if control = '1' then
 						case (STATE) is
 
 								when Idle =>
@@ -204,7 +219,7 @@ begin
 										bitCount <= X"0";				-- Clear #bits read/written
 								
 						end case;
-						
+					--end if;	
 				end if;
 		end process;
 
