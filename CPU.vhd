@@ -21,7 +21,7 @@ entity cpu is
     intr        :  in std_logic; 				-- Avbrotts nivå 1
 	intr2		:  in std_logic;  				-- Avbrotts nivå 2
 	intr_code   :  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
-	joystick_poss : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
+	joystick_pos : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
 	output1 	:  out unsigned(9 downto 0);   -- Output 1  : Address $77 i minnet
 	output2     :  out unsigned(9 downto 0);	-- Output 2  : Address $76 i minnet
 	output3		:  out unsigned(9 downto 0);	-- Output 3  : Address $71 i minnet
@@ -213,11 +213,11 @@ architecture Behavioral of cpu is
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_000000100000", -- 0  LDV1  11,32	   	 UPPDATERA ADDRESSERNA
-			 b"01101_11_000000100011", -- 1  LDV2  11,35    	 UPPDATERA ADDRESSERNA
+			(b"01100_11_000000100011", -- 0  LDV1  11,35	   	 UPPDATERA ADDRESSERNA
+			 b"01101_11_000000100000", -- 1  LDV2  11,32    	 UPPDATERA ADDRESSERNA
 			 b"01110_11_000001111111", -- 2  LDSP  11,$07F
-			 b"00000_11_000000100000", -- 3	 LDA   11,$020
-			 b"01001_00_000001110110", -- 4	 STORE 00,PacMan_X
+			 b"00000_11_000000100000", -- 3	LDA   11,$020
+			 b"01001_00_000001110110", -- 4	STORE 00,PacMan_X
 			 b"01001_00_000001110101", -- 5  STORE 00,PacMan_Y
 			 b"10000_11_000000000000", -- 6  LDJOY 00,$000
 			 b"00000_11_000000000000", -- 7  LDA   11,left
@@ -243,7 +243,7 @@ architecture Behavioral of cpu is
 			 b"00000_00_000001110101", -- 27 LDA   00,PacMan_Y
 			 b"00110_00_000001110011", -- 28 ADD   00,PacMan_Speed
 			 b"01001_00_000001110101", -- 29 STORE 00,PacMan_Y
-			 b"10001_11_000001111111", -- 30 SLEEP_LONG 11,$FFF
+			 b"10001_11_001111111111", -- 30 SLEEP_LONG 11,$FFF
  			 b"00101_11_000000000110", -- 31 JMP   11,$006
 			 b"00000_11_000000000000", -- 32 LDA   11,$000
 			 b"01001_00_000001110011", -- 33 STORE 00,PacMan_Speed
@@ -315,7 +315,7 @@ begin
 		if rising_edge(clk) then
 			if rst = '1' then 	JOY <= (others => '0');
 			elsif FB = 13 then	JOY <= DATA_BUS(11 downto 0);
-			else 			JOY <= "0000000000" & joystick_poss;				
+			else 			JOY <= "0000000000" & joystick_pos;				
 			end if;
 		end if;
 	end process;
