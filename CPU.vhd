@@ -33,7 +33,7 @@ architecture Behavioral of cpu is
 
   -- micro memory
   
-  type u_mem_t is array(0 to 63) of unsigned(29 downto 0);
+  type u_mem_t is array(0 to 127) of unsigned(29 downto 0);
   
   -- Skriv mikrominne här
   constant u_mem_c : u_mem_t := 
@@ -123,7 +123,16 @@ architecture Behavioral of cpu is
 				 b"0010_0000_0000_0_0_0100_00_00_00111101", -- AR <= AR - 1					61
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						62
 				 -- OP = 10000, LDJOY M,ADDR , XR <= JOY
-				 b"0000_1101_0100_0_1_0011_00_00_00000000", -- AR <= JOY					63
+				 b"0000_1101_0100_0_1_0011_00_00_00000000", -- XR <= JOY					63
+				 -- OP = 10001, SLEEP_LONG M,ADDR , SLEEP ADDR times
+				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR					64
+				 b"0000_0101_0100_0_0_0000_00_00_00000000", -- XR <= DR					65
+				 b"0010_0000_0000_0_0_0100_00_00_01000010", -- AR <= AR - 1				66
+				 b"0000_0100_0111_0_0_0000_00_00_00000000", -- AR <= XR					67
+				 b"0010_0000_0000_0_0_0000_00_00_00000000", -- AR <= AR - 1				68
+				 b"0000_0111_0100_0_0_0110_00_00_01000111", -- XR <= AR 				69
+				 b"0000_0101_0111_0_0_0101_00_00_01000010", -- AR <= DR  ,  uPC <= 66 			70
+				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0					71
 				 others => (others => '1'));
 
   signal u_mem : u_mem_t := u_mem_c;
@@ -171,7 +180,7 @@ architecture Behavioral of cpu is
   
   -- K1 minne
   
-  type K1_mem_t is array(0 to 16) of unsigned(7 downto 0);
+  type K1_mem_t is array(0 to 31) of unsigned(7 downto 0);
   
   -- Skriv K1 minne nedanför
   constant K1_mem_c : K1_mem_t := 
@@ -192,6 +201,7 @@ architecture Behavioral of cpu is
 				 "00111010", -- LDSP  57
 				 "00111011", -- SLEEP 59
 				 "00111111", -- LDJOY 63
+				 "01000000", -- SLEEP_LONG 64
 				others => (others => '1')); 
   
   signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -203,13 +213,13 @@ architecture Behavioral of cpu is
   -- Skriv program minne här 
   constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_000000100011", -- 0  LDV1  11,$01C
-			 b"01101_11_000000100110", -- 1  LDV2  11,31
+			(b"01100_11_000000100000", -- 0  LDV1  11,32	   	 UPPDATERA ADDRESSERNA
+			 b"01101_11_000000100011", -- 1  LDV2  11,35    	 UPPDATERA ADDRESSERNA
 			 b"01110_11_000001111111", -- 2  LDSP  11,$07F
-			 b"00000_11_000000100000", -- 3	LDA   11,$020
-			 b"01001_00_000001110110", -- 4	STORE 11,PacMan_X
-			 b"01001_00_000001110101", -- 5  STORE 11,PacMan_Y
-			 b"10000_00_000000000000", -- 6  LDJOY 00,$000
+			 b"00000_11_000000100000", -- 3	 LDA   11,$020
+			 b"01001_00_000001110110", -- 4	 STORE 00,PacMan_X
+			 b"01001_00_000001110101", -- 5  STORE 00,PacMan_Y
+			 b"10000_11_000000000000", -- 6  LDJOY 00,$000
 			 b"00000_11_000000000000", -- 7  LDA   11,left
 			 b"01011_11_000000001101", -- 8  NEQU  11,TEST_UP
 			 b"00000_00_000001110110", -- 9  LDA   00,PacMan_X
@@ -222,7 +232,7 @@ architecture Behavioral of cpu is
 			 b"01000_00_000001110011", -- 16 SUB   00,PacMan_Speed
 			 b"01001_00_000001110101", -- 17 STORE 00,PacMan_Y
 			 b"00101_11_000000011110", -- 18 JMP   11,NEXT_STEP
-			 b"00000_01_000000000010", -- 19 LDA   01,right
+			 b"00000_11_000000000010", -- 19 LDA   01,right
 			 b"01011_11_000000011001", -- 20 NEQU  11,TEST_DOWN
 			 b"00000_00_000001110110", -- 21 LDA   00,PacMan_X
 			 b"00110_00_000001110011", -- 22 ADD   00,PacMan_Speed
@@ -233,17 +243,14 @@ architecture Behavioral of cpu is
 			 b"00000_00_000001110101", -- 27 LDA   00,PacMan_Y
 			 b"00110_00_000001110011", -- 28 ADD   00,PacMan_Speed
 			 b"01001_00_000001110101", -- 29 STORE 00,PacMan_Y
-			 b"01111_11_111111111111", -- 30 SLEEP 11,$FFF
-			 b"01111_11_111111111111", -- 31 SLEEP 11,$FFF
-			 b"01111_11_111111111111", -- 32 SLEEP 11,$FFF
-			 b"01111_11_111111111111", -- 33 SLEEP 11,$FFF
-			 b"00101_11_000000000110", -- 34 JMP   11,$006
-			 b"00000_11_000000000000", -- 35 LDA   11,$000
+			 b"10001_11_000001111111", -- 30 SLEEP_LONG 11,$FFF
+ 			 b"00101_11_000000000110", -- 31 JMP   11,$006
+			 b"00000_11_000000000000", -- 32 LDA   11,$000
+			 b"01001_00_000001110011", -- 33 STORE 00,PacMan_Speed
+			 b"00010_00_000000000000", -- 34 RTE
+			 b"00000_11_000000000001", -- 35 LDA   11,$001
 			 b"01001_00_000001110011", -- 36 STORE 00,PacMan_Speed
 			 b"00010_00_000000000000", -- 37 RTE
-			 b"00000_11_000000000001", -- 38 LDA   11,$001
-			 b"01001_00_000001110011", -- 39 STORE 00,PacMan_Speed
-			 b"00010_00_000000000000", -- 40 RTE
 			 others => (others => '0'));
 
   signal p_mem : p_mem_t := p_mem_c;
@@ -351,15 +358,15 @@ begin
 
     DATA_BUS <= IR when (TB = 2) else
                 DR when (TB = 5) else
-				"0000000" & PC when (TB = 6) else
-				"0000000" & XR when (TB = 4) else
-				"0000000" & SP when (TB = 3) else
-				"0000000" & AR when (TB = 7) else 
-				"0000000" & SR when (TB = 8) else
-				"0000000" & IV when (TB = 9) else
-				"0000000" & IV1 when (TB = 10) else
-				"0000000" & IV2 when (TB = 11) else
-				"0000000" & JOY when (TB = 13) else
+		"0000000" & PC when (TB = 6) else
+		"0000000" & XR when (TB = 4) else
+		"0000000" & SP when (TB = 3) else
+		"0000000" & AR when (TB = 7) else 
+		"0000000" & SR when (TB = 8) else
+		"0000000" & IV when (TB = 9) else
+		"0000000" & IV1 when (TB = 10) else
+		"0000000" & IV2 when (TB = 11) else
+		"0000000" & JOY when (TB = 13) else
                 (others => '0') when (rst = '1') else
                 (others => '0');
 
