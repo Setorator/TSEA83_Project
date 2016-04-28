@@ -38,7 +38,7 @@ architecture Behavioral of PIX_GEN is
   	signal Ypixel        : unsigned(9 downto 0) := (others => '0');  				-- Vertical pixel counter
   	signal blank			: std_logic; 														-- blanking signal
   	
-  	signal tmpX, tmpY		: unsigned(3 downto 0) := (others => '0');				-- Used for tileX and tileY
+  	signal tmpX, tmpY		: unsigned(3 downto 0) := (others => '0');				-- Index within the tile
   	signal tileX			: unsigned(5 downto 0) := (others => '0');				-- X-coordinate of the tile
   	signal tileY			: unsigned(4 downto 0) := (others => '0');				-- Y-coordinate of the tile
   
@@ -47,8 +47,8 @@ architecture Behavioral of PIX_GEN is
   	signal Clk25			: std_logic := '0';		 										-- One pulse width 25 MHz sign
   	
   	-- För testning av rörelse för Pac-Man
-  	signal SpeedDiv		: unsigned(19 downto 0) := (others => '0');
-  	signal Speed			: std_logic := '0';
+--  	signal SpeedDiv		: unsigned(19 downto 0) := (others => '0');
+--  	signal Speed			: std_logic := '0';
   	----------------------
   	
 	signal tileData     	: std_logic_vector(7 downto 0) := (others => '0');		-- Tile pixel data
@@ -57,9 +57,6 @@ architecture Behavioral of PIX_GEN is
 	signal TilePixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen tile pixel
 	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
 	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
-	
---	signal Pac_Man_X		: unsigned(9 downto 0)	:= "0000100000"; -- 32				-- Pac Mans X-koord in pixel size
---	signal Pac_Man_Y		: unsigned(9 downto 0)	:= "0000100000"; -- 32				-- Pac Mans y-koord in pixel size
 	
 	signal Ghost_X		: unsigned(9 downto 0)	:= "0000000000"; -- 0				-- Ghosts X-koord in pixel size
 	signal Ghost_Y		: unsigned(9 downto 0)	:= "0000000000"; -- 0				-- Ghosts Y-koord in pixel si
@@ -192,26 +189,7 @@ begin
     end if;
   end process;
         
-  
-  -- Horizontal sync
 
-  H_Sync : process(clk)
-  begin
-  	if rising_edge(clk) then
- 		if clk25 = '1' then
-    		if Xpixel > 655 and Xpixel < 752 then   -- During 96 cycles we should
-                		                            -- refresh the display. Check the
-				                                      -- bottom of lab4-PM
-				Hsync <= '0';
-			 else
-				Hsync <= '1';
-			 end if;
-		end if;
-   end if;
-  end process;
-        
-
-  
   -- Vertical pixel counter
   y_Counter : process(clk)
   begin
@@ -227,23 +205,12 @@ begin
       end if;
     end if;
   end process;
-	
-
-  -- Vertical sync
-
-  V_Sync : process(clk)
-  begin
-		if rising_edge(clk) then
-			if Ypixel > 489 and Ypixel < 492 then
-				Vsync <= '0';
-			else
-				Vsync <= '1';
-			end if;
-		end if;
-  end process;
-	
   
-  blank <= '1' when (Xpixel > 639 or Ypixel > 479) else '0';
+  
+	-- Sync-signals  
+	Hsync <= '0' when (Xpixel > 655 and Xpixel < 752) else '1';
+	Vsync <= '0' when (Ypixel > 489 and Ypixel < 492) else '1';
+	blank <= '1' when (Xpixel > 639 or Ypixel > 479) else '0';
  
 		    -- Clock divisor
   -- divide system clock (100 MHz) by 4
@@ -266,9 +233,8 @@ begin
 ----------------------------------PIXEL_GEN------------------------------
 -------------------------------------------------------------------------
 
-	
-	tmpX <= Xpixel(3 downto 0);
-	
+	-- Index within tiles
+	tmpX <= Xpixel(3 downto 0);	
 	tmpY <= Ypixel(3 downto 0);
 	
 	big_pixel_xcoord : process(clk)
