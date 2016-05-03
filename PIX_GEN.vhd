@@ -14,11 +14,20 @@ entity PIX_GEN is
 	port (
 		clk            : in std_logic;                         -- system clock
     	rst            : in std_logic;                         -- reset
-	 	tile_type		: in std_logic_vector(1 downto 0);		 -- Type of tile from RAM	
+    	
+		-- Read
+		read_data					: in std_logic_vector(1 downto 0);		-- Data to be read from RAM
+		read_enable					: out std_logic;								-- enables RAM read
+ 		read_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
+ 		
+ 		-- Write
+ 		write_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
+		write_enable				: out std_logic;								-- enables RAM write
+		write_data					: out std_logic_vector(1 downto 0);		-- Data to be written to RAM    	
+    	
+
 	 	Pac_Man_X		: in unsigned(9 downto 0);					 -- Pac_Man X-koord in pixel size		
 	 	Pac_Man_Y		: in unsigned(9 downto 0);					 -- Pac_Man Y-koord in pixel size		
-	 	addr				: out unsigned(10 downto 0);				 -- Adress to the tile pixel in RAM
-	 	read				: out std_logic;								 -- Read enable for RAM
     	Hsync          : out std_logic;                        -- horizontal sync
     	Vsync          : out std_logic;                        -- vertical sync
     	vgaRed         : out std_logic_vector(2 downto 0);     -- VGA red
@@ -58,8 +67,8 @@ architecture Behavioral of PIX_GEN is
 	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
 	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
 	
-	signal Ghost_X		: unsigned(9 downto 0)	:= "0000000000"; -- 0				-- Ghosts X-koord in pixel size
-	signal Ghost_Y		: unsigned(9 downto 0)	:= "0000000000"; -- 0				-- Ghosts Y-koord in pixel si
+	signal Ghost_X		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts X-koord in pixel size
+	signal Ghost_Y		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts Y-koord in pixel si
 	
   
   	-- Tile memory type
@@ -269,16 +278,18 @@ begin
 		end if;
 	end process;
 	
-	
   
-  	addr <= tileY & tileX;							-- addr(10 downto 6) = tiles y-position
+  	read_addr <= tileY & tileX;							-- addr(10 downto 6) = tiles y-position
   															-- addr(5 downto 0) = tiles x-position
-  															
+  		
+----------------------------------------------------------------
+------------------------------PIXEL_CHOOSER---------------------
+----------------------------------------------------------------  															
   										
   										
-  	TilePixel <= color_map(to_integer(tileMem((to_integer(tmpY)*16) + to_integer(tmpX))))  when (tile_type = "00" and blank = '0') else					-- Floor
-  					 color_map(to_integer(tileMem( 256 + (to_integer(tmpY)*16) + to_integer(tmpX))))  when (tile_type = "01" and blank = '0') else			-- Food
-  					 color_map(to_integer(tileMem( 512 + (to_integer(tmpY)*16) + to_integer(tmpX))))  when (tile_type = "11" and blank = '0') else			-- Wall
+  	TilePixel <= color_map(to_integer(tileMem((to_integer(tmpY)*16) + to_integer(tmpX))))  when (read_data = "00" and blank = '0') else					-- Floor
+  					 color_map(to_integer(tileMem( 256 + (to_integer(tmpY)*16) + to_integer(tmpX))))  when (read_data = "01" and blank = '0') else			-- Food
+  					 color_map(to_integer(tileMem( 512 + (to_integer(tmpY)*16) + to_integer(tmpX))))  when (read_data = "11" and blank = '0') else			-- Wall
   					 color_map(0) when (blank = '1') else																												-- For blanking
   					 color_map(3);																																				-- Red (for debugging)
   								 	
@@ -293,70 +304,33 @@ begin
   
   
   	tileData <= TilePixel when (TilePixel /= "00000000") else
-  					GhostPixel when (GhostPixel /= "00000000") else PacPixel;									-- For now	
-  																									
-	COLLISION_detection : process(clk)
+  					GhostPixel when (GhostPixel /= "00000000") else PacPixel;
+  					
+
+----------------------------------------------------------------
+-------------------------COLISION-------------------------------
+----------------------------------------------------------------
+  					
+  	colision <= '1' when (rst = '0') and (tileData = X"02") and (PacPixel /= X"00") else '0'; 																									
+
+----------------------------------------------------------------
+---------------------------EAT_FOOD-----------------------------
+----------------------------------------------------------------
+
+	eat_food : process(clk)
 	begin
 		if rising_edge(clk) then
-			if rst = '1' then
-				colision <= '0';
-			elsif (tileData = X"02") and (PacPixel /= X"00") then
-				colision <= '1';
+			if (TilePixel = X"8C") and (PacPixel /= X"00") then
+				write_enable <= '1';
+				write_addr <= tileY & tileX;
+				write_data <= "00"; 			-- Floor tile
 			else
-				colision <= '0';
+				write_enable <= '0';
 			end if;
 		end if;
 	end process;
+				
 
------------------------------------------------------------------
---Bara för testning av rörelse på Pac-Man
---  process(clk)
---  begin
---    if rising_edge(clk) then
---		SpeedDiv <= SpeedDiv + 1;
---    end if;
---  end process;
--- 25 MHz clock (one system clock pulse width)
---  Speed <= '1' when (SpeedDiv = 1048575) else '0';
---	process(clk)
---	begin
---		if rising_edge(clk) then
---			if Speed = '1' then
---				if Pac_Man_X > 600 then
---					Pac_Man_X <= (others => '0');
---					if Pac_Man_Y > 400 then
---						Pac_Man_Y <= (others => '0');
---					else
---						Pac_Man_Y <= Pac_Man_Y + 32;
---					end if;
---				else
---					Pac_Man_X <= Pac_Man_X + 1;
---				end if;
---			end if;
---		end if;
---	end process;
-	
-	
-	--Bara för testning av rörelse på Ghost
---	process(clk)
---	begin
---		if rising_edge(clk) then
---			if Speed = '1' then
---				if Ghost_X > 600 then
---					Ghost_X <= (others => '0');
---					if Ghost_Y > 400 then
---						Ghost_Y <= (others => '0');
---					else
---						Ghost_Y <= Ghost_Y + 32;
---					end if;
---				else
---					Ghost_X <= Ghost_X + 1;
---				end if;
---			end if;
---		end if;
---	end process;
-	
-----------------------------------------------------------------
 
 
   -- VGA generation

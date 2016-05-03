@@ -24,7 +24,10 @@ entity RAM is
 		x2 			: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
 		y2 			: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 		re 			: in std_logic;								-- Read enable
-		data2			: out std_logic_vector(1 downto 0)		-- Data to be read (tile-type)
+		data2			: out std_logic_vector(1 downto 0);		-- Data to be read (tile-type)
+		
+		--Reset
+		rst			: in std_logic
 	);
 end RAM;
 
@@ -34,7 +37,7 @@ architecture Behavioral of RAM is
 	-- with 2048 adresses and 8 bits width
 	-- (We only uses 40*30 = 1200 adresses,
 	-- each containing a 8-bit colour.)
-	type ram_t is array(0 to 1399) of 
+	type ram_t is array(0 to 2047) of 
 		std_logic_vector(1 downto 0);
 	
 	-- Set all bits to zero
@@ -127,6 +130,7 @@ architecture Behavioral of RAM is
 									
 									"00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00", 
 									"00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00", others => (others => '0'));
+									
 	
 	begin
 	
