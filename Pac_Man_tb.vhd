@@ -9,27 +9,30 @@ end Pac_Man_tb;
 architecture Behavioral of Pac_Man_tb is
   component Pac_Man
     port (
-   	  clk             : in std_logic;                         	-- System clock
-   	  reset           : in std_logic;                         	-- Reset button
-  	     Hsync				: out std_logic;								 	-- H-sync for monitor
+   	  clk             		: in std_logic;                         	-- System clock
+  	  Hsync				: out std_logic;								 	-- H-sync for monitor
     	  Vsync				: out std_logic;									-- V-sync for monitor
-   	  vgaRed				: out std_logic_vector(2 downto 0);
+   	  vgaRed			: out std_logic_vector(2 downto 0);
     	  vgaGreen		 	: out std_logic_vector(2 downto 0);
-    	  vgaBlue			: out std_logic_vector(2 downto 1)
+    	  vgaBlue			: out std_logic_vector(2 downto 1);
+	  btnl				: in std_logic;
+	  btnu				: in std_logic;	
+	  btnr				: in std_logic;
+	  btnd				: in std_logic;
+	  btns				: in std_logic					-- Reset button
       );
   end component;
 
   signal clock : std_logic := '0';
-  signal reset : std_logic := '0';
+  --signal reset : std_logic := '0';
   signal hS    : std_logic;
   signal vS    : std_logic;
   signal video : std_logic_vector(7 downto 0);
-  
+
 begin
 
   uut : Pac_Man port map (
     clk   => clock,
-    reset   => reset,
     Hsync => hS,
     Vsync => vS,
     vgaRed(2) => video(7),
@@ -39,7 +42,12 @@ begin
     vgaGreen(1) => video(3),
     vgaGreen(0) => video(2),
     vgaBlue(2) => video(1),
-    vgaBlue(1) => video(0));
+    vgaBlue(1) => video(0),
+    btnl => '0',
+    btnu => '0',
+    btnr => '0',
+    btnd => '0',
+    btns => '0');
 
   -- Klocksignal 100 MHz
 

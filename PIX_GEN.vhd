@@ -292,12 +292,21 @@ begin
   				
   
   
-  	tileData <= GhostPixel when (GhostPixel /= "00000000") else
-  					PacPixel when (PacPixel /= "00000000") else TilePixel;									-- For now	
-  	
-  	colision <= '0';
+  	tileData <= TilePixel when (TilePixel /= "00000000") else
+  					GhostPixel when (GhostPixel /= "00000000") else PacPixel;									-- For now	
   																									
-
+	COLLISION_detection : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				colision <= '0';
+			elsif (tileData = X"02") and (PacPixel /= X"00") then
+				colision <= '1';
+			else
+				colision <= '0';
+			end if;
+		end if;
+	end process;
 
 -----------------------------------------------------------------
 --Bara för testning av rörelse på Pac-Man

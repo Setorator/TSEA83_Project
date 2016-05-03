@@ -15,108 +15,109 @@ use IEEE.NUMERIC_STD.ALL;
 -- CPU Interface
 
 entity cpu is 
-  port (
-    clk         :  in std_logic;
-    rst         :  in std_logic;
-    intr        :  in std_logic; 				-- Avbrotts nivå 1
-	intr2		:  in std_logic;  				-- Avbrotts nivå 2
-	intr_code   :  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
-	joystick_pos : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
-	output1 	:  out unsigned(9 downto 0);   -- Output 1  : Address $77 i minnet
-	output2     :  out unsigned(9 downto 0);	-- Output 2  : Address $76 i minnet
-	output3		:  out unsigned(9 downto 0);	-- Output 3  : Address $71 i minnet
-	output4 	:  out unsigned(9 downto 0)    -- Output 4  : Address $70 i minnet
-  );
+	port (
+  		clk         :  in std_logic;
+   		rst         :  in std_logic;
+   		intr        :  in std_logic; 				-- Avbrotts nivå 1
+		intr2		:  in std_logic;  				-- Avbrotts nivå 2
+		intr_code   :  in unsigned(3 downto 0); 	-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
+		joystick_pos : in unsigned(1 downto 0);	-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
+		output1 	:  out unsigned(9 downto 0);   -- Output 1  : Address $77 i minnet
+		output2     :  out unsigned(9 downto 0);	-- Output 2  : Address $76 i minnet
+		output3		:  out unsigned(9 downto 0);	-- Output 3  : Address $71 i minnet
+		output4 	:  out unsigned(9 downto 0)    -- Output 4  : Address $70 i minnet
+  	);
 end cpu;
 
 architecture Behavioral of cpu is 
 
-  -- micro memory
+  	-- micro memory
   
-  type u_mem_t is array(0 to 127) of unsigned(29 downto 0);
-  
-  -- Skriv mikrominne här
-  constant u_mem_c : u_mem_t := 
-		   --      ALU _ TB _ FB _P_I_ SEQ_RW_SP_  uAddr
+	type u_mem_t is array(0 to 127) of unsigned(29 downto 0);
+	
+	-- Skriv mikrominne här
+
+  	constant u_mem_c : u_mem_t := 
+		   	   --      ALU _ TB _ FB _P_I_ SEQ_RW_SP_  uAddr
 				(b"0000_0110_0001_0_1_0000_00_00_00000000", -- ADR <= PC					0
-				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)				1
+				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)					1
 				 b"0000_0101_0010_0_0_0000_00_00_00000000", -- IR <= DR						2
-				 b"0000_0000_0000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2				3
+				 b"0000_0000_0000_1_0_0010_00_00_00000000", -- PC++, uPC <= K2					3
 				 -- M = "00" , Direkt addressering
 				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR					4
-				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)				5
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)					5
 				 -- M = "01" , Omedelbar operand
 				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC					6
-				 b"0000_0000_0000_1_0_0001_10_00_00000000", -- DR <= MEM(ADR), PC++ 		7
+				 b"0000_0000_0000_1_0_0001_10_00_00000000", -- DR <= MEM(ADR), PC++ 				7
 				 -- M = "10" , Indirekt addressering
 				 b"0000_0010_0001_0_0_0000_00_00_00000000", -- ADR <= IR					8
-				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)				9
+				 b"0000_0000_0000_0_0_0000_10_00_00000000", -- DR <= MEM(ADR)					9
 				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR					10
-				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)				11
+				 b"0000_0000_0000_0_0_0001_10_00_00000000", -- DR <= MEM(ADR)					11
 				 -- M = "11" , Absolut addresering
 				 b"0000_0010_0101_0_0_0001_00_00_00000000", -- DR <= IR						12
 				 -- OP = 00000, LDA M,ADDR  , AR <= MEM(ADDR)			
-				 b"0000_0101_0111_0_1_0011_00_00_00000000", -- AR <= DR, uPC <= 0			13
+				 b"0000_0101_0111_0_1_0011_00_00_00000000", -- AR <= DR, uPC <= 0				13
 				 -- OP = 00001, STXR M,ADDR , MEM(DR) <= XR
-				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR      				14
+				 b"0000_0101_0001_0_0_0000_00_00_00000000", -- ADR <= DR      					14
 				 b"0000_0100_0101_0_0_0000_00_00_00000000", -- DR <= XR						15
-				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADR) <= XR,uPC <= 0		16
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADR) <= XR,uPC <= 0				16
 				 -- Avbrottsrutin, Lägg undan alla register i minnet
 				 b"0000_0110_0101_0_0_0000_00_00_00000000", -- DR <= PC						17
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				18
-				 b"0000_1000_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= SR 	19
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				20
-				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 	21
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--				22
-				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 	23
-				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			    24
-				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 	25
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--					18
+				 b"0000_1000_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= SR 			19
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--					20
+				 b"0000_0111_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= AR 			21
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--					22
+				 b"0000_0100_0101_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, DR <= XR 			23
+				 b"0000_0011_0001_0_0_0000_00_10_00000000", -- ADR <= SP, SP--			   		24
+				 b"0000_1001_0110_0_0_0000_11_00_00000000", -- MEM(ADR) <= DR, PC <= IV 			25
 				 b"0000_0110_0001_0_0_0000_00_00_00000000", -- ADR <= PC					26	
-				 b"0000_0000_1100_0_1_0011_00_00_00000000", -- SR <= IL, uPC <= 0			27
+				 b"0000_0000_1100_0_1_0011_00_00_00000000", -- SR <= IL, uPC <= 0				27
 				 -- OP = 0010, RTE , Hoppa ur avbrottet
 				 b"0000_0000_0000_0_0_0000_00_01_00000000", -- SP ++						28
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				29
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++					29
 				 b"0000_0011_0001_0_0_0000_10_01_00000000", -- ADR <= SP,DR<=MEM(ADR),SP++  30
-				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 	31
+				 b"0000_0101_0100_0_0_0000_10_00_00000000", -- DR <= MEM(ADR), XR <= DR 			31
 				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR						32
-				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++				33
-				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 	34
-				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  	35
+				 b"0000_0011_0001_0_0_0000_00_01_00000000", -- ADR <= SP, SP++					33
+				 b"0000_0011_0001_0_0_0000_10_00_00000000", -- ADR <= SP,DR <= MEM(ADR) 			34
+				 b"0000_0101_1000_0_0_0000_10_00_00000000", -- SR <= DR,DR <= MEM(ADR)  			35
 				 b"0000_0101_0110_0_0_0000_00_00_00000000", -- PC <= DR						36
 				 b"0000_1100_0000_0_1_0011_00_00_00000000", -- IL <= SR						37
 				 -- OP = 0011, HALT, Stanna programmet
 				 b"0000_0000_0000_0_0_0101_00_00_00100110", -- uPC <= uPC	  				38
 				 -- OP = 0100, LDXR M,ADDR, Ladda XR med ADDR
-				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR 	                39
+				 b"0000_0101_0100_0_1_0011_00_00_00000000", -- XR <= DR 	               			39
 				 -- OP = 0101, JMP M,ADDR, Hoppa till bestämd address
 				 b"0000_0101_0110_0_1_0011_00_00_00000000", -- PC <= DR						40
 				 -- OP = 0110, ADD M,ADDR, AR <= AR + DR								
-				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 				41
+				 b"0011_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR + DR 					41
 				 -- OP = 0111, MULP M,ADDR, AR <= AR * DR (Multiplikation),
-				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR				42
+				 b"1010_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR * DR					42
 				 -- OP = 1000, SUB M,ADDR, AR <= AR - DR
-				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR				43
+				 b"0100_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR - DR					43
 				 -- OP = 1001, STORE M,ADDR, MEM(ADDR) <= AR
 				 b"0000_0111_0101_0_0_0000_00_00_00000000", -- DR <= AR						44
-				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR				45
+				 b"0000_0000_0000_0_1_0011_11_00_00000000", -- MEM(ADDR) <= DR					45
 				 -- OP = 1010, EQU M,ADDR , AR == MEM(ADDR)
-				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				46
-				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- Blank rad för ladda Z		47
-				 b"0000_0000_0000_0_0_0110_00_00_00110010", --								48
+				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR					46
+				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- Blank rad för ladda Z				47
+				 b"0000_0000_0000_0_0_0110_00_00_00110010", --							48
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						49
-				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			50
+				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0				50
 				 -- OP = 1011, NEQU M,ADDR , AR != MEM(ADDR)
-				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR				51
-				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- Blank rad för ladda Z		52
-				 b"0000_0000_0000_0_0_0100_00_00_00110111", --								53
+				 b"0100_0100_0111_0_0_0000_00_00_00000000", -- AR <= AR - XR					51
+				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- Blank rad för ladda Z				52
+				 b"0000_0000_0000_0_0_0100_00_00_00110111", --							53
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						54
-				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0			55
+				 b"0000_0010_0110_0_1_0011_00_00_00000000", -- PC <= IR, uPC <= 0				55
 				 -- OP = 1100, LDV1 M,ADDR , IV1 <= MEM(ADDR)
-				 b"0000_0101_1010_0_1_0011_00_00_00000000", -- IV1 <= MEM(ADDR)				56
+				 b"0000_0101_1010_0_1_0011_00_00_00000000", -- IV1 <= MEM(ADDR)					56
 				 -- OP = 1101, LDV2 M,ADDR , IV2 <= MEM(ADDR)
-				 b"0000_0101_1011_0_1_0011_00_00_00000000", -- IV2 <= MEM(ADDR)				57
+				 b"0000_0101_1011_0_1_0011_00_00_00000000", -- IV2 <= MEM(ADDR)					57
 				 -- OP = 1110, LDSP M,ADDR , SP <= MEM(ADDR)
-				 b"0000_0101_0011_0_1_0011_00_00_00000000", -- SP <= MEM(ADDR)				58
+				 b"0000_0101_0011_0_1_0011_00_00_00000000", -- SP <= MEM(ADDR)					58
 				 -- OP = 1111, SLEEP M,ADDR , LOOPA MEM(ADDR) GGR
 				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR						59
 				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- BLANK RAD					60
@@ -131,59 +132,59 @@ architecture Behavioral of cpu is
 				 b"0000_0100_0111_0_0_0000_00_00_00000000", -- AR <= XR						67
 				 b"0010_0000_0000_0_0_0000_00_00_00000000", -- AR <= AR - 1					68
 				 b"0000_0111_0100_0_0_0110_00_00_01000111", -- XR <= AR 					69
-				 b"0000_0101_0111_0_0_0101_00_00_01000010", -- AR <= DR  ,  uPC <= 66 		70
+				 b"0000_0101_0111_0_0_0101_00_00_01000010", -- AR <= DR  ,  uPC <= 66 				70
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						71
 				 others => (others => '1'));
 
-  signal u_mem : u_mem_t := u_mem_c;
+	signal u_mem : u_mem_t := u_mem_c;
 
-  signal uM    : unsigned(29 downto 0) := (others => '0');        -- micro memory output
-  signal uPC   : unsigned(7 downto 0)  := (others => '0');         -- micro program counter
+  	signal uM    : unsigned(29 downto 0) := (others => '0');        -- micro memory output
+ 	signal uPC   : unsigned(7 downto 0)  := (others => '0');        -- micro program counter
 
-  -- Signaler i uM
-  signal uAddr : unsigned(7 downto 0)  := (others => '0');         -- micro Adress
-  signal TB    : unsigned(3 downto 0)  := (others => '0');         -- to bus field
-  signal FB    : unsigned(3 downto 0)  := (others => '0');          -- from bus field
-  signal ALUsig   : unsigned(3 downto 0) := (others => '0');
-  signal Isig  : std_logic := '0';                   			   -- block interrupts
-  signal RW    : unsigned(1 downto 0) := (others => '0');          -- Read/write
-  signal SEQ   : unsigned(3 downto 0) := (others => '0');
-  signal SPsig : unsigned(1 downto 0) := (others => '0');         -- Manipulera stackpekaren
-  signal PCsig : std_logic  := '0';                    			   -- PC++
-  signal I     : std_logic := '0'; 				   				   -- T-vippa
+ 	 -- Signaler i uM
+ 	signal uAddr : unsigned(7 downto 0)  := (others => '0');       	-- micro Adress
+ 	signal TB    : unsigned(3 downto 0)  := (others => '0');        -- to bus field
+	signal FB    : unsigned(3 downto 0)  := (others => '0');	-- from bus field
+	signal ALUsig   : unsigned(3 downto 0) := (others => '0');
+ 	signal Isig  : std_logic := '0';                   		-- block interrupts
+  	signal RW    : unsigned(1 downto 0) := (others => '0');         -- Read/write
+  	signal SEQ   : unsigned(3 downto 0) := (others => '0');
+	signal SPsig : unsigned(1 downto 0) := (others => '0');         -- Manipulera stackpekaren
+ 	signal PCsig : std_logic  := '0';                    		-- PC++
+  	signal I     : std_logic := '0'; 				-- T-vippa
   
-  signal intr_1: std_logic := '0';
-  signal intr_2: std_logic := '0';
+	signal intr_1: std_logic := '0';
+	signal intr_2: std_logic := '0';
   
-  -- K1 out
+	-- K1 out
 
-  signal K1_out : unsigned(7 downto 0) := (others => '0');
+	signal K1_out : unsigned(7 downto 0) := (others => '0');
 
-  -- K2 out
+	-- K2 out
 
-  signal K2_out : unsigned(7 downto 0) := (others => '0');
+	signal K2_out : unsigned(7 downto 0) := (others => '0');
   
-  -- K2 minne
+	-- K2 minne
   
-  type K2_mem_t is array(0 to 3) of unsigned(7 downto 0);
+	type K2_mem_t is array(0 to 3) of unsigned(7 downto 0);
   
-  constant intr_vector : unsigned(7 downto 0) := "00010001"; -- 17
+	constant intr_vector : unsigned(7 downto 0) := "00010001"; -- 17
   
-  -- Skriv K2 minne nedanför
-  constant K2_mem_c : K2_mem_t :=   ("00000100", --Direkt addressering
-									 "00000110", --Omedelbar operand
-									 "00001000", --Indirekt addressering
-									 "00001100", --Absolut addressering
-									others => (others => '1')); 
+	-- Skriv K2 minne nedanför
+	constant K2_mem_c : K2_mem_t :=   ("00000100", --Direkt addressering
+					   "00000110", --Omedelbar operand
+					   "00001000", --Indirekt addressering
+					   "00001100", --Absolut addressering
+					   others => (others => '1')); 
   
-  signal K2_mem : K2_mem_t := K2_mem_c;
+	signal K2_mem : K2_mem_t := K2_mem_c;
   
-  -- K1 minne
+	-- K1 minne
   
-  type K1_mem_t is array(0 to 31) of unsigned(7 downto 0);
+	type K1_mem_t is array(0 to 31) of unsigned(7 downto 0);
   
-  -- Skriv K1 minne nedanför
-  constant K1_mem_c : K1_mem_t := 
+	-- Skriv K1 minne nedanför
+	constant K1_mem_c : K1_mem_t := 
 				("00001101", -- LDA   13
 				 "00001110", -- STXR  14
 				 "00011100", -- RTE   28
@@ -202,19 +203,19 @@ architecture Behavioral of cpu is
 				 "00111011", -- SLEEP 59
 				 "00111111", -- LDJOY 63
 				 "01000000", -- SLEEP_LONG 64
-				others => (others => '1')); 
+				 others => (others => '1')); 
   
-  signal K1_mem : K1_mem_t := K1_mem_c; 
+	signal K1_mem : K1_mem_t := K1_mem_c; 
   
-  -- program memory
+	-- program memory
   
-  type p_mem_t is array(0 to 127) of unsigned(18 downto 0);
+	type p_mem_t is array(0 to 127) of unsigned(18 downto 0);
   
-  -- Skriv program minne här 
-  constant p_mem_c : p_mem_t :=  
+	-- Skriv program minne här 
+	constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_000000100011", -- 0  LDV1  11,35	   	 UPPDATERA ADDRESSERNA
-			 b"01101_11_000000100000", -- 1  LDV2  11,32    	 UPPDATERA ADDRESSERNA
+			(b"01100_11_000000101100", -- 0  LDV1  11,44	   	 UPPDATERA ADDRESSERNA
+			 b"01101_11_000000100100", -- 1  LDV2  11,36    	 UPPDATERA ADDRESSERNA
 			 b"01110_11_000001111111", -- 2  LDSP  11,$07F
 			 b"00000_11_000000100000", -- 3	 LDA   11,$020
 			 b"01001_00_000001110110", -- 4	 STORE 00,PacMan_X
@@ -243,40 +244,49 @@ architecture Behavioral of cpu is
 			 b"00000_00_000001110101", -- 27 LDA   00,PacMan_Y
 			 b"00110_00_000001110011", -- 28 ADD   00,PacMan_Speed
 			 b"01001_00_000001110101", -- 29 STORE 00,PacMan_Y
-			 b"10001_11_000000011111", -- 30 SLEEP_LONG 11,$FFF
- 			 b"00101_11_000000000110", -- 31 JMP   11,$006
-			 b"00000_11_000000000000", -- 32 LDA   11,$000
-			 b"01001_00_000001110011", -- 33 STORE 00,PacMan_Speed
-			 b"00010_00_000000000000", -- 34 RTE
-			 b"00000_11_000000000001", -- 35 LDA   11,$001
-			 b"01001_00_000001110011", -- 36 STORE 00,PacMan_Speed
-			 b"00010_00_000000000000", -- 37 RTE
+			 b"10001_11_011011111111", -- 30 SLEEP_LONG 11,$FFF
+			 b"00000_00_000001110110", -- 31 LDA   00,PacMan_X
+			 b"01001_00_000001110010", -- 32 STORE 00,PacMan_Old_X
+			 b"00000_00_000001110101", -- 33 LDA   00,PacMan_Y
+			 b"01001_00_000001110001", -- 34 STORE 00,PacMan_Old_Y
+ 			 b"00101_11_000000000110", -- 35 JMP   11,$006
+			 b"00000_11_000000000000", -- 36 LDA   11,$000
+			 b"01001_00_000001110011", -- 37 STORE 00,PacMan_Speed
+			 b"00000_00_000001110010", -- 38 LDA   00,PacMan_Old_X
+ 			 b"01001_00_000001110110", -- 39 STORE 00,PacMan_X
+			 b"00000_00_000001110001", -- 40 LDA   00,PacMan_Old_Y
+ 			 b"01001_00_000001110101", -- 41 STORE 00,PacMan_Y
+ 		     b"10001_11_011011111111", -- 42 SLEEP_LONG 11,$FFF
+			 b"00010_00_000000000000", -- 43 RTE
+			 b"00000_11_000000000010", -- 44 LDA   11,$002
+			 b"01001_00_000001110011", -- 45 STORE 00,PacMan_Speed
+			 b"00010_00_000000000000", -- 46 RTE
 			 others => (others => '0'));
 
-  signal p_mem : p_mem_t := p_mem_c;
+	signal p_mem : p_mem_t := p_mem_c;
 
-  signal DR       : unsigned(18 downto 0) := (others => '0');     -- Dataregister
-  signal ADR      : unsigned(11 downto 0) := (others => '0');     -- Address register
-  signal PC       : unsigned(11 downto 0) := (others => '0');     -- Program räknaren
-  signal IR       : unsigned(18 downto 0) := (others => '0');     -- Instruktion register
-  signal XR       : unsigned(11 downto 0) := (others => '0');     -- XR
-  signal SP       : unsigned(11 downto 0) := (others => '0');     -- Stack pekare, startar på $FFF
-  signal IV 	  : unsigned(11 downto 0)  := (others => '0');	  -- Avbrotts vektorn, startvärde = 3
-  signal IL       : unsigned(1 downto 0)  := (others => '0');     -- Avbrotts nivå
-  signal IV1	  : unsigned(11 downto 0)  := (others => '0');     -- Avbrotts vektor för nivå 1
-  signal IV2	  : unsigned(11 downto 0)  := (others => '0');     -- Avbrotts vektor för nivå 2
-  signal SR       : unsigned(11 downto 0) := (others => '0');     -- Status register
-  signal AR       : unsigned(11 downto 0) := (others => '0');     -- Ackumulator register
-  signal DATA_BUS : unsigned(18 downto 0) := (others => '0');     -- Bussen 19 bitar
-  signal JOY	  : unsigned(11 downto 0) := (others => '0');	  -- Joystickens position
-  signal OUTPUT_REG1 : unsigned(9 downto 0) := (others => '0');  
-  signal OUTPUT_REG2 : unsigned(9 downto 0) := (others => '0');  
-  signal OUTPUT_REG3 : unsigned(9 downto 0) := (others => '0');  
-  signal OUTPUT_REG4 : unsigned(9 downto 0) := (others => '0');  
+	signal DR       : unsigned(18 downto 0) 	:= (others => '0');     -- Dataregister
+	signal ADR      : unsigned(11 downto 0) 	:= (others => '0');     -- Address register
+	signal PC       : unsigned(11 downto 0) 	:= (others => '0');     -- Program räknaren
+	signal IR       : unsigned(18 downto 0) 	:= (others => '0');     -- Instruktion register
+	signal XR       : unsigned(11 downto 0) 	:= (others => '0');     -- XR
+	signal SP       : unsigned(11 downto 0) 	:= (others => '0');     -- Stack pekare, startar på $FFF
+	signal IV 	  : unsigned(11 downto 0)  	:= (others => '0');	-- Avbrotts vektorn, startvärde = 3
+	signal IL       : unsigned(1 downto 0)  	:= (others => '0');     -- Avbrotts nivå
+	signal IV1	  : unsigned(11 downto 0) 	:= (others => '0');  -- Avbrotts vektor för nivå 1
+	signal IV2	  : unsigned(11 downto 0) 	:= (others => '0');  -- Avbrotts vektor för nivå 2
+	signal SR       : unsigned(11 downto 0) 	:= (others => '0');     -- Status register
+	signal AR       : unsigned(11 downto 0) 	:= (others => '0');     -- Ackumulator register
+	signal DATA_BUS : unsigned(18 downto 0) 	:= (others => '0');     -- Bussen 19 bitar
+	signal JOY	  : unsigned(11 downto 0) 	:= (others => '0');	-- Joystickens position
+	signal OUTPUT_REG1 : unsigned(9 downto 0) 	:= (others => '0');  
+	signal OUTPUT_REG2 : unsigned(9 downto 0) 	:= (others => '0');  
+	signal OUTPUT_REG3 : unsigned(9 downto 0) 	:= (others => '0');  
+	signal OUTPUT_REG4 : unsigned(9 downto 0) 	:= (others => '0');  
   
-  -- Flaggorna
- 
-  signal Z : std_logic := '0';
+	-- Flaggorna
+
+	signal Z : std_logic := '0';
 
 begin 
 
@@ -346,22 +356,22 @@ begin
 		end if;
 	end process;
   
-    -- Kombinatorik för avläsning uM
-    
-    uAddr <= uM(7 downto 0);
-    SPsig <= uM(9 downto 8);
-    RW <= uM(11 downto 10);
-    SEQ <= uM(15 downto 12);
-    Isig <= uM(16);
-    PCsig <= uM(17);
-    FB <= uM(21 downto 18);
-    TB <= uM(25 downto 22);
-    ALUsig <= uM(29 downto 26);
+	-- Kombinatorik för avläsning uM
 
-    -- Installera alla signaler till bussen
+	uAddr <= uM(7 downto 0);
+	SPsig <= uM(9 downto 8);
+	RW <= uM(11 downto 10);
+	SEQ <= uM(15 downto 12);
+	Isig <= uM(16);
+	PCsig <= uM(17);
+	FB <= uM(21 downto 18);
+	TB <= uM(25 downto 22);
+	ALUsig <= uM(29 downto 26);
 
-    DATA_BUS <= IR when (TB = 2) else
-                DR when (TB = 5) else
+	-- Installera alla signaler till bussen
+
+	DATA_BUS <= IR when (TB = 2) else
+		DR when (TB = 5) else
 		"0000000" & PC when (TB = 6) else
 		"0000000" & XR when (TB = 4) else
 		"0000000" & SP when (TB = 3) else
@@ -371,19 +381,19 @@ begin
 		"0000000" & IV1 when (TB = 10) else
 		"0000000" & IV2 when (TB = 11) else
 		"0000000" & JOY when (TB = 13) else
-                (others => '0') when (rst = '1') else
-                (others => '0');
+		(others => '0') when (rst = '1') else
+		(others => '0');
 
-    ADR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          ADR <= (others => '0');
-        elsif FB = 1 then
-          ADR <= DATA_BUS(11 downto 0);
-        end if;
-      end if;
-    end process;
+	ADR_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+	 			 ADR <= (others => '0');
+			elsif FB = 1 then
+				  ADR <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
 	
 	IV1_reg : process(clk)
 	begin
@@ -429,16 +439,16 @@ begin
 		  IV1 			  when (IL = 1)    else
 		  IV2 			  when (IL = 2)    else (others => '0');
 
-    XR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          XR <= (others => '0');
-        elsif FB = 4 then
-          XR <= DATA_BUS(11 downto 0);
-        end if;
-      end if;
-    end process;
+	XR_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				XR <= (others => '0');
+			elsif FB = 4 then
+				XR <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
 	
 	IR_reg : process(clk)
 	begin
@@ -468,39 +478,39 @@ begin
 		end if;
 	end process;
 	
-    SP_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          SP <= (others => '0');
-	elsif FB = 3 then
-          SP <= DATA_BUS(11 downto 0);
-        elsif SPsig = 1 then
-          SP <= SP + 1;
-        elsif SPsig = 2 then
-          SP <= SP - 1;
-        elsif SPsig = 3 then
-          SP <= (others => '0');
-        end if;
-      end if;
-    end process;
+	SP_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				SP <= (others => '0');
+			elsif FB = 3 then
+				SP <= DATA_BUS(11 downto 0);
+			elsif SPsig = 1 then
+			 	SP <= SP + 1;
+			elsif SPsig = 2 then
+			  	SP <= SP - 1;
+			elsif SPsig = 3 then
+			  	SP <= (others => '0');
+			end if;
+		end if;
+	end process;
 
-    DR_reg : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' then
-          DR <= (others => '0');
-        elsif FB = 5 then
-          DR <= "0000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
-	elsif RW = "10" then -- Läs från minnet
-          DR <= p_mem(to_integer(ADR));
-	end if;
-		
-        if RW = "11" then -- Skriv till minnet
-          p_mem(to_integer(ADR)) <= DR;
-        end if;
-      end if;
-    end process;
+	DR_reg : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+			  	DR <= (others => '0');
+			elsif FB = 5 then
+			  	DR <= "0000000" & DATA_BUS(11 downto 0); -- Ta endast adressfältet
+			elsif RW = "10" then -- Läs från minnet
+			  	DR <= p_mem(to_integer(ADR));
+			end if;
+	
+			if RW = "11" then -- Skriv till minnet
+			  	p_mem(to_integer(ADR)) <= DR;
+			end if;
+		end if;
+	end process;
 	
 	-- Fungerar som en T vippa.
 	-- signalen I används som en spärr för att inte kunna få avbrott under -
@@ -533,37 +543,37 @@ begin
 
 	uM <= u_mem(to_integer(uPC));
 
-    -- Installera K1
+   	-- Installera K1
 	  
 	K1_out <= K1_mem(to_integer(IR(18 downto 14)));
 
-    -- Installera K2
+   	-- Installera K2
 	  
 	K2_out <= K2_mem(to_integer(IR(13 downto 12)));
 
-    -- Installera ALU
-    -- Lägg till funktioner eftersom, finns plats för 16 olika
+   	-- Installera ALU
+   	-- Lägg till funktioner eftersom, finns plats för 16 olika
 
-    ALU_func : process(clk)
-    begin
-      if rising_edge(clk) then
-        if rst = '1' 	 then AR <= (others => '0');
-        elsif ALUsig = 1 then AR <= AR + 1;
-        elsif ALUsig = 2 then AR <= AR - 1;
-        elsif ALUsig = 3 then AR <= AR + DATA_BUS(11 downto 0);
-        elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
-		elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
-		elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
-		elsif ALUsig = 7 then AR <= AR(10 downto 0) & '0';   --logical shift left
-		elsif ALUsig = 8 then AR <= '0' & AR(11 downto 1);   --logical shift right
-		elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
-		elsif ALUsig = 10 then AR <= (others => '0');
-		elsif ALUsig = 11 then AR <= (others => '1');
-		elsif ALUsig = 12 then AR <= AR(5 downto 0) * DATA_BUS(5 downto 0);
-		elsif FB = 7      then AR <= DATA_BUS(11 downto 0);
-        end if;
-      end if;
-    end process;
+	ALU_func : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' 	 then AR <= (others => '0');
+			elsif ALUsig = 1 then AR <= AR + 1;
+			elsif ALUsig = 2 then AR <= AR - 1;
+			elsif ALUsig = 3 then AR <= AR + DATA_BUS(11 downto 0);
+			elsif ALUsig = 4 then AR <= AR - DATA_BUS(11 downto 0);
+			elsif ALUsig = 5 then AR <= AR and DATA_BUS(11 downto 0);
+			elsif ALUsig = 6 then AR <= AR or DATA_BUS(11 downto 0);
+			elsif ALUsig = 7 then AR <= AR(10 downto 0) & '0';   --logical shift left
+			elsif ALUsig = 8 then AR <= '0' & AR(11 downto 1);   --logical shift right
+			elsif ALUsig = 9 then AR <= not DATA_BUS(11 downto 0);
+			elsif ALUsig = 10 then AR <= (others => '0');
+			elsif ALUsig = 11 then AR <= (others => '1');
+			elsif ALUsig = 12 then AR <= AR(5 downto 0) * DATA_BUS(5 downto 0);
+			elsif FB = 7      then AR <= DATA_BUS(11 downto 0);
+			end if;
+		end if;
+	end process;
 		 
 	-- Sätt flaggorna 	 
 	
