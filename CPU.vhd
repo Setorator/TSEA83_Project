@@ -124,8 +124,8 @@ architecture Behavioral of cpu is
 				 b"0000_0000_0000_0_0_0000_00_00_00000000", -- BLANK RAD					60
 				 b"0010_0000_0000_0_0_0100_00_00_00111101", -- AR <= AR - 1					61
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						62
-				 -- OP = 10000, LDJOY M,ADDR , XR <= JOY
-				 b"0000_1101_0100_0_1_0011_00_00_00000000", -- XR <= JOY					63
+				 -- OP = 10000, LDJOY M,ADDR , AR <= JOY
+				 b"0000_1101_0111_0_1_0011_00_00_00000000", -- AR <= JOY					63
 				 -- OP = 10001, SLEEP_LONG M,ADDR , SLEEP ADDR times
 				 b"0000_0101_0111_0_0_0000_00_00_00000000", -- AR <= DR						64
 				 b"0000_0101_0100_0_0_0000_00_00_00000000", -- XR <= DR						65
@@ -141,6 +141,12 @@ architecture Behavioral of cpu is
 				 b"0000_0101_1111_0_1_0011_00_00_00000000", -- IV3 <= DR					73 
 				 -- OP = 10100, AND M,ADDR AR <= AR AND DATA_BUS						
 				 b"0101_0101_0111_0_1_0011_00_00_00000000", -- AR <= AR AND DR					74
+				 -- OP = 10101, ADD_RND M,ADDR , AR <= AR + RN
+				 b"1111_0000_0000_0_1_0011_00_00_00000000", -- AR <= AR + RN					75
+				 -- OP = 10110, ADD_X M,ADDR   , SPECIAL FUNKTION, KOLLA ALU:n, ALUsig = 13
+				 b"1101_0101_0111_0_1_0011_00_00_00000000", --							76
+				 -- OP = 10111, ADD_Y M,ADDR   , SPECIAL FUNKTION, KOLLA ALU:n, ALUsig = 14
+				 b"1110_0101_0111_0_1_0011_00_00_00000000", -- 							77				 
 				 others => (others => '1'));
 
 	signal u_mem : u_mem_t := u_mem_c;
@@ -214,6 +220,9 @@ architecture Behavioral of cpu is
 				 "01001000", -- LDIC 72
 				 "01001001", -- LDV3 73
 				 "01001010", -- AND  74
+				 "01001011", -- ADD_RND 75
+				 "01001100", -- ADD_X 76
+				 "01001101", -- ADD_Y 77
 				 others => (others => '1')); 
   
 	signal K1_mem : K1_mem_t := K1_mem_c; 
@@ -225,9 +234,9 @@ architecture Behavioral of cpu is
 	-- Skriv program minne här 
 	constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_000001010111", -- 0  LDV1  11,87	   	 UPPDATERA ADDRESSERNA
-			 b"01101_11_000001001110", -- 1  LDV2  11,78    	 UPPDATERA ADDRESSERNA
-			 b"10011_11_000001000111", -- 2  LDV3  11,71		 UPPDATERA ADDRESSERNA
+			(b"01100_11_000000111001", -- 0  LDV1  11,57	   	 UPPDATERA ADDRESSERNA
+			 b"01101_11_000000110000", -- 1  LDV2  11,48    	 UPPDATERA ADDRESSERNA
+			 b"10011_11_000000101001", -- 2  LDV3  11,41		 UPPDATERA ADDRESSERNA
 			 b"01110_11_000001111111", -- 3  LDSP  11,$07F		 
 			 b"00000_11_000000100000", -- 4	 LDA   11,$020		 
 			 b"01001_00_000001110110", -- 5	 STORE 00,PacMan_X
@@ -235,86 +244,57 @@ architecture Behavioral of cpu is
 			 b"00000_11_000100110000", -- 7  LDA   11,GHOST_START_X
 			 b"01001_00_000001110000", -- 8  STORE 00,GHOST_X
 			 b"00000_11_000011100000", -- 9  LDA   11,GHOST_START_Y
-			 b"01001_00_000001101111", -- 10  STORE 00,GHOST_Y
+			 b"01001_00_000001101111", -- 10 STORE 00,GHOST_Y
 			 b"00000_11_000000000001", -- 11 LDA   11,$001
 			 b"01001_00_000001101110", -- 12 STORE 00,GHOST_DIR
-			 b"10000_11_000000000000", -- 13 LDJOY 00,$000			LOAD_JOYSTICK
-			 b"00000_11_000000000000", -- 14 LDA   11,left			TEST_LEFT
-			 b"01011_11_000000010100", -- 15 NEQU  11,TEST_UP
-			 b"00000_00_000001110110", -- 16 LDA   00,PacMan_X
-			 b"01000_00_000001110011", -- 17 SUB   00,PacMan_Speed
-			 b"01001_00_000001110110", -- 18 STORE 00,PacMan_X
-			 b"00101_11_000000100101", -- 19 JMP   11,NEXT_STEP
-			 b"00000_11_000000000001", -- 20 LDA   11,up			TEST_UP
-			 b"01011_11_000000011010", -- 21 NEQU  11,TEST_RIGHT
-			 b"00000_00_000001110101", -- 22 LDA   00,PacMan_Y
-			 b"01000_00_000001110011", -- 23 SUB   00,PacMan_Speed
-			 b"01001_00_000001110101", -- 24 STORE 00,PacMan_Y
-			 b"00101_11_000000100101", -- 25 JMP   11,NEXT_STEP
-			 b"00000_11_000000000010", -- 26 LDA   01,right			TEST_RIGHT
-			 b"01011_11_000000100000", -- 27 NEQU  11,TEST_DOWN
-			 b"00000_00_000001110110", -- 28 LDA   00,PacMan_X
-			 b"00110_00_000001110011", -- 29 ADD   00,PacMan_Speed
-			 b"01001_00_000001110110", -- 30 STORE 00,PacMan_X
-			 b"00101_11_000000100101", -- 31 JMP   11,NEXT_STEP
-			 b"00000_11_000000000011", -- 32 LDA   01,down			TEST_DOWN
-			 b"01011_11_000000100101", -- 33 NEQU  11,NEXT_STEP
+			 b"00000_11_000000000000", -- 13 LDA   11,$000
+			 b"01001_00_000001101101", -- 14 STORE 00,GHOST_SPEED
+			 b"10000_11_000000000000", -- 15 LDJOY 11,$000			LOAD_JOYSTICK
+			 b"01001_00_000001110100", -- 16 STORE 00,PacMan_DIR
+			 b"00100_00_000001110011", -- 17 LDXR  00,PacMan_SPEED
+			 b"00000_00_000001110110", -- 18 LDA   00,PacMan_X		START_PAC_ADD
+			 b"10110_00_000001110100", -- 19 ADD_X 00,PacMan_DIR
+			 b"01001_00_000001110110", -- 20 STORE 00,PacMan_X
+			 b"00000_00_000001110101", -- 21 LDA   00,PacMan_Y
+			 b"10111_00_000001110100", -- 22 ADD_Y 00,PacMan_DIR
+			 b"01001_00_000001110101", -- 23 STORE 00,PacMan_Y		END_PAC_ADD
+			 b"00100_00_000001101101", -- 24 LDXR  00,GHOST_SPEED		START_GHOST_ADD
+			 b"00000_00_000001110000", -- 25 LDA   00,GHOST_X
+			 b"10110_00_000001101110", -- 26 ADD_X 00,GHOST_DIR
+			 b"01001_00_000001110000", -- 27 STORE 00,GHOST_X
+			 b"00000_00_000001101111", -- 28 LDA   00,GHOST_Y
+			 b"10111_00_000001101110", -- 29 ADD_Y 00,GHOST_DIR
+			 b"01001_00_000001101111", -- 30 STORE 00,GHOST_Y
+			 b"10001_11_011000011111", -- 31 SLEEP_LONG 11,$61F		SLEEP
+			 b"00000_00_000001110110", -- 32 LDA   00,PacMan_X
+			 b"01001_00_000001110010", -- 33 STORE 00,PacMan_Old_X
 			 b"00000_00_000001110101", -- 34 LDA   00,PacMan_Y
-			 b"00110_00_000001110011", -- 35 ADD   00,PacMan_Speed
-			 b"01001_00_000001110101", -- 36 STORE 00,PacMan_Y
-			 b"00100_00_000001101110", -- 37 LDXR  00,GHOST_DIR		MOVE GHOST (NEXT_STEP)
-			 b"00000_11_000000000000", -- 38 LDA   11,$000
-			 b"01011_11_000000101100", -- 39 NEQU  11,TEST_UP
-			 b"00000_00_000001110000", -- 40 LDA   00,GHOST_X
-			 b"01000_11_000000000010", -- 41 SUB   11,$002
-			 b"01001_00_000001110000", -- 42 STORE 00,GHOST_X
-			 b"00101_11_000000111101", -- 43 JMP   11,NEXT_STEP
-			 b"00000_11_000000000001", -- 44 LDA   11,$001			TEST_UP
-			 b"01011_11_000000110010", -- 45 NEQU  11,TEST_RIGHT
-			 b"00000_00_000001101111", -- 46 LDA   00,GHOST_Y
-			 b"01000_11_000000000010", -- 47 SUB   11,$002
-			 b"01001_00_000001101111", -- 48 STORE 00,GHOST_Y
-			 b"00101_11_000000111101", -- 49 JMP   11,NEXT_STEP
-			 b"00000_11_000000000010", -- 50 LDA   11,$002			TEST_RIGHT
-			 b"01011_11_000000111000", -- 51 NEQU  11,TEST_DOWN
-			 b"00000_00_000001110000", -- 52 LDA   00,GHOST_X
-			 b"00110_11_000000000010", -- 53 ADD   11,$002
-			 b"01001_00_000001110000", -- 54 STORE 00,GHOST_X
-			 b"00101_11_000000111101", -- 55 JMP   11,NEXT_STEP
-			 b"00000_11_000000000011", -- 56 LDA   11,$003			TEST_DOWN
-			 b"01011_11_000000111101", -- 57 NEQU  11,NEXT_STEP
-			 b"00000_00_000001101111", -- 58 LDA   00,GHOST_Y
-			 b"00110_11_000000000010", -- 59 ADD   11,$002
-			 b"01001_00_000001101111", -- 60 STORE 00,GHOST_Y
-			 b"10001_11_011000011111", -- 61 SLEEP_LONG 11,$61F		NEXT_STEP
-			 b"00000_00_000001110110", -- 62 LDA   00,PacMan_X
-			 b"01001_00_000001110010", -- 63 STORE 00,PacMan_Old_X
-			 b"00000_00_000001110101", -- 64 LDA   00,PacMan_Y
-			 b"01001_00_000001110001", -- 65 STORE 00,PacMan_Old_Y
-			 b"00000_00_000001110000", -- 66 LDA   00,GHOST_X
-			 b"01001_00_000001101100", -- 67 STORE 00,GHOST_OLD_X
-			 b"00000_00_000001101111", -- 68 LDA   00,GHOST_Y
-			 b"01001_00_000001101011", -- 69 STORE 00,GHOST_OLD_Y
- 			 b"00101_11_000000001101", -- 70 JMP   11,$00D			JUMP TO LOAD_JOYSTICK
-			 b"00000_11_000000000000", -- 71 LDA   11,$000			AVBROTT 3 STANNA PACMAN
-			 b"01001_00_000001110011", -- 72 STORE 00,PacMan_Speed
-			 b"00000_00_000001110010", -- 73 LDA   00,PacMan_Old_X
- 			 b"01001_00_000001110110", -- 74 STORE 00,PacMan_X
-			 b"00000_00_000001110001", -- 75 LDA   00,PacMan_Old_Y
- 			 b"01001_00_000001110101", -- 76 STORE 00,PacMan_Y
-			 b"00010_00_000000000000", -- 77 RTE
-			 b"00000_00_000001101110", -- 78 LDA   00,GHOST_DIR		AVBROTT 2 STANNA GHOST
-			 b"00110_11_000000000001", -- 79 ADD   11,$001
-			 b"10100_11_000000000011", -- 80 AND   11,$FFC
-			 b"01001_00_000001101110", -- 81 STORE 00,GHOST_DIR
-			 b"00000_00_000001101100", -- 82 LDA   00,GHOST_OLD_X
-			 b"01001_00_000001110000", -- 83 STORE 00,GHOST_X
-			 b"00000_00_000001101011", -- 84 LDA   00,GHOST_OLD_Y
-			 b"01001_00_000001101111", -- 85 STORE 00,GHOST_Y
-			 b"00010_00_000000000000", -- 86 RTE	
-			 b"00000_11_000000000010", -- 87 LDA   11,$002			AVBROTT 1 STARTA PACMAN
-			 b"01001_00_000001110011", -- 88 STORE 00,PacMan_Speed
-			 b"00010_00_000000000000", -- 89 RTE
+			 b"01001_00_000001110001", -- 35 STORE 00,PacMan_Old_Y
+			 b"00000_00_000001110000", -- 36 LDA   00,GHOST_X
+			 b"01001_00_000001101100", -- 37 STORE 00,GHOST_OLD_X
+			 b"00000_00_000001101111", -- 38 LDA   00,GHOST_Y
+			 b"01001_00_000001101011", -- 39 STORE 00,GHOST_OLD_Y
+ 			 b"00101_11_000000001111", -- 40 JMP   11,$00F			JUMP TO LOAD_JOYSTICK
+			 b"00000_11_000000000000", -- 41 LDA   11,$000			AVBROTT 3 STANNA PACMAN
+			 b"01001_00_000001110011", -- 42 STORE 00,PacMan_Speed
+			 b"00000_00_000001110010", -- 43 LDA   00,PacMan_Old_X
+ 			 b"01001_00_000001110110", -- 44 STORE 00,PacMan_X
+			 b"00000_00_000001110001", -- 45 LDA   00,PacMan_Old_Y
+ 			 b"01001_00_000001110101", -- 46 STORE 00,PacMan_Y
+			 b"00010_00_000000000000", -- 47 RTE
+			 b"00000_00_000001101110", -- 48 LDA   00,GHOST_DIR		AVBROTT 2 ÄNDRA RIKTNING GHOST
+			 b"00110_11_000000000101", -- 49 ADD   11,$005
+			 b"10100_11_000000000011", -- 50 AND   11,$FFC
+			 b"01001_00_000001101110", -- 51 STORE 00,GHOST_DIR
+			 b"00000_00_000001101100", -- 52 LDA   00,GHOST_OLD_X
+			 b"01001_00_000001110000", -- 53 STORE 00,GHOST_X
+			 b"00000_00_000001101011", -- 54 LDA   00,GHOST_OLD_Y
+			 b"01001_00_000001101111", -- 55 STORE 00,GHOST_Y
+			 b"00010_00_000000000000", -- 56 RTE	
+			 b"00000_11_000000000010", -- 57 LDA   11,$002			AVBROTT 1 STARTA PACMAN
+			 b"01001_00_000001110011", -- 58 STORE 00,PacMan_SPEED
+			 b"01001_00_000001101101", -- 59 STORE 00,GHOST_SPEED
+			 b"00010_00_000000000000", -- 60 RTE
 			 others => (others => '0'));
 
 	signal p_mem : p_mem_t := p_mem_c;
@@ -335,6 +315,7 @@ architecture Behavioral of cpu is
 	signal AR       	: unsigned(11 downto 0) 		:= (others => '0');     -- Ackumulator register
 	signal DATA_BUS 	: unsigned(18 downto 0) 		:= (others => '0');     -- Bussen 19 bitar
 	signal JOY	  	: unsigned(11 downto 0) 		:= (others => '0');	-- Joystickens position
+	signal RN		: unsigned(11 downto 0)			:= (others => '0');
 	signal OUTPUT_REG1 	: unsigned(9 downto 0) 			:= (others => '0');  
 	signal OUTPUT_REG2 	: unsigned(9 downto 0) 			:= (others => '0');  
 	signal OUTPUT_REG3 	: unsigned(9 downto 0) 			:= (others => '0');  
@@ -448,6 +429,20 @@ begin
 		"0000000" & IV3 when (TB = 15)  else
 		(others => '0') when (rst = '1')else
 		(others => '0');
+
+
+	-- Ett register som alltid innehåller ett random tal
+
+	RN_reg  : process(clk)
+	begin
+		if rising_edge(clk) then
+			if rst = '1' then
+				RN <= (others => '0');
+			else
+				RN <= RN + 1;
+			end if;
+		end if;
+	end process;
 
 	ADR_reg : process(clk)
 	begin
@@ -677,12 +672,20 @@ begin
 				AR <= (others => '1');
 			elsif ALUsig = 12 then 
 				AR <= AR(5 downto 0) * DATA_BUS(5 downto 0);
-			--elsif ALUsig = 13 then
-			--	if ((not DATA_BUS(1)) and (not DATA_BUS(0))) = '1' then 
-			--		AR <= AR - 1;
-			--	elsif ((not DATA_BUS(0)) and DATA_BUS(1)) = '1'	then 
-			--		AR <= AR + 1;
-			--	end if;
+			elsif ALUsig = 13 then -- Speciella funktioner för att plussa på joystickens riktning direkt på en X-koordinat
+				if ((not DATA_BUS(1)) and (not DATA_BUS(0))) = '1' then 
+					AR <= AR - XR;
+				elsif ((not DATA_BUS(0)) and DATA_BUS(1)) = '1'	then 
+					AR <= AR + XR;
+				end if;
+			elsif ALUsig = 14 then -- Speciella funktioner för att plussa på joystickens riktning direkt på en Y-koordinat
+				if ((not DATA_BUS(1)) and DATA_BUS(0)) = '1' then
+					AR <= AR - XR;
+				elsif (DATA_BUS(1) and DATA_BUS(0)) = '1' then
+					AR <= AR + XR;
+				end if;
+			elsif ALUsig = 15 then -- Plussa på ett helt random tal
+				AR <= AR + RN;
 			elsif FB = 7 then 
 				AR <= DATA_BUS(11 downto 0);
 			end if;
