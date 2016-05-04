@@ -12,32 +12,34 @@ use IEEE.NUMERIC_STD.ALL;                        -- IEEE library for the unsigne
 -- entity
 entity PIX_GEN is
 	port (
-		clk            : in std_logic;                         -- system clock
-    	rst            : in std_logic;                         -- reset
+		clk            			: in std_logic;                       				-- system clock
+    	rst           				: in std_logic;                        			-- reset
     	
 		-- Read
-		read_data					: in std_logic_vector(1 downto 0);		-- Data to be read from RAM
-		read_enable					: out std_logic;								-- enables RAM read
- 		read_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
+		read_data					: in std_logic_vector(1 downto 0);					-- Data to be read from RAM
+		read_enable					: out std_logic;											-- enables RAM read
+ 		read_addr					: out unsigned(10 downto 0);							-- Adress to the tile in RAM
  		
  		-- Write
- 		write_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
-		write_enable				: out std_logic;								-- enables RAM write
-		write_data					: out std_logic_vector(1 downto 0);		-- Data to be written to RAM    	
+ 		write_addr					: out unsigned(10 downto 0);							-- Adress to the tile in RAM
+		write_enable				: out std_logic;											-- enables RAM write
+		write_data					: out std_logic_vector(1 downto 0);					-- Data to be written to RAM    	
     	
 
-	 	Pac_Man_X		: in unsigned(9 downto 0);					 -- Pac_Man X-koord in pixel size		
-	 	Pac_Man_Y		: in unsigned(9 downto 0);					 -- Pac_Man Y-koord in pixel size	
-		Ghost_X			: in unsigned(9 downto 0);
-		Ghost_Y			: in unsigned(9 downto 0);	
-    	Hsync          : out std_logic;                        -- horizontal sync
-    	Vsync          : out std_logic;                        -- vertical sync
-    	vgaRed         : out std_logic_vector(2 downto 0);     -- VGA red
-    	vgaGreen       : out std_logic_vector(2 downto 0);     -- VGA green
-    	vgaBlue        : out std_logic_vector(2 downto 1);     -- VGA blue
-    	colision       : out std_logic;	                	-- Colisions
-	colision2      : out std_logic;				-- Ghost colision	
-	intr_code      : out unsigned(3 downto 0)
+	 	Pac_Man_X					: in unsigned(9 downto 0);					 			-- Pac_Man X-koord in pixel size		
+	 	Pac_Man_Y					: in unsigned(9 downto 0);					 			-- Pac_Man Y-koord in pixel size	
+		Ghost_X						: in unsigned(9 downto 0);
+		Ghost_Y						: in unsigned(9 downto 0);	
+    	Hsync         				: out std_logic;                        			-- horizontal sync
+    	Vsync          			: out std_logic;                        			-- vertical sync
+    	vgaRed         			: out std_logic_vector(2 downto 0);     			-- VGA red
+    	vgaGreen       			: out std_logic_vector(2 downto 0);     			-- VGA green
+    	vgaBlue        			: out std_logic_vector(2 downto 1);     			-- VGA blue
+    	colision       			: out std_logic;	                					-- Colisions
+		colision2      			: out std_logic;											-- Ghost colision	
+		intr_code      			: out unsigned(3 downto 0);
+		
+		display						: out unsigned(15 downto 0)
 	);
          
 end PIX_GEN;
@@ -59,11 +61,6 @@ architecture Behavioral of PIX_GEN is
                                                  										-- 25 MHz clock
   	signal Clk25			: std_logic := '0';		 										-- One pulse width 25 MHz sign
   	
-  	-- För testning av rörelse för Pac-Man
---  	signal SpeedDiv		: unsigned(19 downto 0) := (others => '0');
---  	signal Speed			: std_logic := '0';
-  	----------------------
-  	
 	signal tileData     	: std_logic_vector(7 downto 0) := (others => '0');		-- Tile pixel data
 	signal tileAddr		: unsigned(10 downto 0) := (others => '0');				-- Tile address							-- NOT NEEDED???
 	
@@ -71,9 +68,9 @@ architecture Behavioral of PIX_GEN is
 	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
 	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
 	
-	--signal Ghost_X		: unsigned(9 downto 0)	:= "0100110000"; -- 0				-- Ghosts X-koord in pixel size
-	--signal Ghost_Y		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts Y-koord in pixel si
-	
+	signal food1			: unsigned(3 downto 0) 	:= "0000";							-- ental
+	signal food10			: unsigned(3 downto 0) 	:= "0000";							-- tiotal
+	signal food100			: unsigned(3 downto 0) 	:= "0000";							-- hundratal   -- Max is 368
   
   	-- Tile memory type
   	type tile_t is array (0 to 1023) of unsigned(1 downto 0);  
@@ -330,12 +327,44 @@ begin
 				write_enable <= '1';
 				write_addr <= tileY & tileX;
 				write_data <= "00"; 			-- Floor tile
-			else
+				
+				if food1 > 8 then
+					if food10 > 8 then
+						if food100 > 8 then
+							food1 <= "0000";
+							food10 <= "0000";
+							food100 <= "0000";
+						else
+							food100 <= food100 + 1;
+							food10 <= "0000";
+						end if;
+					else
+						food10 <= food10 + 1;
+						food1 <= "0000";
+					end if; 
+				else
+					food1 <= food1 + 1;
+				end if;
+				
+			else 
 				write_enable <= '0';
 			end if;
 		end if;
 	end process;
+	
+----------------------------------------------------------------
+--------------------------LED-----------------------------------
+----------------------------------------------------------------
+
+
+	display(15 downto 12) <= "0000";
+	display(11 downto 8)	<=	food100;
+	display(7 downto 4) <= food10;
+	display(3 downto 0) <= food1;
 				
+----------------------------------------------------------------
+----------------------------------------------------------------
+----------------------------------------------------------------
 
 
 
