@@ -316,7 +316,7 @@ begin
 ----------------------------------------------------------------
   					
   	colision2 <= '1' when ((rst = '0') and (tileData = X"02") and (PacPixel /= X"00")) else '0';
-	colision <=  '1' when ((rst = '0') and (tileData = X"02") and (GhostPixel /= X"00")) else '0';		
+	colision <=  '1' when ((rst = '0') and (tileData = X"E0") and (TilePixel = X"02")) else '0';		
 	intr_code <= "0000";			
 
 ----------------------------------------------------------------
