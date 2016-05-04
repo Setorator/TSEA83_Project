@@ -38,6 +38,7 @@ architecture Behavioral of Pac_Man is
 			rst							: in std_logic;			-- Reset button
 			intr							: in std_logic;			-- Interupt signal
 			intr2							: in std_logic;
+			intr3							: in std_logic;
 			intr_code					: in unsigned(3 downto 0);
 			joystick_pos				: in unsigned(1 downto 0);
 			output1						: out unsigned(9 downto 0);
@@ -50,28 +51,31 @@ architecture Behavioral of Pac_Man is
 
 	component PIX_GEN
 		port (
-			clk                     : in std_logic;                      	-- System clock
+			clk                     : in std_logic;                      		-- System clock
 			rst                     : in std_logic;                    		-- reset button
 			
 			-- Read
-			read_data					: in std_logic_vector(1 downto 0);		-- Data to be read from RAM
-			read_enable					: out std_logic;								-- enables RAM read
-	 		read_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
+			read_data		: in std_logic_vector(1 downto 0);		-- Data to be read from RAM
+			read_enable		: out std_logic;				-- enables RAM read
+	 		read_addr		: out unsigned(10 downto 0);			-- Adress to the tile in RAM
 	 		
 	 		-- Write
-	 		write_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
-			write_enable				: out std_logic;								-- enables RAM write
-			write_data					: out std_logic_vector(1 downto 0);		-- Data to be written to RAM
-			
-				 		
-	 		Pac_Man_X					: in unsigned(9 downto 0);					-- Pac_Mans X-pixel koords
-			Pac_Man_Y					: in unsigned(9 downto 0);					-- Pac_Mans Y-pixel koords  
-			Hsync                   : out std_logic;                     	-- horizontal sync
-			Vsync                   : out std_logic;                     	-- vertical sync
-			vgaRed                  : out std_logic_vector(2 downto 0);  	-- VGA red
-			vgaGreen                : out std_logic_vector(2 downto 0);  	-- VGA green
-			vgaBlue                 : out std_logic_vector(2 downto 1);  	-- VGA blue
-			colision						: out std_logic								-- Interupt 
+	 		write_addr		: out unsigned(10 downto 0);			-- Adress to the tile in RAM
+			write_enable		: out std_logic;				-- enables RAM write
+			write_data		: out std_logic_vector(1 downto 0);		-- Data to be written to RAM
+							 		
+	 		Pac_Man_X		: in unsigned(9 downto 0);			-- Pac_Mans X-pixel koords
+			Pac_Man_Y		: in unsigned(9 downto 0);			-- Pac_Mans Y-pixel koords  
+			Ghost_X			: in unsigned(9 downto 0);			-- Ghost X poss
+			Ghost_Y			: in unsigned(9 downto 0);			-- Ghost Y poss
+			Hsync                   : out std_logic;                     		-- horizontal sync
+			Vsync                   : out std_logic;                     		-- vertical sync
+			vgaRed                  : out std_logic_vector(2 downto 0);  		-- VGA red
+			vgaGreen                : out std_logic_vector(2 downto 0);  		-- VGA green
+			vgaBlue                 : out std_logic_vector(2 downto 1);  		-- VGA blue
+			intr_code		: out unsigned(3 downto 0);			-- intr_code
+			colision		: out std_logic;				-- Interupt 
+			colision2		: out std_logic					-- Ghost colision
 		);
   	end component;
   
@@ -98,21 +102,22 @@ architecture Behavioral of Pac_Man is
 	end component;
 		
   	
-	signal intr							: std_logic;					-- Signal between CPU and PIX_GEN
-	signal intr2 						: std_logic;
-	signal intr_code					: unsigned(3 downto 0)  := (others => '0');
+	signal intr					: std_logic;					-- Signal between CPU and PIX_GEN
+	signal intr2 					: std_logic;
+	signal intr3					: std_logic;
+	signal intr_code				: unsigned(3 downto 0)  := (others => '0');
 	signal joystick_pos				: unsigned(1 downto 0)	:= "10";
-	signal output1						: unsigned(9 downto 0)  := (others => '0');
+	signal output1					: unsigned(9 downto 0)  := (others => '0');
 	signal output2 					: unsigned(9 downto 0) 	:= (others => '0');
-	signal output3						: unsigned(9 downto 0) 	:= (others => '0');
-	signal output4						: unsigned(9 downto 0)  := (others => '0');
+	signal output3					: unsigned(9 downto 0) 	:= (others => '0');
+	signal output4					: unsigned(9 downto 0)  := (others => '0');
 
 	signal read_enable				: std_logic := '0';
 	signal write_enable				: std_logic := '0';
-	signal read_addr					: unsigned(10 downto 0);
-	signal write_addr					: unsigned(10 downto 0);
-	signal read_data					: std_logic_vector(1 downto 0);
-	signal write_data					: std_logic_vector(1 downto 0);
+	signal read_addr				: unsigned(10 downto 0);
+	signal write_addr				: unsigned(10 downto 0);
+	signal read_data				: std_logic_vector(1 downto 0);
+	signal write_data				: std_logic_vector(1 downto 0);
 
 
 begin 
@@ -122,30 +127,29 @@ begin
 
 	PACMAN_controller : process(clk)
 	begin
-		if rising_edge(clk) then		
-			if btns = '1' 	 then joystick_pos <= "00";
-			elsif btnl = '1' then joystick_pos <= "00";
-			elsif btnu = '1' then joystick_pos <= "01";
-			elsif btnr = '1' then joystick_pos <= "10";
-			elsif btnd = '1' then joystick_pos <= "11";
-			end if;
-		end if;
-	end process;
-
-	INTR2_controller : process(clk)
-	begin
-		if rising_edge(clk) then			
-			if btns = '1' then
-				intr <= '0';			
-			elsif (((btnl = '1') or (btnu = '1') or (btnr = '1') or (btnd = '1')) and (intr = '0')) then
+		if rising_edge(clk) then	
+			if btns = '1' then 
+				joystick_pos <= "00";
+				intr <= '0';
+			elsif btnl = '1' and joystick_pos /= "00" then 
+				joystick_pos <= "00";
 				intr <= '1';
-			else	
+			elsif btnu = '1' and joystick_pos /= "01" then 
+				joystick_pos <= "01";
+				intr <= '1';
+			elsif btnr = '1' and joystick_pos /= "10" then 
+				joystick_pos <= "10";
+				intr <= '1';
+			elsif btnd = '1' and joystick_pos /= "11" then 
+				joystick_pos <= "11";
+				intr <= '1';
+			else
 				intr <= '0';
 			end if;
 		end if;
 	end process;
 
-	U0 : CPU port map(clk=>clk, rst=>btns, intr=>intr, intr2=>intr2, intr_code => intr_code, joystick_pos => joystick_pos,
+	U0 : CPU port map(clk=>clk, rst=>btns, intr=>intr, intr2=>intr2, intr3=>intr3, intr_code => intr_code, joystick_pos => joystick_pos,
 				output1 => output1, output2 => output2, output3 => output3, output4 => output4);
 							 
 	U1 : RAM port map(clk=>clk, we=>write_enable, data1=>write_data, x1=>write_addr(5 downto 0), y1=>write_addr(10 downto 6), 
@@ -163,7 +167,10 @@ begin
 				vgaGreen(0)=>vgaGreen(0),
 				vgaBlue(2)=>vgaBlue(2),
 				vgaBlue(1)=>vgaBlue(1),
-				colision=>intr2);
+				colision=>intr2, 
+				colision2=>intr3,
+				intr_code => intr_code,
+				Ghost_X => output3, Ghost_Y => output4);
 
 
   

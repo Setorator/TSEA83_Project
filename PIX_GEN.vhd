@@ -27,13 +27,17 @@ entity PIX_GEN is
     	
 
 	 	Pac_Man_X		: in unsigned(9 downto 0);					 -- Pac_Man X-koord in pixel size		
-	 	Pac_Man_Y		: in unsigned(9 downto 0);					 -- Pac_Man Y-koord in pixel size		
+	 	Pac_Man_Y		: in unsigned(9 downto 0);					 -- Pac_Man Y-koord in pixel size	
+		Ghost_X			: in unsigned(9 downto 0);
+		Ghost_Y			: in unsigned(9 downto 0);	
     	Hsync          : out std_logic;                        -- horizontal sync
     	Vsync          : out std_logic;                        -- vertical sync
     	vgaRed         : out std_logic_vector(2 downto 0);     -- VGA red
     	vgaGreen       : out std_logic_vector(2 downto 0);     -- VGA green
     	vgaBlue        : out std_logic_vector(2 downto 1);     -- VGA blue
-    	colision       : out std_logic	                		 -- Colisions
+    	colision       : out std_logic;	                	-- Colisions
+	colision2      : out std_logic;				-- Ghost colision	
+	intr_code      : out unsigned(3 downto 0)
 	);
          
 end PIX_GEN;
@@ -67,8 +71,8 @@ architecture Behavioral of PIX_GEN is
 	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
 	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
 	
-	signal Ghost_X		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts X-koord in pixel size
-	signal Ghost_Y		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts Y-koord in pixel si
+	--signal Ghost_X		: unsigned(9 downto 0)	:= "0100110000"; -- 0				-- Ghosts X-koord in pixel size
+	--signal Ghost_Y		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts Y-koord in pixel si
 	
   
   	-- Tile memory type
@@ -303,15 +307,17 @@ begin
   				
   
   
-  	tileData <= TilePixel when (TilePixel /= "00000000") else
-  					GhostPixel when (GhostPixel /= "00000000") else PacPixel;
+  	tileData <= GhostPixel when (GhostPixel /= "00000000") else
+  			TilePixel when (TilePixel /= "00000000") else PacPixel;
   					
 
 ----------------------------------------------------------------
 -------------------------COLISION-------------------------------
 ----------------------------------------------------------------
   					
-  	colision <= '1' when (rst = '0') and (tileData = X"02") and (PacPixel /= X"00") else '0'; 																									
+  	colision2 <= '1' when ((rst = '0') and (tileData = X"02") and (PacPixel /= X"00")) else '0';
+	colision <=  '1' when ((rst = '0') and (tileData = X"02") and (GhostPixel /= X"00")) else '0';		
+	intr_code <= "0000";			
 
 ----------------------------------------------------------------
 ---------------------------EAT_FOOD-----------------------------
