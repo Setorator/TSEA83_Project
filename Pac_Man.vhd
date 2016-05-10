@@ -26,7 +26,7 @@ entity Pac_Man is
 		btnd								: 	in std_logic;
 		btns								:  in std_logic;  								-- Reset button
 		
-		seg 								: out std_logic_vector(7 downto 0);			-- Which segments to be litt.
+		seg 								: out std_logic_vector(0 to 7);			-- Which segments to be litt.
       an 								: out std_logic_vector(3 downto 0)			-- which display to be litt.
 	 );
     
@@ -67,19 +67,28 @@ architecture Behavioral of Pac_Man is
 			write_enable				: out std_logic;									-- enables RAM write
 			write_data					: out std_logic_vector(1 downto 0);			-- Data to be written to RAM
 							 		
+			-- Pac_Man data
 	 		Pac_Man_X					: in unsigned(9 downto 0);						-- Pac_Mans X-pixel koords
 			Pac_Man_Y					: in unsigned(9 downto 0);						-- Pac_Mans Y-pixel koords  
+			Pac_Man_direction			: in unsigned(1 downto 0);						-- Direction of Pac_Mans movement 
+			
+			-- Ghost data
 			Ghost_X						: in unsigned(9 downto 0);						-- Ghost X poss
 			Ghost_Y						: in unsigned(9 downto 0);						-- Ghost Y poss
+			
+			-- VGA-signals
 			Hsync                   : out std_logic;                     		-- horizontal sync
 			Vsync                   : out std_logic;                     		-- vertical sync
 			vgaRed                  : out std_logic_vector(2 downto 0);  		-- VGA red
 			vgaGreen                : out std_logic_vector(2 downto 0);  		-- VGA green
 			vgaBlue                 : out std_logic_vector(2 downto 1);  		-- VGA blue
+			
+			-- Interuption
 			intr_code					: out unsigned(3 downto 0);					-- intr_code
 			colision						: out std_logic;									-- Interupt 
 			colision2					: out std_logic;									-- Ghost colision
 			
+			-- 
 			display						: out unsigned(15 downto 0)
 		);
   	end component;
@@ -148,16 +157,16 @@ begin
 			if btns = '1' then 
 				joystick_pos <= "00";
 				intr <= '0';
-			elsif btnl = '1' and joystick_pos /= "00" then 
+			elsif btnl = '1' and joystick_pos /= "00" then -- Left
 				joystick_pos <= "00";
 				intr <= '1';
-			elsif btnu = '1' and joystick_pos /= "01" then 
+			elsif btnu = '1' and joystick_pos /= "01" then -- Up
 				joystick_pos <= "01";
 				intr <= '1';
-			elsif btnr = '1' and joystick_pos /= "10" then 
+			elsif btnr = '1' and joystick_pos /= "10" then -- Right
 				joystick_pos <= "10";
 				intr <= '1';
-			elsif btnd = '1' and joystick_pos /= "11" then 
+			elsif btnd = '1' and joystick_pos /= "11" then -- Down
 				joystick_pos <= "11";
 				intr <= '1';
 			else
@@ -175,7 +184,7 @@ begin
 
 	U2 : PIX_GEN port map(clk=>clk, rst=>btns, read_data=>read_data,
 				Hsync=>Hsync, Vsync=>Vsync, read_addr=>read_addr, read_enable=>read_enable,
-				Pac_Man_X => output1, Pac_Man_Y => output2,
+				Pac_Man_X => output1, Pac_Man_Y => output2, Pac_Man_direction=>joystick_pos,
 				write_enable=>write_enable, write_addr=>write_addr, write_data=>write_data,
 				vgaRed(2)=>vgaRed(2),
 				vgaRed(1)=>vgaRed(1),
