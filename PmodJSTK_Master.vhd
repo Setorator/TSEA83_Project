@@ -48,9 +48,9 @@ entity PmodJSTK_Master is
            SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
            MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
            SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
-           LED : out  STD_LOGIC_VECTOR (7 downto 0);		-- LEDs 7 to 0
-		   intr : out STD_LOGIC;
-		   pos : out STD_LOGIC_VECTOR(1 downto 0));
+           LED : out  STD_LOGIC_VECTOR (7 downto 0));		-- LEDs 7 to 0
+		   --intr : out STD_LOGIC);
+		   --pos : out STD_LOGIC_VECTOR(1 downto 0));
 end PmodJSTK_Master;
 
 architecture Behavioral of PmodJSTK_Master is
@@ -110,9 +110,15 @@ architecture Behavioral of PmodJSTK_Master is
 			-- Signal carrying output data that user selected
 			--signal posData : STD_LOGIC_VECTOR(9 downto 0);
 
-			signal xposData : STD_LOGIC_VECTOR(9 downto 0);
-			signal yposData : STD_LOGIC_VECTOR(9 downto 0);
+			signal xposData : STD_LOGIC_VECTOR(9 downto 0) := "0111110100";
+			signal yposData : STD_LOGIC_VECTOR(9 downto 0) := "0111110100";
+
+			signal pos : STD_LOGIC_VECTOR(1 downto 0) := "01";
+			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
+			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			
+			signal intr : STD_LOGIC := '0';
+			signal switch : STD_LOGIC := '0';
 			
 --  ===================================================================================
 -- 							  				Implementation
@@ -147,84 +153,38 @@ begin
 
 
 
-			-- Use state of switch 0 to select output of X position or Y position data to SSD
-			-- posData <= (jstkData(9 downto 8) & jstkData(23 downto 16)) when (SW(0) = '1') else (jstkData(25 downto 24) & jstkData(39 downto 32));
+			yPos <= jstkData(25 downto 24);
+			xPos <= jstkData(9 downto 8);
+			
 
-			xposData <= (jstkData(9 downto 8) & jstkData(23 downto 16));
-
-			yposData <= (jstkData(25 downto 24) & jstkData(39 downto 32));
-
-			--process(sndRec, xposData, RST) begin
-			--	if(RST = '1') then
-			--		pos <= "00";
-			--	elsif rising_edge(clk) then
-			--		if sndRec = '1' then
-			--			if xposData <= "1010111100" then
-			--				pos <= "00"; 						--höger
-			--				intr <= '1';
-			--			elsif xposData >= "0100101100" then
-			--				pos <= "01"; 						--vänster
-			--				intr <= '1';
-			--			end if;
-			--		else 
-			--			intr <= '0';
-			--		end if;
-			--	end if;
-			--end process;
-
-			process(sndRec, yposData, RST, clk) begin
+			process(clk, yPos, xPos, RST) begin
 				if(RST = '1') then
 					pos <= "00";
 				elsif rising_edge(clk) then
-					if sndRec = '1' then
-						if yposData >= "1010001010" then
-							pos <= "10"; 						--upp
-							intr <= '1';
-						elsif yposData <= "0101011110" then
-							pos <= "11"; 						--ner
-							intr <= '1';
-						elsif xposData <= "0101011110" then
-							pos <= "00"; 						--höger
-							intr <= '1';
-						elsif xposData >= "1010001010" then
-							pos <= "01"; 						--vänster
-							intr <= '1';
-						end if;
+					if yPos = "11" then
+						pos <= "01";					-- upp
+						intr <= '1';
+					elsif xPos = "11" then
+						pos <= "00";					-- vänster
+						intr <= '1';
+					elsif yPos = "00" then
+						pos <= "11";					-- ner
+						intr <= '1';
+					elsif xPos = "00" then
+						pos <= "10";					-- höger
+						intr <= '1';
 					else
 						intr <= '0';
 					end if;
-				--else
-					--yPos <= "00";
 				end if;
 			end process;
 
-			-- LED <= ("000000" & pos);
 
-			-- väljer antingen x eller y värden som ska visas beroende på vilken knapp som trycks ner på joysticken
-			--process(sndRec) begin
-				--if(RST = '1') then
-					--LED <= "00000000";
-				--if sndRec = '1' and jstkData(1) = '1' then
-				--	LED <= xposData(7 downto 0);
-				--elsif sndRec = '1' and jstkData(0) = '1' then
-				--	LED <= yposData(7 downto 0);
-				--end if;
-			--end process;
+			LED <= (others => '0');
 
-			--posData <= (jstkData(25 downto 24) & jstkData(39 downto 32));
 
 			-- Data to be sent to PmodJSTK, lower two bits will turn on leds on PmodJSTK
-			sndData <= "100000" & SW(1) & SW(2);
-
-			-- Assign PmodJSTK button status to LED[2:0]
-			--process(sndRec, RST) begin
-			--		if(RST = '1') then
-			--				LED <= "000";
-			--		elsif sndRec = '1' then
-			--				--LED <= jstkData(1) & jstkData(2) & jstkData(0);
-			--				ledData <= jstkData(1) & jstkData(2) & jstkData(0);
-			--		end if;
-			--end process;
+			sndData <= "10000000";
 
 end Behavioral;
 
