@@ -29,8 +29,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 -- 										  Define Module
 -- ====================================================================================
 entity spiCtrl is
-    Port ( CLK : in  STD_LOGIC;
-		   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
+    Port ( clk : in  STD_LOGIC;
+	   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
            RST : in  STD_LOGIC;
            sndRec : in  STD_LOGIC;
            BUSY : in  STD_LOGIC;
@@ -92,8 +92,8 @@ begin
 		--------------------------------
 		--		   State Register
 		--------------------------------
-		STATE_REGISTER: process(CLK) begin
-			if rising_edge(CLK) then
+		STATE_REGISTER: process(clk) begin
+			if rising_edge(clk) then
 				if (RST = '1') then
 						STATE <= stIdle;
 				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
@@ -107,8 +107,8 @@ begin
 		--------------------------------
 		--		Output Logic/Assignment
 		--------------------------------
-		OUTPUT_LOGIC: process (CLK) begin
-			if rising_edge(CLK) then
+		OUTPUT_LOGIC: process (clk) begin
+			if rising_edge(clk) then
 				if(RST = '1') then
 						-- Reset/clear values
 						SS <= '1';
@@ -177,8 +177,8 @@ begin
 		--------------------------------
 		--		  Next State Logic
 		--------------------------------
-		NEXT_STATE_LOGIC: process (CLK) begin
-			if rising_edge(CLK) then
+		NEXT_STATE_LOGIC: process (clk) begin
+			if rising_edge(clk) then
 				-- Define default state to avoid latches
 				NSTATE <= stIdle;
 

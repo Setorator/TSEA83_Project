@@ -41,7 +41,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity spiMode0 is
-    Port ( CLK : in  STD_LOGIC;									-- 100Mhz clock
+    Port ( clk : in  STD_LOGIC;									-- 100Mhz clock
 		   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
            RST : in  STD_LOGIC;									-- Reset
            sndRec : in  STD_LOGIC;								-- Send receive, initializes data read/write
@@ -89,9 +89,9 @@ begin
 				end if;
 			end process;
 
-			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank
+			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank på 66.67hz klockan
 
-			flank_up <= '1' when (Six_CLK = '1' and q <= '0') else '0';						-- uppåt flank
+			flank_up <= '1' when (Six_CLK = '1' and q <= '0') else '0';					-- uppåt flank på 66.67hz klockan
 
 			process(clk) begin
 				if rising_edge(clk) then
@@ -116,8 +116,8 @@ begin
 			-- 	slave reads on rising edges,
 			-- change output data on falling edges
 			---------------------------------------
-			process(CLK) begin
-				if rising_edge(CLK) then
+			process(clk) begin
+				if rising_edge(clk) then
 					if(RST = '1') then
 							wSR <= X"00";
 					
@@ -150,8 +150,8 @@ begin
 			-- 	master reads on rising edges,
 			-- slave changes data on falling edges
 			---------------------------------------
-			process(CLK, RST) begin
-				if rising_edge(CLK) then
+			process(clk) begin
+				if rising_edge(clk) then
 					if(RST = '1') then
 							rSR <= X"00";
 					elsif flank_up = '1' then
@@ -179,8 +179,8 @@ begin
 		--------------------------------
 		--		   State Register
 		--------------------------------
-		STATE_REGISTER: process(CLK) begin
-			if rising_edge(CLK) then
+		STATE_REGISTER: process(clk) begin
+			if rising_edge(clk) then
 				if (RST = '1') then
 						STATE <= Idle;
 				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
@@ -194,8 +194,8 @@ begin
 		--------------------------------
 		--		Output Logic/Assignment
 		--------------------------------
-		OUTPUT_LOGIC: process (CLK) begin
-			if rising_edge(CLK) then
+		OUTPUT_LOGIC: process (clk) begin
+			if rising_edge(clk) then
 				if(RST = '1') then
 						-- Reset/clear values
 						CE <= '0';										-- Disable serial clock
@@ -245,8 +245,8 @@ begin
 		--------------------------------
 		--		  Next State Logic
 		--------------------------------
-		NEXT_STATE_LOGIC: process (CLK) begin
-			if rising_edge(CLK) then
+		NEXT_STATE_LOGIC: process (clk) begin
+			if rising_edge(clk) then
 				-- Define default state to avoid latches
 				NSTATE <= Idle;
 
