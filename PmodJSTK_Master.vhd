@@ -45,8 +45,8 @@ entity PmodJSTK_Master is
            RST : in  STD_LOGIC;								-- Button D
            MISO : in  STD_LOGIC;							-- Master In Slave Out, JA3
            SW : in  STD_LOGIC_VECTOR (2 downto 0);					-- Switches 2, 1, and 0
-	   --pos : out STD_LOGIC_VECTOR (1 downto 0);					-- positionen som joysticken är i
-	   --intr : out STD_LOGIC;							-- interupt till cpu när joysticken används
+	   pos : out STD_LOGIC_VECTOR (1 downto 0);					-- positionen som joysticken är i
+	   intr : out STD_LOGIC;							-- interupt till cpu när joysticken används
            SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
            MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
            SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
@@ -114,9 +114,6 @@ architecture Behavioral of PmodJSTK_Master is
 
 			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
-			signal pos : STD_LOGIC_VECTOR(1 downto 0) := "00";
-			
-			signal intr : STD_LOGIC := '0';
 			
 --  ===================================================================================
 -- 							  				Implementation
@@ -177,10 +174,8 @@ begin
 				end if;
 			end process;
 
+			LED <= (others => '0');
 
-			LED(6 downto 0) <= ("00000" & pos);
-
-			LED(7) <= intr;
 
 
 			-- Data to be sent to PmodJSTK, lower two bits will turn on leds on PmodJSTK
