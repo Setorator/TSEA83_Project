@@ -44,7 +44,9 @@ entity PmodJSTK_Master is
     Port ( clk : in  STD_LOGIC;								-- 100Mhz onboard clock
            RST : in  STD_LOGIC;								-- Button D
            MISO : in  STD_LOGIC;							-- Master In Slave Out, JA3
-           SW : in  STD_LOGIC_VECTOR (2 downto 0);			-- Switches 2, 1, and 0
+           SW : in  STD_LOGIC_VECTOR (2 downto 0);					-- Switches 2, 1, and 0
+	   pos : out STD_LOGIC_VECTOR (1 downto 0);					-- positionen som joysticken är i
+	   intr : out STD_LOGIC;							-- interupt till cpu när joysticken används
            SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
            MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
            SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
@@ -113,11 +115,9 @@ architecture Behavioral of PmodJSTK_Master is
 			signal xposData : STD_LOGIC_VECTOR(9 downto 0) := "0111110100";
 			signal yposData : STD_LOGIC_VECTOR(9 downto 0) := "0111110100";
 
-			signal pos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			
-			signal intr : STD_LOGIC := '0';
 			signal switch : STD_LOGIC := '0';
 			
 --  ===================================================================================
