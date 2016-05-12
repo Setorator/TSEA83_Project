@@ -17,8 +17,8 @@ use IEEE.NUMERIC_STD.ALL;
 entity cpu is 
 	port (
   		clk       	:  in std_logic;
-   		rst         	:  in std_logic;
-   		intr        	:  in std_logic; 				-- Avbrotts nivå 1
+   	rst         	:  in std_logic;
+   	intr        	:  in std_logic; 				-- Avbrotts nivå 1
 		intr2		:  in std_logic;  				-- Avbrotts nivå 2
 		intr3		:  in std_logic;				-- Avbrotts nivå 3
 		intr_code   	:  in unsigned(3 downto 0); 			-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)

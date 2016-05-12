@@ -33,7 +33,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
-use IEEE.std_logic_arith.all;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
@@ -41,18 +40,17 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --  								Define Module, Inputs and Outputs
 --  ===================================================================================
 entity PmodJSTK_Master is
-    Port ( clk : in  STD_LOGIC;								-- 100Mhz onboard clock
-           RST : in  STD_LOGIC;								-- Button D
-           MISO : in  STD_LOGIC;							-- Master In Slave Out, JA3
-           SW : in  STD_LOGIC_VECTOR (2 downto 0);					-- Switches 2, 1, and 0
-	   pos : out STD_LOGIC_VECTOR (1 downto 0);					-- positionen som joysticken är i
-	   intr : out STD_LOGIC;							-- interupt till cpu när joysticken används
-           SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
-           MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
-           SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
-           LED : out  STD_LOGIC_VECTOR (7 downto 0));		-- LEDs 7 to 0
-		   --intr : out STD_LOGIC);
-		   --pos : out STD_LOGIC_VECTOR(1 downto 0));
+    Port ( clk : in  STD_LOGIC;											-- 100Mhz onboard clock
+           rst : in  STD_LOGIC;											-- Button D
+           MISO : in  STD_LOGIC;											-- Master In Slave Out, JA3
+	   	  joystick_pos : buffer unsigned(1 downto 0);				-- positionen som joysticken är i
+	   	  start_pacman : out std_logic;
+           SS : out  STD_LOGIC;											-- Slave Select, Pin 1, Port JA
+           MOSI : out  STD_LOGIC;										-- Master Out Slave In, Pin 2, Port JA
+           SCLK : out  STD_LOGIC											-- Serial Clock, Pin 4, Port JA
+           );	
+
+
 end PmodJSTK_Master;
 
 architecture Behavioral of PmodJSTK_Master is
@@ -67,7 +65,7 @@ architecture Behavioral of PmodJSTK_Master is
 		component PmodJSTK
 
 			 Port (   clk : in  STD_LOGIC;
-					  RST : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
 					  sndRec : in  STD_LOGIC;
 					  DIN : in  STD_LOGIC_VECTOR (7 downto 0);
 					  MISO : in  STD_LOGIC;
@@ -86,7 +84,7 @@ architecture Behavioral of PmodJSTK_Master is
 		component ClkDiv_5Hz
 
 			 Port ( clk : in  STD_LOGIC;
-					  RST : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
 					  CLKOUT : inout STD_LOGIC
 			 );
 
@@ -120,12 +118,13 @@ architecture Behavioral of PmodJSTK_Master is
 --  ===================================================================================
 begin
 
+
 			-------------------------------------------------
 			--  	  			PmodJSTK Interface
 			------------------------------------------------
 			PmodJSTK_Int : PmodJSTK port map(
 					clk=>clk,
-					RST=>RST,
+					rst=>rst,
 					sndRec=>sndRec,
 					DIN=>sndData,
 					MISO=>MISO,
@@ -142,7 +141,7 @@ begin
 			-------------------------------------------------
 			genSndRec : ClkDiv_5Hz port map(
 					clk=>clk,
-					RST=>RST,
+					rst=>rst,
 					CLKOUT=>sndRec
 			);
 
@@ -152,32 +151,31 @@ begin
 			yPos <= jstkData(9 downto 8);
 			
 
-			process(clk, yPos, xPos, RST) begin
-				if(RST = '1') then
-					pos <= "00";
-				elsif rising_edge(clk) then
-					if xPos = "11" then
-						pos <= "10";					-- höger
-						intr <= '1';
-					elsif yPos = "11" then
-						pos <= "01";					-- upp
-						intr <= '1';
-					elsif xPos = "00" then
-						pos <= "00";					-- vänster
-						intr <= '1';
-					elsif yPos = "00" then
-						pos <= "11";					-- ner
-						intr <= '1';
+			process(clk) 
+			begin
+				if rising_edge(clk) then
+					if(rst = '1') then		
+						joystick_pos <= "10";
+						start_pacman <= '0'; 
+					elsif xPos = "11" and joystick_pos /= "10" then
+						start_pacman <= '1';
+						joystick_pos <= "10";					-- höger
+					elsif yPos = "11" and joystick_pos /= "01" then	
+						start_pacman <= '1';
+						joystick_pos <= "01";					-- upp
+					elsif xPos = "00" and joystick_pos /= "00" then	
+						start_pacman <= '1';
+						joystick_pos <= "00";					-- vänster
+					elsif yPos = "00" and joystick_pos /= "11" then	
+						start_pacman <= '1';
+						joystick_pos <= "11";					-- ner
 					else
-						intr <= '0';
+						start_pacman <= '0';
 					end if;
 				end if;
 			end process;
 
-			LED <= (others => '0');
-
-
-
+ 
 			-- Data to be sent to PmodJSTK, lower two bits will turn on leds on PmodJSTK
 			sndData <= "10000000";
 

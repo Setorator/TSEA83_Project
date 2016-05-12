@@ -15,19 +15,34 @@ use IEEE.NUMERIC_STD.ALL;                        -- IEEE library for the unsigne
 entity Pac_Man is
 	port (
 		clk     							:	in std_logic;                         	-- System clock
+		btns								:  in std_logic;  								-- Reset button
+		
+		-- VGA
 		Hsync								:	out std_logic;									-- H-sync for monitor
 		Vsync								:	out std_logic;									-- V-sync for monitor
 		vgaRed							: 	out std_logic_vector(2 downto 0);
 		vgaGreen							: 	out std_logic_vector(2 downto 0);
 		vgaBlue							: 	out std_logic_vector(2 downto 1);
-		btnl								: 	in std_logic;
-		btnu								: 	in std_logic;
-		btnr								: 	in std_logic;
-		btnd								: 	in std_logic;
-		btns								:  in std_logic;  								-- Reset button
 		
-		seg 								: out std_logic_vector(0 to 7);			-- Which segments to be litt.
-      an 								: out std_logic_vector(3 downto 0)			-- which display to be litt.
+		-- Buttons
+--		btnl								: 	in std_logic;
+--		btnu								: 	in std_logic;
+--		btnr								: 	in std_logic;
+--		btnd								: 	in std_logic;
+
+		--LED
+		seg 								: out std_logic_vector(0 to 7);				-- Which segments to be litt.
+      an 								: out std_logic_vector(3 downto 0);			-- which display to be litt.
+      
+      Lampa								: out std_logic;
+      
+      -- Joystick
+      MISO 								: in  STD_LOGIC;									-- Master In Slave Out, pin 3, JA3
+      SS 								: out  STD_LOGIC;									-- Slave Select, Pin 1, Port JA1
+      MOSI 								: out  STD_LOGIC;									-- Master Out Slave In, Pin 2, Port JA2
+      SCLK 								: out  STD_LOGIC									-- Serial Clock, Pin 4, Port JA4
+      
+      
 	 );
     
 end Pac_Man;
@@ -88,8 +103,14 @@ architecture Behavioral of Pac_Man is
 			colision						: out std_logic;									-- Interupt 
 			colision2					: out std_logic;									-- Ghost colision
 			
-			-- 
-			display						: out unsigned(15 downto 0)
+			-- Display
+			display						: out unsigned(15 downto 0);
+			
+			-- Test collisions
+			TEST_X						: in unsigned(9 downto 0);
+			TEST_Y						: in unsigned(9 downto 0);
+			TEST_COLLISION_1			: out std_logic;
+			TEST_COLLISION_2			: out std_logic
 		);
   	end component;
   
@@ -124,18 +145,43 @@ architecture Behavioral of Pac_Man is
          an 							: out std_logic_vector(3 downto 0);
          value 						: in unsigned(15 downto 0)
       );
-	end component;			
+	end component;		
+	
+	
+	component PmodJSTK_Master
+		port (
+			clk							: in std_logic;
+			rst							: in std_logic;
+			MISO							: in std_logic;
+			joystick_pos				: buffer unsigned(1 downto 0);	
+       	start_pacman 				: out std_logic;
+			SS								: out std_logic;
+			MOSI							: out std_logic;
+			SCLK							: out std_logic
+		);
+	end component;
 		
   	
-	signal intr							: std_logic;					-- Signal between CPU and PIX_GEN
+	signal start_pacman				: std_logic;					-- Signal between CPU and Joystick
 	signal intr2 						: std_logic;
 	signal intr3						: std_logic;
 	signal intr_code					: unsigned(3 downto 0)  := (others => '0');
-	signal joystick_pos				: unsigned(1 downto 0)	:= "10";
+	signal joystick_pos				: unsigned(1 downto 0)	:= "00";
 	signal output1						: unsigned(9 downto 0)  := (others => '0');
 	signal output2 					: unsigned(9 downto 0) 	:= (others => '0');
 	signal output3						: unsigned(9 downto 0) 	:= (others => '0');
 	signal output4						: unsigned(9 downto 0)  := (others => '0');
+	
+	signal test_pac_x					: unsigned(9 downto 0)	:= (others => '0');
+	signal test_pac_y					: unsigned(9 downto 0)	:= (others => '0');
+
+	signal test_pac_collision_1	: std_logic		:= '1';
+	signal test_pac_collision_2	: std_logic		:= '1';
+	signal test_pac_collision		: std_logic		:= '1';
+	
+	signal joystick					: unsigned(1 downto 0)	:= "10";
+	signal delay_cntr					: unsigned(27 downto 0) := (others => '0');
+	signal clr_cntr					: std_logic		:= '0';
 
 	signal read_enable				: std_logic := '0';
 	signal write_enable				: std_logic := '0';
@@ -148,35 +194,58 @@ architecture Behavioral of Pac_Man is
 
 begin 
 
+	Lampa <= start_pacman;
+
+	-- Använd knapparna på Nexys för att styra PacMan
+	
+		test_pac_collision <= test_pac_collision_1 or test_pac_collision_2;
 
 	-- Använd knapparna på Nexys för att styra PacMan
 
-	PACMAN_controller : process(clk)
+	test_pac_x <= 	(output1 - 8) when (joystick_pos = "00") else
+		      		(output1 + 8) when (joystick_pos = "10") else output1;
+
+	test_pac_y <= 	(output2 - 8) when (joystick_pos = "01") else
+		      		(output2 + 8) when (joystick_pos = "11") else output2;
+
+	INTR_func : process(clk)
 	begin
-		if rising_edge(clk) then	
-			if btns = '1' then 
-				joystick_pos <= "00";
-				intr <= '0';
-			elsif btnl = '1' and joystick_pos /= "00" then -- Left
-				joystick_pos <= "00";
-				intr <= '1';
-			elsif btnu = '1' and joystick_pos /= "01" then -- Up
-				joystick_pos <= "01";
-				intr <= '1';
-			elsif btnr = '1' and joystick_pos /= "10" then -- Right
-				joystick_pos <= "10";
-				intr <= '1';
-			elsif btnd = '1' and joystick_pos /= "11" then -- Down
-				joystick_pos <= "11";
-				intr <= '1';
+		if rising_edge(clk) then
+			if btns = '1' then
+				start_pacman <= '0';
+			elsif delay_cntr = X"0197080" then
+				start_pacman <= '1';
 			else
-				intr <= '0';
+				start_pacman <= '0';
 			end if;
 		end if;
 	end process;
 
+	DELAY_CNTR_func : process(clk)
+	begin
+		if rising_edge(clk) then	
+			if (btns = '1') or (test_pac_collision = '1') or (clr_cntr = '1')then
+				delay_cntr <= (others => '0');
+			elsif (delay_cntr /= X"0197080") then
+				delay_cntr <= delay_cntr + 1;
+			else
+				delay_cntr <= (others => '0');
+			end if;
+		end if;	
+	end process;
 
-	U0 : CPU port map(clk=>clk, rst=>btns, intr=>intr, intr2=>intr2, intr3=>intr3, intr_code => intr_code, joystick_pos => joystick_pos,
+	JOYSTICK_func : process(clk)
+	begin
+		if rising_edge(clk) then
+			if btns = '1' then
+				joystick <= "10";
+			elsif delay_cntr = X"0197080" then
+				joystick <= joystick_pos;
+			end if;
+		end if;
+	end process;
+
+	U0 : CPU port map(clk=>clk, rst=>btns, intr=>start_pacman, intr2=>intr2, intr3=>intr3, intr_code => intr_code, joystick_pos => joystick_pos,
 				output1 => output1, output2 => output2, output3 => output3, output4 => output4);
 							 
 	U1 : RAM port map(clk=>clk, we=>write_enable, data1=>write_data, x1=>write_addr(5 downto 0), y1=>write_addr(10 downto 6), 
@@ -198,16 +267,17 @@ begin
 				colision2=>intr3,
 				intr_code => intr_code,
 				Ghost_X => output3, Ghost_Y => output4,
+				TEST_X => test_pac_x,
+				TEST_Y => test_pac_y,
+				TEST_COLLISION_1 => test_pac_collision_1,
+				TEST_COLLISION_2 => test_pac_collision_2,
 				display=>display);
 				
-	U3 : LED port map(clk=> clk, rst=>btns,
+	U3 : LED port map(clk=>clk, rst=>btns,
 							seg=>seg, an=>an,
 							value=>display);
-				
-				
-				
-
-
+							
+	U4 : PmodJSTK_Master port map(clk=>clk, rst=>btns, joystick_pos=>joystick_pos, start_pacman=>clr_cntr, MISO=>MISO, SS=>SS, MOSI=>MOSI, SCLK=>SCLK);
   
 end Behavioral;
 

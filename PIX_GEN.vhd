@@ -47,7 +47,13 @@ entity PIX_GEN is
 		colision2					: out std_logic;									-- Ghost colision
 		
 		-- LED
-		display						: out unsigned(15 downto 0)
+		display						: out unsigned(15 downto 0);
+		
+		-- Test coordinates
+		TEST_X						: in unsigned(9 downto 0);
+		TEST_Y						: in unsigned(9 downto 0);
+		TEST_COLLISION_1			: out std_logic;
+		TEST_COLLISION_2			: out std_logic
 	);
          
 end PIX_GEN;
@@ -84,6 +90,9 @@ architecture Behavioral of PIX_GEN is
   	-- Tile memory type
   	type tile_t is array (0 to 1023) of unsigned(1 downto 0);  
   	type sprite is array (0 to 255) of unsigned(1 downto 0);
+  	
+  	signal TestPixel_1	: std_logic_vector(7 downto 0) 	:= (others => '0');
+  	signal TestPixel_2   : std_logic_vector(7 downto 0) 	:= (others => '0'); 
   	
   	-- Color Map
   	type color_m is array(0 to 3) of std_logic_vector(7 downto 0);
@@ -335,12 +344,22 @@ begin
   	tileData <= GhostPixel when (GhostPixel /= "00000000") else
   			TilePixel when (TilePixel /= "00000000") else PacPixel;
   					
+  	TestPixel_1 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y))*16) + (to_integer(Xpixel) - to_integer(TEST_X))))) when (((to_integer(Xpixel) - to_integer(TEST_X)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(TEST_X)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y)) > 0)) else x"00"; 		
+
+  	TestPixel_2 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y + 1))*16) + (to_integer(Xpixel) - to_integer(TEST_X + 1))))) when (((to_integer(Xpixel) - to_integer(TEST_X + 1)) 						< 16) and ((to_integer(Xpixel) - to_integer(TEST_X + 1)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) > 0)) else x"00";
 
 ----------------------------------------------------------------
 -------------------------COLISION-------------------------------
 ----------------------------------------------------------------
-  					
+  	
+  	TEST_COLLISION_1 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_1 /= X"00")) else '0';
+	TEST_COLLISION_2 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_2 /= X"00")) else '0';
+  	
+  	-- Colision when Pac_Man collide with the wall				
   	colision2 <= '1' when ((rst = '0') and (tileData = X"02") and (PacPixel /= X"00")) else '0';
+  	
+  	-- Colision when Ghost collides woth the wall
 	colision <=  '1' when ((rst = '0') and (tileData = X"E0") and (TilePixel = X"02")) else '0';		
 	intr_code <= "0000";			
 
