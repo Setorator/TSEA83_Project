@@ -45,8 +45,8 @@ entity PmodJSTK_Master is
            RST : in  STD_LOGIC;								-- Button D
            MISO : in  STD_LOGIC;							-- Master In Slave Out, JA3
            SW : in  STD_LOGIC_VECTOR (2 downto 0);					-- Switches 2, 1, and 0
-	   pos : out STD_LOGIC_VECTOR (1 downto 0);					-- positionen som joysticken är i
-	   intr : out STD_LOGIC;							-- interupt till cpu när joysticken används
+	   --pos : out STD_LOGIC_VECTOR (1 downto 0);					-- positionen som joysticken är i
+	   --intr : out STD_LOGIC;							-- interupt till cpu när joysticken används
            SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
            MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
            SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
@@ -112,13 +112,11 @@ architecture Behavioral of PmodJSTK_Master is
 			-- Signal carrying output data that user selected
 			--signal posData : STD_LOGIC_VECTOR(9 downto 0);
 
-			signal xposData : STD_LOGIC_VECTOR(9 downto 0) := "0111110100";
-			signal yposData : STD_LOGIC_VECTOR(9 downto 0) := "0111110100";
-
 			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
+			signal pos : STD_LOGIC_VECTOR(1 downto 0) := "00";
 			
-			signal switch : STD_LOGIC := '0';
+			signal intr : STD_LOGIC := '0';
 			
 --  ===================================================================================
 -- 							  				Implementation
@@ -153,25 +151,25 @@ begin
 
 
 
-			yPos <= jstkData(25 downto 24);
-			xPos <= jstkData(9 downto 8);
+			xPos <= jstkData(25 downto 24);
+			yPos <= jstkData(9 downto 8);
 			
 
 			process(clk, yPos, xPos, RST) begin
 				if(RST = '1') then
 					pos <= "00";
 				elsif rising_edge(clk) then
-					if yPos = "11" then
+					if xPos = "11" then
+						pos <= "10";					-- höger
+						intr <= '1';
+					elsif yPos = "11" then
 						pos <= "01";					-- upp
 						intr <= '1';
-					elsif xPos = "11" then
+					elsif xPos = "00" then
 						pos <= "00";					-- vänster
 						intr <= '1';
 					elsif yPos = "00" then
 						pos <= "11";					-- ner
-						intr <= '1';
-					elsif xPos = "00" then
-						pos <= "10";					-- höger
 						intr <= '1';
 					else
 						intr <= '0';
@@ -180,7 +178,9 @@ begin
 			end process;
 
 
-			LED <= (others => '0');
+			LED(6 downto 0) <= ("00000" & pos);
+
+			LED(7) <= intr;
 
 
 			-- Data to be sent to PmodJSTK, lower two bits will turn on leds on PmodJSTK
