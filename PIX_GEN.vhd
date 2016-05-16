@@ -12,36 +12,48 @@ use IEEE.NUMERIC_STD.ALL;                        -- IEEE library for the unsigne
 -- entity
 entity PIX_GEN is
 	port (
-		clk            : in std_logic;                         -- system clock
-    	rst            : in std_logic;                         -- reset
-    	
+		clk                     : in std_logic;                      		-- System clock
+		rst                     : in std_logic;                    			-- reset button
+		
 		-- Read
-		read_data					: in std_logic_vector(1 downto 0);		-- Data to be read from RAM
-		read_enable					: out std_logic;								-- enables RAM read
- 		read_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
+		read_data					: in std_logic_vector(1 downto 0);			-- Data to be read from RAM
+		read_enable					: out std_logic;									-- enables RAM read
+ 		read_addr					: out unsigned(10 downto 0);					-- Adress to the tile in RAM
  		
  		-- Write
- 		write_addr					: out unsigned(10 downto 0);				-- Adress to the tile in RAM
-		write_enable				: out std_logic;								-- enables RAM write
-		write_data					: out std_logic_vector(1 downto 0);		-- Data to be written to RAM    	
-    	
-
-	 	Pac_Man_X		: in unsigned(9 downto 0);					 -- Pac_Man X-koord in pixel size		
-	 	Pac_Man_Y		: in unsigned(9 downto 0);					 -- Pac_Man Y-koord in pixel size	
-		Ghost_X			: in unsigned(9 downto 0);
-		Ghost_Y			: in unsigned(9 downto 0);	
-		TEST_X			: in unsigned(9 downto 0);
-		TEST_Y			: in unsigned(9 downto 0);
-		TEST_COLLISION_1	: out std_logic;
-		TEST_COLLISION_2	: out std_logic;
-    	Hsync          : out std_logic;                        -- horizontal sync
-    	Vsync          : out std_logic;                        -- vertical sync
-    	vgaRed         : out std_logic_vector(2 downto 0);     -- VGA red
-    	vgaGreen       : out std_logic_vector(2 downto 0);     -- VGA green
-    	vgaBlue        : out std_logic_vector(2 downto 1);     -- VGA blue
-    	colision       : out std_logic;	                	-- Colisions
-	colision2      : out std_logic;				-- Ghost colision	
-	intr_code      : out unsigned(3 downto 0)
+ 		write_addr					: out unsigned(10 downto 0);					-- Adress to the tile in RAM
+		write_enable				: out std_logic;									-- enables RAM write
+		write_data					: out std_logic_vector(1 downto 0);			-- Data to be written to RAM
+						 		
+		-- Pac_Man data
+ 		Pac_Man_X					: in unsigned(9 downto 0);						-- Pac_Mans X-pixel koords
+		Pac_Man_Y					: in unsigned(9 downto 0);						-- Pac_Mans Y-pixel koords  
+		Pac_Man_direction			: in unsigned(1 downto 0);						-- Direction of Pac_Mans movement 
+		
+		-- Ghost data
+		Ghost_X						: in unsigned(9 downto 0);						-- Ghost X poss
+		Ghost_Y						: in unsigned(9 downto 0);						-- Ghost Y poss
+		
+		-- VGA-signals
+		Hsync                   : out std_logic;                     		-- horizontal sync
+		Vsync                   : out std_logic;                     		-- vertical sync
+		vgaRed                  : out std_logic_vector(2 downto 0);  		-- VGA red
+		vgaGreen                : out std_logic_vector(2 downto 0);  		-- VGA green
+		vgaBlue                 : out std_logic_vector(2 downto 1);  		-- VGA blue
+		
+		-- Interuption
+		intr_code					: out unsigned(3 downto 0);					-- intr_code
+		colision						: out std_logic;									-- Interupt 
+		colision2					: out std_logic;									-- Ghost colision
+		
+		-- LED
+		display						: out unsigned(15 downto 0);
+		
+		-- Test coordinates
+		TEST_X						: in unsigned(9 downto 0);
+		TEST_Y						: in unsigned(9 downto 0);
+		TEST_COLLISION_1			: out std_logic;
+		TEST_COLLISION_2			: out std_logic
 	);
          
 end PIX_GEN;
@@ -63,27 +75,24 @@ architecture Behavioral of PIX_GEN is
                                                  										-- 25 MHz clock
   	signal Clk25			: std_logic := '0';		 										-- One pulse width 25 MHz sign
   	
-  	-- För testning av rörelse för Pac-Man
---  	signal SpeedDiv		: unsigned(19 downto 0) := (others => '0');
---  	signal Speed			: std_logic := '0';
-  	----------------------
-  	
 	signal tileData     	: std_logic_vector(7 downto 0) := (others => '0');		-- Tile pixel data
 	signal tileAddr		: unsigned(10 downto 0) := (others => '0');				-- Tile address							-- NOT NEEDED???
 	
 	signal TilePixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen tile pixel
 	signal PacPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Pac_Man pixel
 	signal GhostPixel		: std_logic_vector(7 downto 0) := (others => '0');		-- Color of chosen Ghost pixel
-	signal TestPixel_1	:	std_logic_vector(7 downto 0)	:= (others => '0');
-	signal TestPixel_2	:	std_logic_vector(7 downto 0)	:= (others => '0');
 	
-	--signal Ghost_X		: unsigned(9 downto 0)	:= "0100110000"; -- 0				-- Ghosts X-koord in pixel size
-	--signal Ghost_Y		: unsigned(9 downto 0)	:= "0011100000"; -- 0				-- Ghosts Y-koord in pixel si
-	
+	signal food1			: unsigned(3 downto 0) 	:= "0000";							-- ental
+	signal food10			: unsigned(3 downto 0) 	:= "0000";							-- tiotal
+	signal food100			: unsigned(3 downto 0) 	:= "0000";							-- hundratal   -- Max is 368
+	signal food_clk		: unsigned(1 downto 0)	:= "00";
   
   	-- Tile memory type
   	type tile_t is array (0 to 1023) of unsigned(1 downto 0);  
   	type sprite is array (0 to 255) of unsigned(1 downto 0);
+  	
+  	signal TestPixel_1	: std_logic_vector(7 downto 0) 	:= (others => '0');
+  	signal TestPixel_2   : std_logic_vector(7 downto 0) 	:= (others => '0'); 
   	
   	-- Color Map
   	type color_m is array(0 to 3) of std_logic_vector(7 downto 0);
@@ -173,11 +182,11 @@ architecture Behavioral of PIX_GEN is
 		  "00","00","01","01","01","01","01","01", "01","01","01","01","01","01","00","00",
 		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","00",
 		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","01",
-		  "01","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
+		  "00","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
 		  "01","01","01","01","01","01","01","00", "00","00","00","00","00","00","00","00",
 		  
 		  "01","01","01","01","01","01","01","00", "00","00","00","00","00","00","00","00",
-		  "01","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
+		  "00","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
 		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","01",
 		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","00",
 		  "00","00","01","01","01","01","01","01", "01","01","01","01","01","01","00","00",
@@ -304,14 +313,28 @@ begin
   					 color_map(3);																																				-- Red (for debugging)
   								 	
 
-  	PacPixel <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(Pac_Man_Y))*16) + (to_integer(Xpixel) - to_integer(Pac_Man_X))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else x"00"; 
-
-  	TestPixel_1 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y))*16) + (to_integer(Xpixel) - to_integer(TEST_X))))) when (((to_integer(Xpixel) - to_integer(TEST_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(TEST_X)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y)) > 0)) else x"00"; 		
-
-  	TestPixel_2 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y + 1))*16) + (to_integer(Xpixel) - to_integer(TEST_X + 1))))) when (((to_integer(Xpixel) - to_integer(TEST_X + 1)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(TEST_X + 1)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) > 0)) else x"00";
+	
+  	PacPixel <= -- Left
+  					color_map(to_integer(Pac_Man(((to_integer(Pac_Man_Y) - to_integer(Ypixel))*16) + (to_integer(Pac_Man_X) - to_integer(Xpixel))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "00") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else 
+  					
+  					-- Up
+  					color_map(to_integer(Pac_Man(((to_integer(Pac_Man_X) - to_integer(Xpixel))*16) + (to_integer(Pac_Man_Y) - to_integer(Ypixel))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "01") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else 
+  					
+  					-- Right
+  					color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(Pac_Man_Y))*16) + (to_integer(Xpixel) - to_integer(Pac_Man_X))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "10") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else
+  					
+  					-- Down
+  					color_map(to_integer(Pac_Man(((to_integer(Xpixel) - to_integer(Pac_Man_X))*16) + (to_integer(Ypixel) - to_integer(Pac_Man_Y))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "11") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else X"00";
+  					
+  					
   					
 	GhostPixel <= color_map(to_integer(Ghost(((to_integer(Ypixel) - to_integer(Ghost_Y))*16) + (to_integer(Xpixel) - to_integer(Ghost_X))))) when (((to_integer(Xpixel) - to_integer(Ghost_X)) < 16) 
 						and ((to_integer(Xpixel) - to_integer(Ghost_X)) > 0) and ((to_integer(Ypixel) - to_integer(Ghost_Y)) < 16) and ((to_integer(Ypixel) - to_integer(Ghost_Y)) > 0)) else x"00"; 			
@@ -319,16 +342,24 @@ begin
   
   
   	tileData <= GhostPixel when (GhostPixel /= "00000000") else
-  			TilePixel when (TilePixel /= "00000000") else 
-			 PacPixel;
+  			TilePixel when (TilePixel /= "00000000") else PacPixel;
+  					
+  	TestPixel_1 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y))*16) + (to_integer(Xpixel) - to_integer(TEST_X))))) when (((to_integer(Xpixel) - to_integer(TEST_X)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(TEST_X)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y)) > 0)) else x"00"; 		
+
+  	TestPixel_2 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y + 1))*16) + (to_integer(Xpixel) - to_integer(TEST_X + 1))))) when (((to_integer(Xpixel) - to_integer(TEST_X + 1)) 						< 16) and ((to_integer(Xpixel) - to_integer(TEST_X + 1)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) > 0)) else x"00";
 
 ----------------------------------------------------------------
 -------------------------COLISION-------------------------------
 ----------------------------------------------------------------
-
-	TEST_COLLISION_1 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_1 /= X"00")) else '0';
+  	
+  	TEST_COLLISION_1 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_1 /= X"00")) else '0';
 	TEST_COLLISION_2 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_2 /= X"00")) else '0';
+  	
+  	-- Colision when Pac_Man collide with the wall				
   	colision2 <= '1' when ((rst = '0') and (tileData = X"02") and (PacPixel /= X"00")) else '0';
+  	
+  	-- Colision when Ghost collides woth the wall
 	colision <=  '1' when ((rst = '0') and (tileData = X"E0") and (TilePixel = X"02")) else '0';		
 	intr_code <= "0000";			
 
@@ -339,16 +370,55 @@ begin
 	eat_food : process(clk)
 	begin
 		if rising_edge(clk) then
+			food_clk <= food_clk + 1;
+
 			if (TilePixel = X"8C") and (PacPixel /= X"00") then
-				write_enable <= '1';
-				write_addr <= tileY & tileX;
-				write_data <= "00"; 			-- Floor tile
-			else
 				write_enable <= '0';
+				write_addr <= tileY & tileX;
+				write_data <= "00"; 			-- Floor tile		
+				
+				if food_clk = 3 then
+					if food1 > 8 then							-- Adds score altough not with the correct score.
+						if food10 > 8 then					-- Different score depending on which way you eat from.
+							if food100 > 8 then				-- Gonna try to write out Pac-Man in the corresponding way and
+								food1 <= "0000";				-- see if that fixes the problem.
+								food10 <= "0000";
+								food100 <= "0000";
+							else
+								food100 <= food100 + 1;
+								food10 <= "0000";
+								food1 <= "0000";
+							end if;
+						else
+							food10 <= food10 + 1;
+							food1 <= "0000";
+						end if; 
+					else
+						food1 <= food1 + 1;
+					end if;	
+				end if;
+			else 
+				write_enable <= '1';
 			end if;
 		end if;
 	end process;
+	
+	
+	
+
+----------------------------------------------------------------
+--------------------------LED-----------------------------------
+----------------------------------------------------------------
+
+
+	display(15 downto 12) <= "0000";
+	display(11 downto 8)	<=	food100;
+	display(7 downto 4) <= food10;
+	display(3 downto 0) <= food1;
 				
+----------------------------------------------------------------
+----------------------------------------------------------------
+----------------------------------------------------------------
 
 
 
