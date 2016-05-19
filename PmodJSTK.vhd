@@ -18,20 +18,22 @@
 --//////////////////////////////////////////////////////////////////////////////////////////
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.std_logic_arith.all;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 -- ====================================================================================
 -- 										  Define Module
 -- ====================================================================================
 entity PmodJSTK is
-    Port ( clk : in  STD_LOGIC;
-           rst : in  STD_LOGIC;
-           sndRec : in  STD_LOGIC;
-           DIN : in  STD_LOGIC_VECTOR (7 downto 0);
-           MISO : in  STD_LOGIC;
-           SS : out  STD_LOGIC;
-           SCLK : out  STD_LOGIC;
-           MOSI : out  STD_LOGIC;
-           DOUT : inout  STD_LOGIC_VECTOR (39 downto 0));
+    Port ( clk : in  std_logic;
+           rst : in  std_logic;
+           sndRec : in  std_logic;
+           DIN : in  std_logic_vector (7 downto 0);
+           MISO : in  std_logic;
+           SS : out  std_logic;
+           SCLK : out  std_logic;
+           MOSI : out  std_logic;
+           DOUT : inout  std_logic_vector (39 downto 0));
 end PmodJSTK;
 
 architecture Behavioral of PmodJSTK is
@@ -45,17 +47,17 @@ architecture Behavioral of PmodJSTK is
 		-- **********************************************
 		component spiCtrl
 
-			 Port (   clk : in  STD_LOGIC;
-					  Six_CLK : in STD_LOGIC;
-					  rst : in  STD_LOGIC;
-					  sndRec : in STD_LOGIC;
-					  BUSY : in STD_LOGIC;
-					  DIN : in  STD_LOGIC_VECTOR(7 downto 0);
-					  RxData : in  STD_LOGIC_VECTOR(7 downto 0);
-					  SS : out STD_LOGIC;
-					  getByte : out STD_LOGIC;
-					  sndData : inout STD_LOGIC_VECTOR(7 downto 0);
-					  DOUT : inout STD_LOGIC_VECTOR(39 downto 0)
+			 Port (   clk : in  std_logic;
+					  Six_CLK : in std_logic;
+					  rst : in  std_logic;
+					  sndRec : in std_logic;
+					  BUSY : in std_logic;
+					  DIN : in  std_logic_vector(7 downto 0);
+					  RxData : in  std_logic_vector(7 downto 0);
+					  SS : out std_logic;
+					  getByte : out std_logic;
+					  sndData : inout std_logic_vector(7 downto 0);
+					  DOUT : inout std_logic_vector(39 downto 0)
 			 );
 
 		end component;
@@ -65,16 +67,16 @@ architecture Behavioral of PmodJSTK is
 		-- **********************************************
 		component spiMode0
 
-			 Port (   clk : in  STD_LOGIC;
-					  Six_CLK : in STD_LOGIC;
-					  rst : in  STD_LOGIC;
-					  sndRec : in STD_LOGIC;
-					  DIN : in  STD_LOGIC_VECTOR(7 downto 0);
-					  MISO : in  STD_LOGIC;
-					  MOSI : out STD_LOGIC;
-					  SCLK : out STD_LOGIC;
-					  BUSY : out STD_LOGIC;
-					  DOUT : out STD_LOGIC_VECTOR (7 downto 0)
+			 Port (   clk : in  std_logic;
+					  Six_CLK : in std_logic;
+					  rst : in  std_logic;
+					  sndRec : in std_logic;
+					  DIN : in  std_logic_vector(7 downto 0);
+					  MISO : in  std_logic;
+					  MOSI : out std_logic;
+					  SCLK : out std_logic;
+					  BUSY : out std_logic;
+					  DOUT : out std_logic_vector (7 downto 0)
 			 );
 
 		end component;
@@ -84,22 +86,22 @@ architecture Behavioral of PmodJSTK is
 -- 							       Signals and Constants
 -- ====================================================================================
 
-		signal getByte : STD_LOGIC;						-- Initiates a data byte transfer in SPI_Int
-		signal sndData : STD_LOGIC_VECTOR(7 downto 0);	-- Data to be sent to Slave
-		signal RxData : STD_LOGIC_VECTOR(7 downto 0);	-- Output data from SPI_Int
-		signal BUSY : STD_LOGIC;						-- Handshake from SPI_Int to SPI_Ctrl
+		signal getByte : std_logic;						-- Initiates a data byte transfer in SPI_Int
+		signal sndData : std_logic_vector(7 downto 0);	-- Data to be sent to Slave
+		signal RxData : std_logic_vector(7 downto 0);	-- Output data from SPI_Int
+		signal BUSY : std_logic;						-- Handshake from SPI_Int to SPI_Ctrl
 
 
 		-- 66.67kHz Clock Divider, period 15us
-		signal iSCLK : STD_LOGIC;						-- Internal serial clock,
+		signal iSCLK : std_logic;						-- Internal serial clock,
 														-- not directly output to slave,
 														-- controls state machine, etc.
 
 
 		-- Value to toggle output clock at
-		constant cntEndVal : STD_LOGIC_VECTOR(9 downto 0) := "1011101110";	-- End count value
+		constant cntEndVal : std_logic_vector(9 downto 0) := "1011101110";	-- End count value
 		-- Current count
-		signal clkCount : STD_LOGIC_VECTOR(9 downto 0) := (others => '0');	-- Stores count value
+		signal clkCount : std_logic_vector(9 downto 0) := (others => '0');	-- Stores count value
 
 -- ====================================================================================
 -- 							       	 Implementation
@@ -142,15 +144,15 @@ begin
 
 
 			-------------------------------------------------
-			--	5Hz Clock Divider Generates Send/Receive signal
+			--	66.67kHz Clock Divider Generates Send/Receive signal
 			-------------------------------------------------
 			process(clk) begin
 				if rising_edge(clk) then
 					if rst = '1'  then
-						CLKOUT <= '0';
+						iSCLK <= '0';
 						clkCount <= "0000000000";
 					elsif(clkCount = cntEndVal) then
-						CLKOUT <= NOT CLKOUT;
+						iSCLK <= NOT iSCLK;
 						clkCount <= "0000000000";
 					else
 						clkCount <= clkCount + '1';
@@ -158,8 +160,6 @@ begin
 				end if;
 
 			end process;
-
-			iSCLK <= CLKOUT;
 
 			
 

@@ -35,7 +35,6 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-
 --  ===================================================================================
 --  								Define Module, Inputs and Outputs
 --  ===================================================================================
@@ -136,10 +135,10 @@ begin
 
 					if rising_edge(clk) then
 						if rst = '1'  then
-							CLKOUT <= '0';
+							sndRec <= '0';
 							clkCount <= X"000000";
 						elsif(clkCount = cntEndVal) then
-							CLKOUT <= NOT CLKOUT;
+							sndRec <= NOT sndRec;
 							clkCount <= X"000000";
 						else
 							clkCount <= clkCount + '1';
@@ -147,8 +146,6 @@ begin
 					end if;
 
 			end process;
-
-			sndRec <= clk_out;
 
 			xPos <= jstkData(25 downto 24);
 			yPos <= jstkData(9 downto 8);
