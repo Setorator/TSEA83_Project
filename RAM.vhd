@@ -14,7 +14,6 @@ entity RAM is
 		clk			: in std_logic;					-- Clock pulse
 		
 		-- port 1
-
 		x1 			: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
 		y1 			: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 		we 			: in std_logic;								-- Write enable
@@ -33,10 +32,11 @@ end RAM;
 
 architecture Behavioral of RAM is
 
+
 	-- Declaration of a two-port RAM
 	-- with 2048 adresses and 8 bits width
 	-- (We only uses 40*30 = 1200 adresses,
-	-- each containing a 8-bit colour.)
+	-- each containing a 2-bit tile_type.)
 	type ram_t is array(0 to 2047) of 
 		std_logic_vector(1 downto 0);
 	
@@ -133,22 +133,20 @@ architecture Behavioral of RAM is
 									
 	
 	begin
-	
+
+
 	
 	process(clk)
 	begin
-		if rising_edge(clk) then
-		
-			-- Synched write port 1
+		if rising_edge(clk) then			
+			-- Synched write port 1	
 			if (we = '0') then
-				ram(40*to_integer(y1)+
-					to_integer(x1)) <= data1;
+				ram(40*to_integer(y1) + to_integer(x1)) <= data1;
 			end if;
 		
 			-- synched read from port 2
 			if (re = '0') then 
-				data2 <= ram(40*to_integer(y2)+
-									to_integer(x2));
+				data2 <= ram(40*to_integer(y2) + to_integer(x2));
 			end if;
 		end if;
 	end process;

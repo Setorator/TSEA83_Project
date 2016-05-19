@@ -33,7 +33,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
-use IEEE.std_logic_arith.all;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
@@ -41,16 +40,17 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --  								Define Module, Inputs and Outputs
 --  ===================================================================================
 entity PmodJSTK_Master is
-    Port ( clk : in  STD_LOGIC;								-- 100Mhz onboard clock
-           RST : in  STD_LOGIC;								-- Button D
-           MISO : in  STD_LOGIC;							-- Master In Slave Out, JA3
-           SW : in  STD_LOGIC_VECTOR (2 downto 0);			-- Switches 2, 1, and 0
-           SS : out  STD_LOGIC;								-- Slave Select, Pin 1, Port JA
-           MOSI : out  STD_LOGIC;							-- Master Out Slave In, Pin 2, Port JA
-           SCLK : out  STD_LOGIC;							-- Serial Clock, Pin 4, Port JA
-           LED : out  STD_LOGIC_VECTOR (7 downto 0);		-- LEDs 7 to 0
-		   intr : out STD_LOGIC;
-		   pos : out STD_LOGIC_VECTOR(1 downto 0));
+    Port ( clk : in  STD_LOGIC;											-- 100Mhz onboard clock
+           rst : in  STD_LOGIC;											-- Button D
+           MISO : in  STD_LOGIC;											-- Master In Slave Out, JA3
+	   	  joystick_pos : buffer unsigned(1 downto 0);				-- positionen som joysticken är i
+	   	  start_pacman : out std_logic;
+           SS : out  STD_LOGIC;											-- Slave Select, Pin 1, Port JA
+           MOSI : out  STD_LOGIC;										-- Master Out Slave In, Pin 2, Port JA
+           SCLK : out  STD_LOGIC											-- Serial Clock, Pin 4, Port JA
+           );	
+
+
 end PmodJSTK_Master;
 
 architecture Behavioral of PmodJSTK_Master is
@@ -65,7 +65,7 @@ architecture Behavioral of PmodJSTK_Master is
 		component PmodJSTK
 
 			 Port (   clk : in  STD_LOGIC;
-					  RST : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
 					  sndRec : in  STD_LOGIC;
 					  DIN : in  STD_LOGIC_VECTOR (7 downto 0);
 					  MISO : in  STD_LOGIC;
@@ -84,7 +84,7 @@ architecture Behavioral of PmodJSTK_Master is
 		component ClkDiv_5Hz
 
 			 Port ( clk : in  STD_LOGIC;
-					  RST : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
 					  CLKOUT : inout STD_LOGIC
 			 );
 
@@ -110,21 +110,21 @@ architecture Behavioral of PmodJSTK_Master is
 			-- Signal carrying output data that user selected
 			--signal posData : STD_LOGIC_VECTOR(9 downto 0);
 
-			signal xposData : STD_LOGIC_VECTOR(9 downto 0);
-			signal yposData : STD_LOGIC_VECTOR(9 downto 0);
-			
+			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
+			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			
 --  ===================================================================================
 -- 							  				Implementation
 --  ===================================================================================
 begin
 
+
 			-------------------------------------------------
 			--  	  			PmodJSTK Interface
 			------------------------------------------------
 			PmodJSTK_Int : PmodJSTK port map(
 					clk=>clk,
-					RST=>RST,
+					rst=>rst,
 					sndRec=>sndRec,
 					DIN=>sndData,
 					MISO=>MISO,
@@ -141,90 +141,37 @@ begin
 			-------------------------------------------------
 			genSndRec : ClkDiv_5Hz port map(
 					clk=>clk,
-					RST=>RST,
+					rst=>rst,
 					CLKOUT=>sndRec
 			);
 
 
 
-			-- Use state of switch 0 to select output of X position or Y position data to SSD
-			-- posData <= (jstkData(9 downto 8) & jstkData(23 downto 16)) when (SW(0) = '1') else (jstkData(25 downto 24) & jstkData(39 downto 32));
+			xPos <= jstkData(25 downto 24);
+			yPos <= jstkData(9 downto 8);
+			
 
-			xposData <= (jstkData(9 downto 8) & jstkData(23 downto 16));
-
-			yposData <= (jstkData(25 downto 24) & jstkData(39 downto 32));
-
-			--process(sndRec, xposData, RST) begin
-			--	if(RST = '1') then
-			--		pos <= "00";
-			--	elsif rising_edge(clk) then
-			--		if sndRec = '1' then
-			--			if xposData <= "1010111100" then
-			--				pos <= "00"; 						--höger
-			--				intr <= '1';
-			--			elsif xposData >= "0100101100" then
-			--				pos <= "01"; 						--vänster
-			--				intr <= '1';
-			--			end if;
-			--		else 
-			--			intr <= '0';
-			--		end if;
-			--	end if;
-			--end process;
-
-			process(sndRec, yposData, RST, clk) begin
-				if(RST = '1') then
-					pos <= "00";
-				elsif rising_edge(clk) then
-					if sndRec = '1' then
-						if yposData >= "1010001010" then
-							pos <= "10"; 						--upp
-							intr <= '1';
-						elsif yposData <= "0101011110" then
-							pos <= "11"; 						--ner
-							intr <= '1';
-						elsif xposData <= "0101011110" then
-							pos <= "00"; 						--höger
-							intr <= '1';
-						elsif xposData >= "1010001010" then
-							pos <= "01"; 						--vänster
-							intr <= '1';
-						end if;
-					else
-						intr <= '0';
+			process(clk) 
+			begin
+				if rising_edge(clk) then
+					if(rst = '1') then 	joystick_pos <= "00";
+					elsif xPos = "11" then	joystick_pos <= "10";					-- höger
+					elsif yPos = "11" then	joystick_pos <= "01";					-- upp
+					elsif xPos = "00" then	joystick_pos <= "00";					-- vänster
+					elsif yPos = "00" then	joystick_pos <= "11";					-- ner
 					end if;
-				--else
-					--yPos <= "00";
 				end if;
 			end process;
 
-			-- LED <= ("000000" & pos);
-
-			-- väljer antingen x eller y värden som ska visas beroende på vilken knapp som trycks ner på joysticken
-			--process(sndRec) begin
-				--if(RST = '1') then
-					--LED <= "00000000";
-				--if sndRec = '1' and jstkData(1) = '1' then
-				--	LED <= xposData(7 downto 0);
-				--elsif sndRec = '1' and jstkData(0) = '1' then
-				--	LED <= yposData(7 downto 0);
-				--end if;
-			--end process;
-
-			--posData <= (jstkData(25 downto 24) & jstkData(39 downto 32));
-
+			start_pacman <= '0' when (rst = '1') else
+					'1' when (xPos = "11" and joystick_pos /= "10") else
+					'1' when (yPos = "11" and joystick_pos /= "01") else
+					'1' when (xPos = "00" and joystick_pos /= "00") else
+					'1' when (yPos = "00" and joystick_pos /= "11") else '0';
+ 
 			-- Data to be sent to PmodJSTK, lower two bits will turn on leds on PmodJSTK
-			sndData <= "100000" & SW(1) & SW(2);
 
-			-- Assign PmodJSTK button status to LED[2:0]
-			--process(sndRec, RST) begin
-			--		if(RST = '1') then
-			--				LED <= "000";
-			--		elsif sndRec = '1' then
-			--				--LED <= jstkData(1) & jstkData(2) & jstkData(0);
-			--				ledData <= jstkData(1) & jstkData(2) & jstkData(0);
-			--		end if;
-			--end process;
+			sndData <= "10000000";
 
 end Behavioral;
 
