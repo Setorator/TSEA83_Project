@@ -42,12 +42,12 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity PmodJSTK_Master is
     Port ( clk : in  std_logic;											-- 100Mhz onboard clock
            rst : in  std_logic;											-- Button D
-           MISO : in  std_logic;											-- Master In Slave Out, JA3
-	   	   joystick_pos : buffer unsigned(1 downto 0);				-- positionen som joysticken är i
+           MISO : in  std_logic;										-- Master In Slave Out, JA3
+	   	   joystick_pos : buffer unsigned(1 downto 0);					-- positionen som joysticken är i
 	   	   start_pacman : out std_logic;
            SS : out  std_logic;											-- Slave Select, Pin 1, Port JA
        	   MOSI : out  std_logic;										-- Master Out Slave In, Pin 2, Port JA
-           SCLK : out  std_logic											-- Serial Clock, Pin 4, Port JA
+           SCLK : out  std_logic										-- Serial Clock, Pin 4, Port JA
            );	
 
 
@@ -94,9 +94,7 @@ architecture Behavioral of PmodJSTK_Master is
 			-- Data read from PmodJSTK
 			signal jstkData : std_logic_vector(39 downto 0) := (others => '0');
 
-			-- Signal carrying output data that user selected
-			--signal posData : std_logic_vector(9 downto 0);
-
+			-- Holds the x and y value from jstkData
 			signal xPos : std_logic_vector(1 downto 0) := "01";
 			signal yPos : std_logic_vector(1 downto 0) := "01";
 

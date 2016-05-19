@@ -29,17 +29,17 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 -- 										  Define Module
 -- ====================================================================================
 entity spiCtrl is
-    Port ( clk : in  STD_LOGIC;
-	   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
-           rst : in  STD_LOGIC;
-           sndRec : in  STD_LOGIC;
-           BUSY : in  STD_LOGIC;
-           DIN : in  STD_LOGIC_VECTOR (7 downto 0);
-           RxData : in  STD_LOGIC_VECTOR (7 downto 0);
-           SS : out  STD_LOGIC;
-           getByte : out  STD_LOGIC;
-           sndData : inout  STD_LOGIC_VECTOR (7 downto 0);
-           DOUT : inout  STD_LOGIC_VECTOR (39 downto 0));
+    Port ( clk : in  std_logic;
+	   	   Six_CLK : in std_logic;								-- 66.67khz clock
+           rst : in  std_logic;
+           sndRec : in  std_logic;
+           BUSY : in  std_logic;
+           DIN : in  std_logic_vector (7 downto 0);
+           RxData : in  std_logic_vector (7 downto 0);
+           SS : out  std_logic;
+           getByte : out  std_logic;
+           sndData : inout  std_logic_vector (7 downto 0);
+           DOUT : inout  std_logic_vector (39 downto 0));
 end spiCtrl;
 
 architecture Behavioral of spiCtrl is
@@ -54,15 +54,16 @@ architecture Behavioral of spiCtrl is
 			-- Present state, Next State
 			signal STATE, NSTATE : state_type;
 
-			signal byteCnt : STD_LOGIC_VECTOR(2 downto 0) := "000";					-- Number bits read/written
-			constant byteEndVal : STD_LOGIC_VECTOR(2 downto 0) := "101";			-- Number of bytes to send/receive
-			signal tmpSR : STD_LOGIC_VECTOR(39 downto 0) := X"0000000000";			-- Temporary shift register to
-																										-- accumulate all five data bytes
-			signal q : STD_LOGIC;
-			signal q2 : STD_LOGIC;
-			signal q2_plus : STD_LOGIC;
-			signal flank : STD_LOGIC;	
-			signal flank_down : STD_LOGIC;	
+			signal byteCnt : std_logic_vector(2 downto 0) := "000";					-- Number bits read/written
+			constant byteEndVal : std_logic_vector(2 downto 0) := "101";			-- Number of bytes to send/receive
+			signal tmpSR : std_logic_vector(39 downto 0) := X"0000000000";			-- Temporary shift register to accumulate all five data bytes
+
+			-- Signals to handle falling edge on the 66.67kHz clock
+			signal q : std_logic;
+			signal q2 : std_logic;
+			signal q2_plus : std_logic;
+			signal edge : std_logic;	
+			signal edge_down : std_logic;	
 
 
 -- ====================================================================================
@@ -78,16 +79,16 @@ begin
 				end if;
 			end process;
 
-			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank
+			edge <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- falling edge
 
-			-- Enpulsar fallande flank
+			-- Turns the falling edge signal to a pulse
 			process(clk) begin
 				if rising_edge(clk) then
 					q2 <= q2_plus;
 				end if;
 			end process;
-			q2_plus <= flank;
-			flank_down <= ((not q2) and flank);
+			q2_plus <= edge;
+			edge_down <= ((not q2) and edge);
 
 
 		--------------------------------
@@ -97,7 +98,7 @@ begin
 			if rising_edge(clk) then
 				if rst = '1' then
 						STATE <= stIdle;
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif edge_down = '1' then					-- bytte ut falling_edge(CLK)
 						STATE <= NSTATE;
 				end if;
 			end if;
@@ -119,7 +120,7 @@ begin
 						DOUT <= X"0000000000";
 						byteCnt <= "000";
 						
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif edge_down = '1' then					-- bytte ut falling_edge(CLK)
 						case (STATE) is
 
 								when stIdle =>

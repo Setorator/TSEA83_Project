@@ -41,16 +41,16 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity spiMode0 is
-    Port ( clk : in  STD_LOGIC;									-- 100Mhz clock
-		   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
-           rst : in  STD_LOGIC;									-- Reset
-           sndRec : in  STD_LOGIC;								-- Send receive, initializes data read/write
-           DIN : in  STD_LOGIC_VECTOR (7 downto 0);		-- Data that is to be sent to the slave
-           MISO : in  STD_LOGIC;									-- Master input slave output
-           MOSI : out  STD_LOGIC;								-- Master out slave in
-           SCLK : out  STD_LOGIC;								-- Serial clock
-           BUSY : out  STD_LOGIC;								-- Busy if sending/receiving data
-           DOUT : out  STD_LOGIC_VECTOR (7 downto 0));	-- Data read from the slave
+    Port ( clk : in  std_logic;									-- 100Mhz clock
+		   Six_CLK : in std_logic;								-- 66.67khz clock
+           rst : in  std_logic;									-- Reset
+           sndRec : in  std_logic;								-- Send receive, initializes data read/write
+           DIN : in  std_logic_vector (7 downto 0);		-- Data that is to be sent to the slave
+           MISO : in  std_logic;									-- Master input slave output
+           MOSI : out  std_logic;								-- Master out slave in
+           SCLK : out  std_logic;								-- Serial clock
+           BUSY : out  std_logic;								-- Busy if sending/receiving data
+           DOUT : out  std_logic_vector (7 downto 0));	-- Data read from the slave
 end spiMode0;
 
 architecture Behavioral of spiMode0 is
@@ -65,18 +65,20 @@ architecture Behavioral of spiMode0 is
 		-- Present state, Next State
 		signal STATE, NSTATE : state_type;
 
-		signal bitCount : STD_LOGIC_VECTOR(3 downto 0) := X"0";				-- Number bits read/written
-		signal rSR : STD_LOGIC_VECTOR(7 downto 0) := X"00";					-- Read shift register
-		signal wSR : STD_LOGIC_VECTOR(7 downto 0) := X"00";					-- Write shift register
+		signal bitCount : std_logic_vector(3 downto 0) := X"0";				-- Number bits read/written
+		signal rSR : std_logic_vector(7 downto 0) := X"00";					-- Read shift register
+		signal wSR : std_logic_vector(7 downto 0) := X"00";					-- Write shift register
 
-		signal CE : STD_LOGIC := '0';													-- Clock enable, controls serial
-																								-- clock signal sent to slave	
-		signal q : STD_LOGIC;
-		signal q2 : STD_LOGIC;
-		signal q2_plus : STD_LOGIC;
-		signal flank : STD_LOGIC;	
-		signal flank_down : STD_LOGIC;	
-		signal flank_up : STD_LOGIC;		
+		signal CE : std_logic := '0';										-- Clock enable, controls serial clock signal sent to slave	
+																								
+
+		-- Signals to handle falling and rising edge on the 66.67kHz clock
+		signal q : std_logic;
+		signal q2 : std_logic;
+		signal q2_plus : std_logic;
+		signal edge : std_logic;	
+		signal edge_down : std_logic;	
+		signal edge_up : std_logic;		
 
 --  ===================================================================================
 -- 							  				Implementation
@@ -89,17 +91,18 @@ begin
 				end if;
 			end process;
 
-			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank på 66.67hz klockan
+			edge <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- falling edge on the 66.67kHz clock
 
-			flank_up <= '1' when (Six_CLK = '1' and q <= '0') else '0';					-- uppåt flank på 66.67hz klockan
+			edge_up <= '1' when (Six_CLK = '1' and q <= '0') else '0';					-- rising edge on the 66.67kHz clock
 
+			-- Turns the falling edge signal to a pulse
 			process(clk) begin
 				if rising_edge(clk) then
 					q2 <= q2_plus;
 				end if;
 			end process;
-			q2_plus <= flank;
-			flank_down <= ((not q2) and flank);
+			q2_plus <= edge;
+			edge_down <= ((not q2) and edge);
 
 
 
@@ -121,7 +124,7 @@ begin
 					if rst = '1' then
 							wSR <= X"00";
 					
-					elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+					elsif edge_down = '1' then
 							-- Enable shift during RxTx state only
 							case(STATE) is
 									when Idle =>
@@ -154,7 +157,7 @@ begin
 				if rising_edge(clk) then
 					if rst = '1' then
 							rSR <= X"00";
-					elsif flank_up = '1' then
+					elsif edge_up = '1' then
 							-- Enable shift during RxTx state only
 							case(STATE) is
 									when Idle =>
@@ -183,7 +186,7 @@ begin
 			if rising_edge(clk) then
 				if rst = '1' then
 						STATE <= Idle;
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif edge_down = '1' then
 						STATE <= NSTATE;
 				end if;
 			end if;
@@ -202,25 +205,25 @@ begin
 						BUSY <= '0';									-- Not busy in Idle state
 						bitCount <= X"0";								-- Clear #bits read/written
 						
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif edge_down = '1' then
 						case (STATE) is
 
 								when Idle =>
 
 										CE <= '0';						-- Disable serial clock
 										BUSY <= '0';					-- Not busy in Idle state
-										bitCount <= X"0";		-- Clear #bits read/written
+										bitCount <= X"0";				-- Clear #bits read/written
 
 								when Init =>
 
 										BUSY <= '1';					-- Output a busy signal
-										bitCount <= X"0";		-- Have not read/written anything yet
+										bitCount <= X"0";				-- Have not read/written anything yet
 										CE <= '0';						-- Disable serial clock
 
 								when RxTx =>
 
 										BUSY <= '1';					-- Output busy signal
-										bitCount <= bitCount + 1;	-- Begin counting bits received/written
+										bitCount <= bitCount + 1;		-- Begin counting bits received/written
 										
 										-- Have written all bits to slave so prevent another falling edge
 										if(bitCount >= X"8") then

@@ -45,7 +45,7 @@ architecture Behavioral of PmodJSTK is
 		-- **********************************************
 		component spiCtrl
 
-			 Port ( 	  clk : in  STD_LOGIC;
+			 Port (   clk : in  STD_LOGIC;
 					  Six_CLK : in STD_LOGIC;
 					  rst : in  STD_LOGIC;
 					  sndRec : in STD_LOGIC;
@@ -65,7 +65,7 @@ architecture Behavioral of PmodJSTK is
 		-- **********************************************
 		component spiMode0
 
-			 Port ( 	  clk : in  STD_LOGIC;
+			 Port (   clk : in  STD_LOGIC;
 					  Six_CLK : in STD_LOGIC;
 					  rst : in  STD_LOGIC;
 					  sndRec : in STD_LOGIC;
@@ -84,16 +84,16 @@ architecture Behavioral of PmodJSTK is
 -- 							       Signals and Constants
 -- ====================================================================================
 
-		signal getByte : STD_LOGIC;							-- Initiates a data byte transfer in SPI_Int
+		signal getByte : STD_LOGIC;						-- Initiates a data byte transfer in SPI_Int
 		signal sndData : STD_LOGIC_VECTOR(7 downto 0);	-- Data to be sent to Slave
 		signal RxData : STD_LOGIC_VECTOR(7 downto 0);	-- Output data from SPI_Int
-		signal BUSY : STD_LOGIC;								-- Handshake from SPI_Int to SPI_Ctrl
+		signal BUSY : STD_LOGIC;						-- Handshake from SPI_Int to SPI_Ctrl
 
 
 		-- 66.67kHz Clock Divider, period 15us
-		signal iSCLK : STD_LOGIC;								-- Internal serial clock,
-																		-- not directly output to slave,
-																		-- controls state machine, etc.
+		signal iSCLK : STD_LOGIC;						-- Internal serial clock,
+														-- not directly output to slave,
+														-- controls state machine, etc.
 
 
 		-- Value to toggle output clock at
