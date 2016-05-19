@@ -43,7 +43,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity spiMode0 is
     Port ( clk : in  STD_LOGIC;									-- 100Mhz clock
 		   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
-           RST : in  STD_LOGIC;									-- Reset
+           rst : in  STD_LOGIC;									-- Reset
            sndRec : in  STD_LOGIC;								-- Send receive, initializes data read/write
            DIN : in  STD_LOGIC_VECTOR (7 downto 0);		-- Data that is to be sent to the slave
            MISO : in  STD_LOGIC;									-- Master input slave output
@@ -118,7 +118,7 @@ begin
 			---------------------------------------
 			process(clk) begin
 				if rising_edge(clk) then
-					if(RST = '1') then
+					if rst = '1' then
 							wSR <= X"00";
 					
 					elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
@@ -152,7 +152,7 @@ begin
 			---------------------------------------
 			process(clk) begin
 				if rising_edge(clk) then
-					if(RST = '1') then
+					if rst = '1' then
 							rSR <= X"00";
 					elsif flank_up = '1' then
 							-- Enable shift during RxTx state only
@@ -181,7 +181,7 @@ begin
 		--------------------------------
 		STATE_REGISTER: process(clk) begin
 			if rising_edge(clk) then
-				if (RST = '1') then
+				if rst = '1' then
 						STATE <= Idle;
 				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
 						STATE <= NSTATE;
@@ -196,7 +196,7 @@ begin
 		--------------------------------
 		OUTPUT_LOGIC: process (clk) begin
 			if rising_edge(clk) then
-				if(RST = '1') then
+				if rst = '1' then
 						-- Reset/clear values
 						CE <= '0';										-- Disable serial clock
 						BUSY <= '0';									-- Not busy in Idle state

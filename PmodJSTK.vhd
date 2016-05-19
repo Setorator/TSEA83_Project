@@ -23,8 +23,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 -- 										  Define Module
 -- ====================================================================================
 entity PmodJSTK is
-    Port ( CLK : in  STD_LOGIC;
-           RST : in  STD_LOGIC;
+    Port ( clk : in  STD_LOGIC;
+           rst : in  STD_LOGIC;
            sndRec : in  STD_LOGIC;
            DIN : in  STD_LOGIC_VECTOR (7 downto 0);
            MISO : in  STD_LOGIC;
@@ -45,9 +45,9 @@ architecture Behavioral of PmodJSTK is
 		-- **********************************************
 		component spiCtrl
 
-			 Port ( CLK : in  STD_LOGIC;
+			 Port ( 	  clk : in  STD_LOGIC;
 					  Six_CLK : in STD_LOGIC;
-					  RST : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
 					  sndRec : in STD_LOGIC;
 					  BUSY : in STD_LOGIC;
 					  DIN : in  STD_LOGIC_VECTOR(7 downto 0);
@@ -65,9 +65,9 @@ architecture Behavioral of PmodJSTK is
 		-- **********************************************
 		component spiMode0
 
-			 Port ( CLK : in  STD_LOGIC;
+			 Port ( 	  clk : in  STD_LOGIC;
 					  Six_CLK : in STD_LOGIC;
-					  RST : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
 					  sndRec : in STD_LOGIC;
 					  DIN : in  STD_LOGIC_VECTOR(7 downto 0);
 					  MISO : in  STD_LOGIC;
@@ -78,18 +78,7 @@ architecture Behavioral of PmodJSTK is
 			 );
 
 		end component;
-		
-		-- **********************************************
-		-- 				66.67kHz Clock Divider
-		-- **********************************************
-		component ClkDiv_66_67kHz
 
-			 Port ( CLK : in  STD_LOGIC;
-					  RST : in  STD_LOGIC;
-					  CLKOUT : inout STD_LOGIC
-			 );
-
-		end component;
 
 -- ====================================================================================
 -- 							       Signals and Constants
@@ -106,6 +95,12 @@ architecture Behavioral of PmodJSTK is
 																		-- not directly output to slave,
 																		-- controls state machine, etc.
 
+
+		-- Value to toggle output clock at
+		constant cntEndVal : STD_LOGIC_VECTOR(9 downto 0) := "1011101110";	-- End count value
+		-- Current count
+		signal clkCount : STD_LOGIC_VECTOR(9 downto 0) := (others => '0');	-- Stores count value
+
 -- ====================================================================================
 -- 							       	 Implementation
 -- ====================================================================================
@@ -115,9 +110,9 @@ begin
 			--  	  				SPI Controller
 			-------------------------------------------------
 			SPI_Ctrl : spiCtrl port map(
-					CLK=>CLK,
+					clk=>clk,
 					Six_CLK=>iSCLK,
-					RST=>RST,
+					rst=>rst,
 					sndRec=>sndRec,
 					BUSY=>BUSY,
 					DIN=>DIN,
@@ -132,9 +127,9 @@ begin
 			--  	  				  SPI Mode 0
 			-------------------------------------------------
 			SPI_Int : spiMode0 port map(
-					CLK=>CLK,
+					clk=>clk,
 					Six_CLK=>iSCLK,
-					RST=>RST,
+					rst=>rst,
 					sndRec=>getByte,
 					DIN=>sndData,
 					MISO=>MISO,
@@ -144,14 +139,30 @@ begin
 					DOUT=>RxData
 			);
 
+
+
 			-------------------------------------------------
-			--  	  				SPI Controller
+			--	5Hz Clock Divider Generates Send/Receive signal
 			-------------------------------------------------
-			SerialClock : ClkDiv_66_67kHz port map(
-					CLK=>CLK,
-					RST=>RST,
-					CLKOUT=>iSCLK
-			);
+			process(clk) begin
+				if rising_edge(clk) then
+					if rst = '1'  then
+						CLKOUT <= '0';
+						clkCount <= "0000000000";
+					elsif(clkCount = cntEndVal) then
+						CLKOUT <= NOT CLKOUT;
+						clkCount <= "0000000000";
+					else
+						clkCount <= clkCount + '1';
+					end if;
+				end if;
+
+			end process;
+
+			iSCLK <= CLKOUT;
+
+			
+
 
 end Behavioral;
 

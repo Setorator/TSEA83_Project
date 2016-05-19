@@ -31,7 +31,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity spiCtrl is
     Port ( clk : in  STD_LOGIC;
 	   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
-           RST : in  STD_LOGIC;
+           rst : in  STD_LOGIC;
            sndRec : in  STD_LOGIC;
            BUSY : in  STD_LOGIC;
            DIN : in  STD_LOGIC_VECTOR (7 downto 0);
@@ -70,7 +70,7 @@ architecture Behavioral of spiCtrl is
 -- ====================================================================================
 begin
 
-
+			
 			process(clk) 
 			begin
 				if rising_edge(clk) then
@@ -80,6 +80,7 @@ begin
 
 			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank
 
+			-- Enpulsar fallande flank
 			process(clk) begin
 				if rising_edge(clk) then
 					q2 <= q2_plus;
@@ -94,7 +95,7 @@ begin
 		--------------------------------
 		STATE_REGISTER: process(clk) begin
 			if rising_edge(clk) then
-				if (RST = '1') then
+				if rst = '1' then
 						STATE <= stIdle;
 				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
 						STATE <= NSTATE;
@@ -109,7 +110,7 @@ begin
 		--------------------------------
 		OUTPUT_LOGIC: process (clk) begin
 			if rising_edge(clk) then
-				if(RST = '1') then
+				if rst = '1' then
 						-- Reset/clear values
 						SS <= '1';
 						getByte <= '0';
