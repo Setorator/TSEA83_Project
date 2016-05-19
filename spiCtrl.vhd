@@ -30,7 +30,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 -- ====================================================================================
 entity spiCtrl is
     Port ( clk : in  STD_LOGIC;
-	   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
            RST : in  STD_LOGIC;
            sndRec : in  STD_LOGIC;
            BUSY : in  STD_LOGIC;
@@ -57,49 +56,36 @@ architecture Behavioral of spiCtrl is
 			signal byteCnt : STD_LOGIC_VECTOR(2 downto 0) := "000";					-- Number bits read/written
 			constant byteEndVal : STD_LOGIC_VECTOR(2 downto 0) := "101";			-- Number of bytes to send/receive
 			signal tmpSR : STD_LOGIC_VECTOR(39 downto 0) := X"0000000000";			-- Temporary shift register to
+
+			signal control : STD_LOGIC := '0';
+
 																										-- accumulate all five data bytes
-			signal q : STD_LOGIC;
-			signal q2 : STD_LOGIC;
-			signal q2_plus : STD_LOGIC;
-			signal flank : STD_LOGIC;	
-			signal flank_down : STD_LOGIC;	
-
-
+			
 -- ====================================================================================
 -- 							       	 Implementation
 -- ====================================================================================
 begin
 
-
-			process(clk) 
-			begin
-				if rising_edge(clk) then
-					q <= Six_CLK;
-				end if;
-			end process;
-
-			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank
-
-			process(clk) begin
-				if rising_edge(clk) then
-					q2 <= q2_plus;
-				end if;
-			end process;
-			q2_plus <= flank;
-			flank_down <= ((not q2) and flank);
-
+		process(clk, RST) begin
+			if(RST = '1') then
+				control <= '0';
+			elsif rising_edge(clk) then
+				control <= not(control);
+			end if;
+		end process;
 
 		--------------------------------
 		--		   State Register
 		--------------------------------
-		STATE_REGISTER: process(clk) begin
-			if rising_edge(clk) then
-				if (RST = '1') then
+		STATE_REGISTER: process(clk, RST) begin
+				if(RST = '1') then
 						STATE <= stIdle;
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif rising_edge(clk) then				-- bytte ut falling_edge(CLK)
+					--if control = '1' then
 						STATE <= NSTATE;
+					--end if;
 				end if;
-			end if;
+
 		end process;
 
 		
@@ -107,8 +93,8 @@ begin
 		--------------------------------
 		--		Output Logic/Assignment
 		--------------------------------
-		OUTPUT_LOGIC: process (clk) begin
-			if rising_edge(clk) then
+		OUTPUT_LOGIC: process (CLK, RST)
+		begin
 				if(RST = '1') then
 						-- Reset/clear values
 						SS <= '1';
@@ -118,7 +104,8 @@ begin
 						DOUT <= X"0000000000";
 						byteCnt <= "000";
 						
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif rising_edge(clk) then				-- bytte ut falling_edge(CLK)
+					--if control = '1' then
 						case (STATE) is
 
 								when stIdle =>
@@ -170,15 +157,15 @@ begin
 										byteCnt <= byteCnt;									-- Do not count
 								
 						end case;
+					--end if;	
 				end if;
-			end if;
 		end process;
 
 		--------------------------------
 		--		  Next State Logic
 		--------------------------------
-		NEXT_STATE_LOGIC: process (clk) begin
-			if rising_edge(clk) then
+		NEXT_STATE_LOGIC: process (sndRec, STATE, BUSY, byteCnt)
+		begin
 				-- Define default state to avoid latches
 				NSTATE <= stIdle;
 
@@ -239,8 +226,7 @@ begin
 --						when others =>
 --								NSTATE <= stIdle;
 								
-				end case;  
-			end if;    
+				end case;      
 		end process;
 
 end Behavioral;

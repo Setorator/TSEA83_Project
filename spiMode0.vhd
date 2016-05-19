@@ -42,15 +42,14 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity spiMode0 is
     Port ( clk : in  STD_LOGIC;									-- 100Mhz clock
-		   Six_CLK : in STD_LOGIC;								-- 66.67khz clock
            RST : in  STD_LOGIC;									-- Reset
            sndRec : in  STD_LOGIC;								-- Send receive, initializes data read/write
-           DIN : in  STD_LOGIC_VECTOR (7 downto 0);		-- Data that is to be sent to the slave
-           MISO : in  STD_LOGIC;									-- Master input slave output
+           DIN : in  STD_LOGIC_VECTOR (7 downto 0);				-- Data that is to be sent to the slave
+           MISO : in  STD_LOGIC;								-- Master input slave output
            MOSI : out  STD_LOGIC;								-- Master out slave in
            SCLK : out  STD_LOGIC;								-- Serial clock
            BUSY : out  STD_LOGIC;								-- Busy if sending/receiving data
-           DOUT : out  STD_LOGIC_VECTOR (7 downto 0));	-- Data read from the slave
+           DOUT : out  STD_LOGIC_VECTOR (7 downto 0));			-- Data read from the slave
 end spiMode0;
 
 architecture Behavioral of spiMode0 is
@@ -69,59 +68,42 @@ architecture Behavioral of spiMode0 is
 		signal rSR : STD_LOGIC_VECTOR(7 downto 0) := X"00";					-- Read shift register
 		signal wSR : STD_LOGIC_VECTOR(7 downto 0) := X"00";					-- Write shift register
 
-		signal CE : STD_LOGIC := '0';													-- Clock enable, controls serial
-																								-- clock signal sent to slave	
-		signal q : STD_LOGIC;
-		signal q2 : STD_LOGIC;
-		signal q2_plus : STD_LOGIC;
-		signal flank : STD_LOGIC;	
-		signal flank_down : STD_LOGIC;	
-		signal flank_up : STD_LOGIC;		
+		signal CE : STD_LOGIC := '0';										-- Clock enable, controls serial
+																			-- clock signal sent to slave
 
+		signal control : STD_LOGIC := '0';
+			
 --  ===================================================================================
 -- 							  				Implementation
 --  ===================================================================================
-begin	
-
-			process(clk) begin
-				if rising_edge(clk) then
-					q <= Six_CLK;
-				end if;
-			end process;
-
-			flank <= '1' when (Six_CLK = '0' and q <= '1') else '0';					-- fallande flank på 66.67hz klockan
-
-			flank_up <= '1' when (Six_CLK = '1' and q <= '0') else '0';					-- uppåt flank på 66.67hz klockan
-
-			process(clk) begin
-				if rising_edge(clk) then
-					q2 <= q2_plus;
-				end if;
-			end process;
-			q2_plus <= flank;
-			flank_down <= ((not q2) and flank);
-
-
-
+begin			
 
 			-- Serial clock output, allow if clock enable asserted
-			SCLK <= Six_CLK when (CE = '1') else '0';
+			SCLK <= clk when (CE = '1') else '0';
 			-- Master out slave in, value always stored in MSB of write shift register
 			MOSI <= wSR(7);
 			-- Connect data output bus to read shift register
 			DOUT <= rSR;
+
+
+			process(clk, RST) begin
+				if(RST = '1') then
+					control <= '0';
+				elsif rising_edge(clk) then
+					control <= not(control);
+				end if;
+			end process;
 	
 			---------------------------------------
 			--			 Write Shift Register
 			-- 	slave reads on rising edges,
 			-- change output data on falling edges
 			---------------------------------------
-			process(clk) begin
-				if rising_edge(clk) then
+			process(clk, RST) begin
 					if(RST = '1') then
 							wSR <= X"00";
-					
-					elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+					elsif rising_edge(clk) then				-- bytte ut falling_edge(CLK)
+						--if control = '1' then
 							-- Enable shift during RxTx state only
 							case(STATE) is
 									when Idle =>
@@ -138,8 +120,8 @@ begin
 									when Done =>
 											wSR <= wSR;
 							end case;
+						--end if;
 					end if;
-				end if;
 			end process;
 
 
@@ -150,11 +132,11 @@ begin
 			-- 	master reads on rising edges,
 			-- slave changes data on falling edges
 			---------------------------------------
-			process(clk) begin
-				if rising_edge(clk) then
+			process(CLK, RST) begin
 					if(RST = '1') then
 							rSR <= X"00";
-					elsif flank_up = '1' then
+					elsif rising_edge(clk) then
+						--if control = '0' then
 							-- Enable shift during RxTx state only
 							case(STATE) is
 									when Idle =>
@@ -171,22 +153,20 @@ begin
 									when Done =>
 											rSR <= rSR;
 							end case;
+						--end if;
 					end if;
-				end if;
 			end process;
 			
 
 		--------------------------------
 		--		   State Register
 		--------------------------------
-		STATE_REGISTER: process(clk) begin
-			if rising_edge(clk) then
+		STATE_REGISTER: process(clk, RST) begin
 				if (RST = '1') then
 						STATE <= Idle;
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif rising_edge(clk) then
 						STATE <= NSTATE;
 				end if;
-			end if;
 		end process;
 
 		
@@ -194,15 +174,16 @@ begin
 		--------------------------------
 		--		Output Logic/Assignment
 		--------------------------------
-		OUTPUT_LOGIC: process (clk) begin
-			if rising_edge(clk) then
+		OUTPUT_LOGIC: process (clk, RST)
+		begin
 				if(RST = '1') then
 						-- Reset/clear values
 						CE <= '0';										-- Disable serial clock
 						BUSY <= '0';									-- Not busy in Idle state
 						bitCount <= X"0";								-- Clear #bits read/written
 						
-				elsif flank_down = '1' then					-- bytte ut falling_edge(CLK)
+				elsif rising_edge(clk) then			-- bytte ut falling_edge(CLK)
+					--if control = '1' then
 						case (STATE) is
 
 								when Idle =>
@@ -238,15 +219,15 @@ begin
 										bitCount <= X"0";				-- Clear #bits read/written
 								
 						end case;
+					--end if;	
 				end if;
-			end if;
 		end process;
 
 		--------------------------------
 		--		  Next State Logic
 		--------------------------------
-		NEXT_STATE_LOGIC: process (clk) begin
-			if rising_edge(clk) then
+		NEXT_STATE_LOGIC: process (sndRec, bitCount, STATE)
+		begin
 				-- Define default state to avoid latches
 				NSTATE <= Idle;
 
@@ -276,8 +257,7 @@ begin
 								NSTATE <= Idle;
 						when others =>
 								NSTATE <= Idle;
-				end case;
-			end if;      
+				end case;      
 		end process;
 
 end Behavioral;

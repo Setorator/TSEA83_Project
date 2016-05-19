@@ -1,0 +1,1320 @@
+
+   *** Important settings for the Xilinx Backend module ***
+
+   Synthesis top module: Pac_Man
+   FPGA part (PART): xc6slx16-3-csg324
+   Constraints file: Nexys3.ucf
+
+nice -n 19 make -f Makefile Pac_Man-synthdir/layoutdefault/design.bit PROJNAME="Pac_Man" S="Pac_Man.vhd RAM.vhd CPU.vhd PIX_GEN.vhd" U="Nexys3.ucf" XST_OPT="" PART="xc6slx16-3-csg324" INCDIRS=""
+make[1]: Entering directory `/edu/emino969/PacMan/TSEA83_Project-master'
+
+*** Creating synthesis scripts ***
+
+mkdir -p Pac_Man-synthdir/xst/synth
+echo "-top $(basename $(echo Pac_Man.vhd | sed 's/\..*$//'))" >> Pac_Man-synthdir/xst/synth/design.scr.tmp
+echo "-p xc6slx16-3-csg324" >> Pac_Man-synthdir/xst/synth/design.scr.tmp
+echo  >> Pac_Man-synthdir/xst/synth/design.scr.tmp
+rm -f Pac_Man-synthdir/xst/synth/design.prj
+touch Pac_Man-synthdir/xst/synth/design.prj
+echo 'vhdl work "../../../Pac_Man.vhd"' >> Pac_Man-synthdir/xst/synth/design.prj;  echo 'vhdl work "../../../RAM.vhd"' >> Pac_Man-synthdir/xst/synth/design.prj;  echo 'vhdl work "../../../CPU.vhd"' >> Pac_Man-synthdir/xst/synth/design.prj;  echo 'vhdl work "../../../PIX_GEN.vhd"' >> Pac_Man-synthdir/xst/synth/design.prj;
+mv Pac_Man-synthdir/xst/synth/design.scr.tmp Pac_Man-synthdir/xst/synth/design.scr
+
+*** Synthesizing ***
+
+rm -rf Pac_Man-synthdir/xst/synth/tmpdir
+mkdir -p Pac_Man-synthdir/xst/synth/tmpdir
+rm -rf Pac_Man-synthdir/xst/synth/xst
+mkdir -p Pac_Man-synthdir/xst/synth/xst
+cd Pac_Man-synthdir/xst/synth; source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh; xst -ifn design.scr -ofn design.syr
+. /sw/xilinx/ise_12.4i/ISE_DS/EDK/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/EDK
+. /sw/xilinx/ise_12.4i/ISE_DS/ISE/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/ISE
+. /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead
+. /sw/xilinx/ise_12.4i/ISE_DS/common/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/common
+Release 12.4 - xst M.81d (lin64)
+Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
+--> 
+Parameter TMPDIR set to tmpdir
+
+
+Total REAL time to Xst completion: 9.00 secs
+Total CPU time to Xst completion: 0.13 secs
+ 
+--> 
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                      Synthesis Options Summary                        *
+=========================================================================
+---- Source Parameters
+Input File Name                    : "design.prj"
+
+---- Target Parameters
+Output File Name                   : "design.ngc"
+Target Device                      : xc6slx16-3-csg324
+
+---- Source Options
+Top Module Name                    : Pac_Man
+
+=========================================================================
+
+WARNING:Xst:29 - Optimization Effort not specified
+The following parameters have been added:
+Optimization Goal                  : SPEED
+
+=========================================================================
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Parsing VHDL file "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" into library work
+Parsing entity <Pac_Man>.
+Parsing architecture <Behavioral> of entity <pac_man>.
+Parsing VHDL file "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../RAM.vhd" into library work
+Parsing entity <RAM>.
+Parsing architecture <Behavioral> of entity <ram>.
+Parsing VHDL file "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../CPU.vhd" into library work
+Parsing entity <cpu>.
+Parsing architecture <Behavioral> of entity <cpu>.
+Parsing VHDL file "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../PIX_GEN.vhd" into library work
+Parsing entity <PIX_GEN>.
+Parsing architecture <Behavioral> of entity <pix_gen>.
+
+=========================================================================
+*                            HDL Elaboration                            *
+=========================================================================
+
+Elaborating entity <Pac_Man> (architecture <Behavioral>) from library <work>.
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 86: Using initial value '0' for intr2 since it is never assigned
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 87: Using initial value "0000" for intr_code since it is never assigned
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 88: Using initial value "10" for joystick_poss since it is never assigned
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 94: Using initial value '0' for read_enable since it is never assigned
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 95: Using initial value '0' for write_enable since it is never assigned
+
+Elaborating entity <cpu> (architecture <Behavioral>) from library <work>.
+
+Elaborating entity <RAM> (architecture <Behavioral>) from library <work>.
+
+Elaborating entity <PIX_GEN> (architecture <Behavioral>) from library <work>.
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../PIX_GEN.vhd" Line 64: Using initial value "0000000000" for ghost_x since it is never assigned
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../PIX_GEN.vhd" Line 65: Using initial value "0000000000" for ghost_y since it is never assigned
+WARNING:HDLCompiler:871 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../PIX_GEN.vhd" Line 74: Using initial value ("00000000","10001100","00000010","11100000") for color_map since it is never assigned
+WARNING:HDLCompiler:634 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 97: Net <write_addr[10]> does not have a driver.
+WARNING:HDLCompiler:634 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/xst/synth/../../../Pac_Man.vhd" Line 99: Net <write_data[1]> does not have a driver.
+
+=========================================================================
+*                           HDL Synthesis                               *
+=========================================================================
+
+Synthesizing Unit <Pac_Man>.
+    Related source file is "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man.vhd".
+INFO:Xst:3010 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man.vhd" line 105: Output port <output3> of the instance <U0> is unconnected or connected to loadless signal.
+INFO:Xst:3010 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man.vhd" line 105: Output port <output4> of the instance <U0> is unconnected or connected to loadless signal.
+INFO:Xst:3010 - "/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man.vhd" line 113: Output port <read> of the instance <U2> is unconnected or connected to loadless signal.
+WARNING:Xst:653 - Signal <write_addr> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <write_data> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+    Summary:
+	no macro.
+Unit <Pac_Man> synthesized.
+
+Synthesizing Unit <cpu>.
+    Related source file is "/edu/emino969/PacMan/TSEA83_Project-master/CPU.vhd".
+WARNING:Xst:647 - Input <intr_code<3:0>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:2999 - Signal 'u_mem', unconnected in block 'cpu', is tied to its initial value.
+WARNING:Xst:2999 - Signal 'K2_mem', unconnected in block 'cpu', is tied to its initial value.
+WARNING:Xst:2999 - Signal 'K1_mem', unconnected in block 'cpu', is tied to its initial value.
+    Found 64x30-bit single-port Read Only RAM <Mram_u_mem> for signal <u_mem>.
+    Found 4x8-bit single-port Read Only RAM <Mram_K2_mem> for signal <K2_mem>.
+WARNING:Xst:3035 - Index value(s) does not match array range for signal <K1_mem>, simulation mismatch.
+    Found 17x8-bit single-port Read Only RAM <Mram_K1_mem> for signal <K1_mem>.
+    Found 128x19-bit single-port RAM <Mram_p_mem> for signal <p_mem>.
+    Found 10-bit register for signal <OUTPUT_REG2>.
+    Found 10-bit register for signal <OUTPUT_REG3>.
+    Found 10-bit register for signal <OUTPUT_REG4>.
+    Found 12-bit register for signal <JOY>.
+    Found 1-bit register for signal <intr_1>.
+    Found 1-bit register for signal <intr_2>.
+    Found 12-bit register for signal <ADR>.
+    Found 12-bit register for signal <IV1>.
+    Found 12-bit register for signal <IV2>.
+    Found 2-bit register for signal <IL>.
+    Found 12-bit register for signal <XR>.
+    Found 19-bit register for signal <IR>.
+    Found 12-bit register for signal <SR>.
+    Found 12-bit register for signal <SP>.
+    Found 19-bit register for signal <DR>.
+    Found 1-bit register for signal <I>.
+    Found 8-bit register for signal <uPC>.
+    Found 12-bit register for signal <AR>.
+    Found 12-bit register for signal <PC>.
+    Found 10-bit register for signal <OUTPUT_REG1>.
+    Found 12-bit adder for signal <SP[11]_GND_7_o_add_108_OUT> created at line 1241.
+    Found 8-bit adder for signal <uPC[7]_GND_7_o_add_136_OUT> created at line 1241.
+    Found 12-bit adder for signal <AR[11]_GND_7_o_add_151_OUT> created at line 1241.
+    Found 12-bit adder for signal <AR[11]_DATA_BUS[11]_add_155_OUT> created at line 542.
+    Found 12-bit adder for signal <PC[11]_GND_7_o_add_187_OUT> created at line 1241.
+    Found 12-bit subtractor for signal <GND_7_o_GND_7_o_sub_111_OUT<11:0>> created at line 1308.
+    Found 12-bit subtractor for signal <GND_7_o_GND_7_o_sub_154_OUT<11:0>> created at line 1308.
+    Found 12-bit subtractor for signal <GND_7_o_GND_7_o_sub_158_OUT<11:0>> created at line 543.
+    Found 6x6-bit multiplier for signal <AR[5]_DATA_BUS[5]_MuLt_169_OUT> created at line 551.
+    Found 19-bit 14-to-1 multiplexer for signal <DATA_BUS> created at line 263.
+    Found 12-bit 4-to-1 multiplexer for signal <GND_7_o_GND_7_o_mux_90_OUT> created at line 417.
+    Found 8-bit 7-to-1 multiplexer for signal <_n0754> created at line 509.
+    Found 12-bit 15-to-1 multiplexer for signal <AR[11]_AR[11]_mux_183_OUT> created at line 539.
+    Found 2-bit comparator greater for signal <IL[1]_PWR_7_o_LessThan_35_o> created at line 330
+    Found 2-bit comparator greater for signal <IL[1]_GND_7_o_LessThan_36_o> created at line 332
+    Summary:
+	inferred   4 RAM(s).
+	inferred   1 Multiplier(s).
+	inferred   7 Adder/Subtractor(s).
+	inferred 199 D-type flip-flop(s).
+	inferred   2 Comparator(s).
+	inferred  22 Multiplexer(s).
+Unit <cpu> synthesized.
+
+Synthesizing Unit <RAM>.
+    Related source file is "/edu/emino969/PacMan/TSEA83_Project-master/RAM.vhd".
+WARNING:Xst:3035 - Index value(s) does not match array range for signal <ram>, simulation mismatch.
+    Found 1400x2-bit dual-port RAM <Mram_ram> for signal <ram>.
+    Found 2-bit register for signal <data2>.
+    Found 11-bit adder for signal <PWR_10_o_GND_15_o_add_4_OUT> created at line 146.
+    Found 6x5-bit multiplier for signal <PWR_10_o_GND_15_o_add_1_OUT> created at line 140.
+    Found 6x5-bit multiplier for signal <n0027> created at line 146.
+    Summary:
+	inferred   1 RAM(s).
+	inferred   2 Multiplier(s).
+	inferred   1 Adder/Subtractor(s).
+	inferred   2 D-type flip-flop(s).
+Unit <RAM> synthesized.
+
+Synthesizing Unit <PIX_GEN>.
+    Related source file is "/edu/emino969/PacMan/TSEA83_Project-master/PIX_GEN.vhd".
+WARNING:Xst:653 - Signal <read> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:2999 - Signal 'tileMem', unconnected in block 'PIX_GEN', is tied to its initial value.
+WARNING:Xst:2999 - Signal 'Ghost', unconnected in block 'PIX_GEN', is tied to its initial value.
+WARNING:Xst:2999 - Signal 'Pac_Man', unconnected in block 'PIX_GEN', is tied to its initial value.
+    Found 256x2-bit single-port Read Only RAM <Mram_Ghost> for signal <Ghost>.
+    Found 256x2-bit single-port Read Only RAM <Mram_Pac_Man> for signal <Pac_Man>.
+    Found 1-bit register for signal <Hsync>.
+    Found 10-bit register for signal <Ypixel>.
+    Found 1-bit register for signal <Vsync>.
+    Found 2-bit register for signal <ClkDiv>.
+    Found 6-bit register for signal <tileX>.
+    Found 5-bit register for signal <tileY>.
+    Found 10-bit register for signal <Xpixel>.
+    Found 11-bit subtractor for signal <GND_19_o_GND_19_o_sub_72_OUT> created at line 320.
+    Found 11-bit subtractor for signal <GND_19_o_GND_19_o_sub_73_OUT> created at line 320.
+    Found 10-bit adder for signal <Xpixel[9]_GND_19_o_add_1_OUT> created at line 1241.
+    Found 10-bit adder for signal <Ypixel[9]_GND_19_o_add_10_OUT> created at line 1241.
+    Found 2-bit adder for signal <ClkDiv[1]_GND_19_o_add_19_OUT> created at line 1241.
+    Found 6-bit adder for signal <tileX[5]_GND_19_o_add_28_OUT> created at line 1241.
+    Found 5-bit adder for signal <tileY[4]_GND_19_o_add_38_OUT> created at line 1241.
+    Found 11-bit adder for signal <n0224> created at line 315.
+    Found 11-bit adder for signal <n0153> created at line 315.
+    Found 10-bit adder for signal <n0229> created at line 314.
+    Found 10-bit adder for signal <BUS_0010_GND_19_o_add_55_OUT> created at line 314.
+    Found 9-bit adder for signal <n0234[8:0]> created at line 313.
+    Found 15-bit adder for signal <n0167> created at line 320.
+    Found 15-bit adder for signal <n0172> created at line 324.
+    Found 1024x2-bit dual-port Read Only RAM <Mram_tileMem> for signal <tileMem>.
+    Found 10-bit comparator greater for signal <PWR_11_o_Xpixel[9]_LessThan_7_o> created at line 202
+    Found 10-bit comparator greater for signal <Xpixel[9]_PWR_11_o_LessThan_8_o> created at line 202
+    Found 10-bit comparator greater for signal <GND_19_o_Ypixel[9]_LessThan_16_o> created at line 237
+    Found 10-bit comparator greater for signal <Ypixel[9]_GND_19_o_LessThan_17_o> created at line 237
+    Found 10-bit comparator greater for signal <PWR_11_o_Xpixel[9]_LessThan_18_o> created at line 246
+    Found 10-bit comparator greater for signal <GND_19_o_Ypixel[9]_LessThan_19_o> created at line 246
+    Found 6-bit comparator greater for signal <PWR_11_o_tileX[5]_LessThan_26_o> created at line 280
+    Found 5-bit comparator greater for signal <PWR_11_o_tileY[4]_LessThan_35_o> created at line 297
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_65_o> created at line 320
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_67_o> created at line 321
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_69_o> created at line 321
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_71_o> created at line 321
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_79_o> created at line 324
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_81_o> created at line 325
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_83_o> created at line 325
+    Found 11-bit comparator greater for signal <GND_19_o_GND_19_o_LessThan_85_o> created at line 325
+    Summary:
+	inferred   4 RAM(s).
+	inferred  14 Adder/Subtractor(s).
+	inferred  35 D-type flip-flop(s).
+	inferred  16 Comparator(s).
+	inferred  11 Multiplexer(s).
+Unit <PIX_GEN> synthesized.
+RTL-Simplification CPUSTAT: 0.16 
+RTL-BasicInf CPUSTAT: 0.24 
+RTL-BasicOpt CPUSTAT: 0.00 
+RTL-Remain-Bus CPUSTAT: 0.01 
+
+=========================================================================
+HDL Synthesis Report
+
+Macro Statistics
+# RAMs                                                 : 9
+ 1024x2-bit dual-port Read Only RAM                    : 1
+ 1024x2-bit single-port Read Only RAM                  : 1
+ 128x19-bit single-port RAM                            : 1
+ 1400x2-bit dual-port RAM                              : 1
+ 17x8-bit single-port Read Only RAM                    : 1
+ 256x2-bit single-port Read Only RAM                   : 2
+ 4x8-bit single-port Read Only RAM                     : 1
+ 64x30-bit single-port Read Only RAM                   : 1
+# Multipliers                                          : 3
+ 6x5-bit multiplier                                    : 2
+ 6x6-bit multiplier                                    : 1
+# Adders/Subtractors                                   : 22
+ 10-bit adder                                          : 4
+ 11-bit adder                                          : 3
+ 11-bit subtractor                                     : 2
+ 12-bit adder                                          : 3
+ 12-bit addsub                                         : 1
+ 12-bit subtractor                                     : 2
+ 15-bit adder                                          : 2
+ 2-bit adder                                           : 1
+ 5-bit adder                                           : 1
+ 6-bit adder                                           : 1
+ 8-bit adder                                           : 1
+ 9-bit adder                                           : 1
+# Registers                                            : 28
+ 1-bit register                                        : 5
+ 10-bit register                                       : 6
+ 12-bit register                                       : 9
+ 19-bit register                                       : 2
+ 2-bit register                                        : 3
+ 5-bit register                                        : 1
+ 6-bit register                                        : 1
+ 8-bit register                                        : 1
+# Comparators                                          : 18
+ 10-bit comparator greater                             : 6
+ 11-bit comparator greater                             : 8
+ 2-bit comparator greater                              : 2
+ 5-bit comparator greater                              : 1
+ 6-bit comparator greater                              : 1
+# Multiplexers                                         : 33
+ 1-bit 2-to-1 multiplexer                              : 3
+ 10-bit 2-to-1 multiplexer                             : 2
+ 12-bit 15-to-1 multiplexer                            : 1
+ 12-bit 2-to-1 multiplexer                             : 9
+ 12-bit 4-to-1 multiplexer                             : 1
+ 19-bit 14-to-1 multiplexer                            : 1
+ 19-bit 2-to-1 multiplexer                             : 1
+ 2-bit 2-to-1 multiplexer                              : 1
+ 5-bit 2-to-1 multiplexer                              : 1
+ 6-bit 2-to-1 multiplexer                              : 1
+ 8-bit 2-to-1 multiplexer                              : 11
+ 8-bit 7-to-1 multiplexer                              : 1
+
+=========================================================================
+INFO:Xst:1767 - HDL ADVISOR - Resource sharing has identified that some arithmetic operations in this design can share the same physical resources for reduced device utilization. For improved clock frequency you may try to disable resource sharing.
+
+=========================================================================
+*                       Advanced HDL Synthesis                          *
+=========================================================================
+
+
+Synthesizing (advanced) Unit <PIX_GEN>.
+The following registers are absorbed into counter <ClkDiv>: 1 register on signal <ClkDiv>.
+The following registers are absorbed into counter <Ypixel>: 1 register on signal <Ypixel>.
+The following registers are absorbed into counter <tileX>: 1 register on signal <tileX>.
+The following registers are absorbed into counter <tileY>: 1 register on signal <tileY>.
+The following registers are absorbed into counter <Xpixel>: 1 register on signal <Xpixel>.
+INFO:Xst:3031 - HDL ADVISOR - The RAM <Mram_Ghost> will be implemented on LUTs either because you have described an asynchronous read or because of currently unsupported block RAM features. If you have described an asynchronous read, making it synchronous would allow you to take advantage of available block RAM resources, for optimized device usage and improved timings. Please refer to your documentation for coding guidelines.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 256-word x 2-bit                    |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <n0172>         |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3031 - HDL ADVISOR - The RAM <Mram_Pac_Man> will be implemented on LUTs either because you have described an asynchronous read or because of currently unsupported block RAM features. If you have described an asynchronous read, making it synchronous would allow you to take advantage of available block RAM resources, for optimized device usage and improved timings. Please refer to your documentation for coding guidelines.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 256-word x 2-bit                    |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <n0167>         |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3031 - HDL ADVISOR - The RAM <Mram_tileMem> will be implemented on LUTs either because you have described an asynchronous read or because of currently unsupported block RAM features. If you have described an asynchronous read, making it synchronous would allow you to take advantage of available block RAM resources, for optimized device usage and improved timings. Please refer to your documentation for coding guidelines.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 1024-word x 2-bit                   |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <n0153>         |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 1024-word x 2-bit                   |          |
+    |     addrB          | connected to signal <BUS_0010_GND_19_o_add_55_OUT> |          |
+    |     doB            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3031 - HDL ADVISOR - The RAM <Mram_tileMem1> will be implemented on LUTs either because you have described an asynchronous read or because of currently unsupported block RAM features. If you have described an asynchronous read, making it synchronous would allow you to take advantage of available block RAM resources, for optimized device usage and improved timings. Please refer to your documentation for coding guidelines.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 1024-word x 2-bit                   |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <("0",n0234[8:0])> |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+Unit <PIX_GEN> synthesized (advanced).
+
+Synthesizing (advanced) Unit <RAM>.
+	Multiplier <Mmult_n0027> in block <RAM> and adder/subtractor <Madd_PWR_10_o_GND_15_o_add_4_OUT> in block <RAM> are combined into a MAC<Maddsub_n0027>.
+INFO:Xst:3040 - The RAM <Mram_ram> will be implemented as a BLOCK RAM, absorbing the following register(s): <data2>
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 1400-word x 2-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkA           | connected to signal <clk>           | rise     |
+    |     weA            | connected to signal <VCC>           | high     |
+    |     addrA          | connected to signal <(PWR_10_o_GND_15_o_add_1_OUT<7>,PWR_10_o_GND_15_o_add_1_OUT<7>,PWR_10_o_GND_15_o_add_1_OUT<7>,PWR_10_o_GND_15_o_add_1_OUT)> |          |
+    |     diA            | connected to signal <GND>           |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 1400-word x 2-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | rise     |
+    |     addrB          | connected to signal <PWR_10_o_GND_15_o_add_4_OUT> |          |
+    |     doB            | connected to signal <data2>         |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+Unit <RAM> synthesized (advanced).
+
+Synthesizing (advanced) Unit <cpu>.
+The following registers are absorbed into counter <PC>: 1 register on signal <PC>.
+INFO:Xst:3039 - The RAM <Mram_p_mem> will be implemented as BLOCK RAM
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 128-word x 19-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkA           | connected to signal <clk>           | rise     |
+    |     weA            | connected to internal node          | high     |
+    |     addrA          | connected to signal <ADR<6:0>>      |          |
+    |     diA            | connected to signal <DR>            |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 128-word x 19-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | rise     |
+    |     addrB          | connected to signal <DATA_BUS<6:0>> |          |
+    |     doB            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3048 - The small RAM <Mram_u_mem> will be implemented on LUTs in order to maximize performance and save block RAM resources. If you want to force its implementation on block, use option/constraint ram_style.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 64-word x 30-bit                    |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <uPC<5:0>>      |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to signal <uAddr>         |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3048 - The small RAM <Mram_K1_mem> will be implemented on LUTs in order to maximize performance and save block RAM resources. If you want to force its implementation on block, use option/constraint ram_style.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 17-word x 8-bit                     |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <IR<18:14>>     |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3048 - The small RAM <Mram_K2_mem> will be implemented on LUTs in order to maximize performance and save block RAM resources. If you want to force its implementation on block, use option/constraint ram_style.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 4-word x 8-bit                      |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <IR<13:12>>     |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+Unit <cpu> synthesized (advanced).
+
+=========================================================================
+Advanced HDL Synthesis Report
+
+Macro Statistics
+# RAMs                                                 : 9
+ 1024x2-bit dual-port distributed Read Only RAM        : 1
+ 1024x2-bit single-port distributed Read Only RAM      : 1
+ 128x19-bit dual-port block RAM                        : 1
+ 1400x2-bit dual-port block RAM                        : 1
+ 17x8-bit single-port distributed Read Only RAM        : 1
+ 256x2-bit single-port distributed Read Only RAM       : 2
+ 4x8-bit single-port distributed Read Only RAM         : 1
+ 64x30-bit single-port distributed Read Only RAM       : 1
+# MACs                                                 : 1
+ 6x5-to-11-bit MAC                                     : 1
+# Multipliers                                          : 2
+ 6x2-bit multiplier                                    : 1
+ 6x6-bit multiplier                                    : 1
+# Adders/Subtractors                                   : 15
+ 10-bit adder                                          : 4
+ 11-bit subtractor                                     : 2
+ 12-bit adder                                          : 2
+ 12-bit addsub                                         : 1
+ 12-bit subtractor                                     : 2
+ 8-bit adder                                           : 3
+ 9-bit adder                                           : 1
+# Counters                                             : 6
+ 10-bit up counter                                     : 2
+ 12-bit up counter                                     : 1
+ 2-bit up counter                                      : 1
+ 5-bit up counter                                      : 1
+ 6-bit up counter                                      : 1
+# Registers                                            : 189
+ Flip-Flops                                            : 189
+# Comparators                                          : 18
+ 10-bit comparator greater                             : 6
+ 11-bit comparator greater                             : 8
+ 2-bit comparator greater                              : 2
+ 5-bit comparator greater                              : 1
+ 6-bit comparator greater                              : 1
+# Multiplexers                                         : 39
+ 1-bit 2-to-1 multiplexer                              : 15
+ 12-bit 15-to-1 multiplexer                            : 1
+ 12-bit 2-to-1 multiplexer                             : 7
+ 12-bit 4-to-1 multiplexer                             : 1
+ 19-bit 14-to-1 multiplexer                            : 1
+ 19-bit 2-to-1 multiplexer                             : 1
+ 2-bit 2-to-1 multiplexer                              : 1
+ 8-bit 2-to-1 multiplexer                              : 11
+ 8-bit 7-to-1 multiplexer                              : 1
+
+=========================================================================
+
+=========================================================================
+*                         Low Level Synthesis                           *
+=========================================================================
+WARNING:Xst:1293 - FF/Latch <intr_2> has a constant value of 0 in block <cpu>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:2677 - Node <uPC_6> of sequential type is unconnected in block <cpu>.
+WARNING:Xst:2677 - Node <uPC_7> of sequential type is unconnected in block <cpu>.
+
+Optimizing unit <Pac_Man> ...
+
+Optimizing unit <cpu> ...
+
+Optimizing unit <PIX_GEN> ...
+WARNING:Xst:1293 - FF/Latch <U0/intr_1> has a constant value of 0 in block <Pac_Man>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_9> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_8> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_7> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_6> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_5> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_4> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_3> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_2> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_1> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG4_0> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_9> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_8> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_7> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_6> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_5> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_4> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_3> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_2> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_1> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/OUTPUT_REG3_0> of sequential type is unconnected in block <Pac_Man>.
+WARNING:Xst:2677 - Node <U0/I> of sequential type is unconnected in block <Pac_Man>.
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem3> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem6> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem7> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem11> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem10> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem12> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem2>, <Mram_tileMem13> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem8>, <Mram_tileMem9> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem8>, <Mram_tileMem17> are equivalent, second RAM is removed
+INFO:Xst:2399 - RAMs <Mram_tileMem8>, <Mram_tileMem16> are equivalent, second RAM is removed
+
+Mapping all equations...
+Building and optimizing final netlist ...
+Found area constraint ratio of 100 (+ 0) on block Pac_Man, actual ratio is 7.
+
+Final Macro Processing ...
+
+=========================================================================
+Final Register Report
+
+Macro Statistics
+# Registers                                            : 209
+ Flip-Flops                                            : 209
+
+=========================================================================
+
+=========================================================================
+*                           Partition Report                            *
+=========================================================================
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+=========================================================================
+*                            Design Summary                             *
+=========================================================================
+
+Top Level Output File Name         : design.ngc
+
+Primitive and Black Box Usage:
+------------------------------
+# BELS                             : 895
+#      GND                         : 1
+#      INV                         : 13
+#      LUT1                        : 17
+#      LUT2                        : 79
+#      LUT3                        : 62
+#      LUT4                        : 61
+#      LUT5                        : 69
+#      LUT6                        : 288
+#      MUXCY                       : 128
+#      MUXF7                       : 34
+#      MUXF8                       : 3
+#      VCC                         : 1
+#      XORCY                       : 139
+# FlipFlops/Latches                : 209
+#      FDE                         : 1
+#      FDR                         : 45
+#      FDRE                        : 163
+# RAMS                             : 8
+#      RAM128X1D                   : 6
+#      RAMB8BWER                   : 2
+# Clock Buffers                    : 1
+#      BUFGP                       : 1
+# IO Buffers                       : 11
+#      IBUF                        : 1
+#      OBUF                        : 10
+
+Device utilization summary:
+---------------------------
+
+Selected Device : 6slx16csg324-3 
+
+
+Slice Logic Utilization: 
+ Number of Slice Registers:             209  out of  18224     1%  
+ Number of Slice LUTs:                  613  out of   9112     6%  
+    Number used as Logic:               589  out of   9112     6%  
+    Number used as Memory:               24  out of   2176     1%  
+       Number used as RAM:               24
+
+Slice Logic Distribution: 
+ Number of LUT Flip Flop pairs used:    686
+   Number with an unused Flip Flop:     477  out of    686    69%  
+   Number with an unused LUT:            73  out of    686    10%  
+   Number of fully used LUT-FF pairs:   136  out of    686    19%  
+   Number of unique control sets:        19
+
+IO Utilization: 
+ Number of IOs:                          12
+ Number of bonded IOBs:                  12  out of    232     5%  
+
+Specific Feature Utilization:
+ Number of Block RAM/FIFO:                1  out of     32     3%  
+    Number using Block RAM only:          1
+ Number of BUFG/BUFGCTRLs:                1  out of     16     6%  
+
+---------------------------
+Partition Resource Summary:
+---------------------------
+
+  No Partitions were found in this design.
+
+---------------------------
+
+
+=========================================================================
+Timing Report
+
+NOTE: THESE TIMING NUMBERS ARE ONLY A SYNTHESIS ESTIMATE.
+      FOR ACCURATE TIMING INFORMATION PLEASE REFER TO THE TRACE REPORT
+      GENERATED AFTER PLACE-and-ROUTE.
+
+Clock Information:
+------------------
+-----------------------------------+------------------------+-------+
+Clock Signal                       | Clock buffer(FF name)  | Load  |
+-----------------------------------+------------------------+-------+
+clk                                | BUFGP                  | 211   |
+N0                                 | NONE(U2_Mram_tileMem15)| 6     |
+-----------------------------------+------------------------+-------+
+INFO:Xst:2169 - HDL ADVISOR - Some clock signals were not automatically buffered by XST with BUFG/BUFR resources. Please use the buffer_type constraint in order to insert these buffers to the clock signals to help prevent skew problems.
+
+Asynchronous Control Signals Information:
+----------------------------------------
+No asynchronous control signals found in this design
+
+Timing Summary:
+---------------
+Speed Grade: -3
+
+   Minimum period: 9.846ns (Maximum Frequency: 101.559MHz)
+   Minimum input arrival time before clock: 10.288ns
+   Maximum output required time after clock: 10.303ns
+   Maximum combinational path delay: No path found
+
+Timing Details:
+---------------
+All values displayed in nanoseconds (ns)
+
+=========================================================================
+Timing constraint: Default period analysis for Clock 'clk'
+  Clock period: 9.846ns (frequency: 101.559MHz)
+  Total number of paths / destination ports: 216170 / 432
+-------------------------------------------------------------------------
+Delay:               9.846ns (Levels of Logic = 13)
+  Source:            U0/uPC_4 (FF)
+  Destination:       U0/AR_11 (FF)
+  Source Clock:      clk rising
+  Destination Clock: clk rising
+
+  Data Path: U0/uPC_4 to U0/AR_11
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDR:C->Q             29   0.447   1.594  U0/uPC_4 (U0/uPC_4)
+     LUT6:I1->O           58   0.203   1.705  U0_Mram_u_mem221 (U0/TB<0>)
+     LUT3:I1->O            2   0.203   0.864  U0/Mmux_DATA_BUS_85 (U0/Mmux_DATA_BUS_85)
+     LUT6:I2->O           10   0.203   0.961  U0/TB<3>51_1 (U0/TB<3>51)
+     LUT6:I4->O            2   0.203   0.845  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd2_cy<5>1 (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd2_cy<5>)
+     LUT4:I1->O            1   0.205   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_lut<7> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_lut<7>)
+     MUXCY:S->O            1   0.172   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<7> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<7>)
+     MUXCY:CI->O           1   0.019   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<8> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<8>)
+     MUXCY:CI->O           1   0.019   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<9> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<9>)
+     XORCY:CI->O           1   0.180   0.580  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_xor<10> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd_103)
+     LUT5:I4->O            1   0.205   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_lut<10> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_lut<10>)
+     MUXCY:S->O            0   0.172   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_cy<10> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_cy<10>)
+     XORCY:CI->O           1   0.180   0.580  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_xor<11> (U0/AR[5]_DATA_BUS[5]_MuLt_169_OUT<11>)
+     LUT5:I4->O            1   0.205   0.000  U0/_n0382<29>22 (U0/AR[11]_AR[11]_mux_183_OUT<11>)
+     FDR:D                     0.102          U0/AR_11
+    ----------------------------------------
+    Total                      9.846ns (2.718ns logic, 7.128ns route)
+                                       (27.6% logic, 72.4% route)
+
+=========================================================================
+Timing constraint: Default OFFSET IN BEFORE for Clock 'clk'
+  Total number of paths / destination ports: 2882 / 346
+-------------------------------------------------------------------------
+Offset:              10.288ns (Levels of Logic = 14)
+  Source:            reset (PAD)
+  Destination:       U0/AR_11 (FF)
+  Destination Clock: clk rising
+
+  Data Path: reset to U0/AR_11
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IBUF:I->O           209   1.222   2.400  reset_IBUF (reset_IBUF)
+     LUT5:I0->O            1   0.203   0.808  U0/Mmux_IV61 (U0/IV<3>)
+     LUT6:I3->O            2   0.205   0.617  U0/Mmux_DATA_BUS_711 (U0/Mmux_DATA_BUS_711)
+     LUT6:I5->O           10   0.205   0.961  U0/TB<3>51_1 (U0/TB<3>51)
+     LUT6:I4->O            2   0.203   0.845  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd2_cy<5>1 (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd2_cy<5>)
+     LUT4:I1->O            1   0.205   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_lut<7> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_lut<7>)
+     MUXCY:S->O            1   0.172   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<7> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<7>)
+     MUXCY:CI->O           1   0.019   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<8> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<8>)
+     MUXCY:CI->O           1   0.019   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<9> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_cy<9>)
+     XORCY:CI->O           1   0.180   0.580  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd3_xor<10> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd_103)
+     LUT5:I4->O            1   0.205   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_lut<10> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_lut<10>)
+     MUXCY:S->O            0   0.172   0.000  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_cy<10> (U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_cy<10>)
+     XORCY:CI->O           1   0.180   0.580  U0/Mmult_AR[5]_DATA_BUS[5]_MuLt_169_OUT_Madd4_xor<11> (U0/AR[5]_DATA_BUS[5]_MuLt_169_OUT<11>)
+     LUT5:I4->O            1   0.205   0.000  U0/_n0382<29>22 (U0/AR[11]_AR[11]_mux_183_OUT<11>)
+     FDR:D                     0.102          U0/AR_11
+    ----------------------------------------
+    Total                     10.288ns (3.497ns logic, 6.791ns route)
+                                       (34.0% logic, 66.0% route)
+
+=========================================================================
+Timing constraint: Default OFFSET OUT AFTER for Clock 'clk'
+  Total number of paths / destination ports: 6384 / 8
+-------------------------------------------------------------------------
+Offset:              10.303ns (Levels of Logic = 14)
+  Source:            U2/Xpixel_0 (FF)
+  Destination:       vgaRed<1> (PAD)
+  Source Clock:      clk rising
+
+  Data Path: U2/Xpixel_0 to vgaRed<1>
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDRE:C->Q            24   0.447   1.277  U2/Xpixel_0 (U2/Xpixel_0)
+     LUT2:I0->O            1   0.203   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_lut<0> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_lut<0>)
+     MUXCY:S->O            1   0.172   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<0> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<0>)
+     MUXCY:CI->O           1   0.019   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<1> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<1>)
+     MUXCY:CI->O           1   0.019   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<2> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<2>)
+     MUXCY:CI->O           1   0.019   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<3> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<3>)
+     MUXCY:CI->O           1   0.019   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<4> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<4>)
+     MUXCY:CI->O           1   0.019   0.000  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<5> (U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_cy<5>)
+     XORCY:CI->O           3   0.180   0.995  U2/Msub_GND_19_o_GND_19_o_sub_73_OUT_xor<6> (U2/GND_19_o_GND_19_o_sub_73_OUT<6>)
+     LUT6:I1->O            1   0.203   0.580  U2/Madd_n0167_Madd_xor<7>121 (U2/N17)
+     LUT3:I2->O            1   0.205   0.579  U2/Madd_n0167_Madd_xor<7>11 (U2/n0167<7>)
+     MUXF8:S->O            1   0.202   0.579  U2_Mram_Pac_Man_f8 (U2/_n0246<0>)
+     MUXF7:S->O            4   0.148   1.048  U2/tileData<5>16_f7 (U2/tileData<5>16_f7)
+     LUT6:I0->O            2   0.203   0.616  U2/tileData<5> (vgaRed_0_OBUF)
+     OBUF:I->O                 2.571          vgaRed_1_OBUF (vgaRed<1>)
+    ----------------------------------------
+    Total                     10.303ns (4.629ns logic, 5.674ns route)
+                                       (44.9% logic, 55.1% route)
+
+=========================================================================
+
+Cross Clock Domains Report:
+--------------------------
+
+Clock to Setup on destination clock N0
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+clk            |    1.619|         |         |         |
+---------------+---------+---------+---------+---------+
+
+Clock to Setup on destination clock clk
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+clk            |    9.846|         |         |         |
+---------------+---------+---------+---------+---------+
+
+=========================================================================
+
+
+Total REAL time to Xst completion: 21.00 secs
+Total CPU time to Xst completion: 10.39 secs
+ 
+--> 
+
+
+Total memory usage is 468224 kilobytes
+
+Number of errors   :    0 (   0 filtered)
+Number of warnings :   48 (   0 filtered)
+Number of infos    :   24 (   0 filtered)
+
+mkdir -p Pac_Man-synthdir/synth
+cp Pac_Man-synthdir/xst/synth/design.ngc Pac_Man-synthdir/synth/design.ngc
+
+*** Producing NGD file ***
+
+rm -rf Pac_Man-synthdir/layoutdefault/_ngo
+mkdir -p Pac_Man-synthdir/layoutdefault/_ngo
+if [ "Nexys3.ucf" == "" ]; then \
+		cd Pac_Man-synthdir/layoutdefault; source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh; ngdbuild -sd . -dd _ngo -nt timestamp -p xc6slx16-3-csg324 ../synth/design.ngc  design.ngd;\
+	else \
+		cd Pac_Man-synthdir/layoutdefault; source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh; ngdbuild -sd . -dd _ngo -nt timestamp -p xc6slx16-3-csg324 -uc ../../Nexys3.ucf ../synth/design.ngc  design.ngd;\
+	fi
+. /sw/xilinx/ise_12.4i/ISE_DS/EDK/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/EDK
+. /sw/xilinx/ise_12.4i/ISE_DS/ISE/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/ISE
+. /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead
+. /sw/xilinx/ise_12.4i/ISE_DS/common/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/common
+Release 12.4 - ngdbuild M.81d (lin64)
+Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
+
+Command Line: /sw/xilinx/ise_12.4i/ISE_DS/ISE/bin/lin64/unwrapped/ngdbuild -sd .
+-dd _ngo -nt timestamp -p xc6slx16-3-csg324 -uc ../../Nexys3.ucf
+../synth/design.ngc design.ngd
+
+Reading NGO file
+"/edu/emino969/PacMan/TSEA83_Project-master/Pac_Man-synthdir/synth/design.ngc"
+...
+Gathering constraint information from source properties...
+Done.
+
+Annotating constraints to design from ucf file "../../Nexys3.ucf" ...
+Resolving constraint associations...
+Checking Constraint Associations...
+Done...
+
+Checking expanded design ...
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+NGDBUILD Design Results Summary:
+  Number of errors:     0
+  Number of warnings:   0
+
+Writing NGD file "design.ngd" ...
+Total REAL time to NGDBUILD completion:  3 sec
+Total CPU time to NGDBUILD completion:   2 sec
+
+Writing NGDBUILD log file "design.bld"...
+
+NGDBUILD done.
+
+*** Mapping design ***
+
+cd Pac_Man-synthdir/layoutdefault;source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh; map -detail -u -p  xc6slx16-3-csg324 -pr b -c 100 -o design_map.ncd design.ngd design.pcf
+. /sw/xilinx/ise_12.4i/ISE_DS/EDK/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/EDK
+. /sw/xilinx/ise_12.4i/ISE_DS/ISE/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/ISE
+. /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead
+. /sw/xilinx/ise_12.4i/ISE_DS/common/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/common
+Release 12.4 - Map M.81d (lin64)
+Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
+Using target part "6slx16csg324-3".
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+INFO:Security:50 - The XILINXD_LICENSE_FILE environment variable is set to
+'1706@license.isy.liu.se'.
+INFO:Security:52 - The LM_LICENSE_FILE environment variable is set to
+'1706@license.isy.liu.se'.
+INFO:Security:54 - 'xc6slx16' is a WebPack part.
+WARNING:Security:43 - No license file was found in the standard Xilinx license
+directory.
+WARNING:Security:44 - No license file was found.
+       Please run the Xilinx License Configuration Manager
+       (xlcm or "Manage Xilinx Licenses")
+       to assist in obtaining a license.
+WARNING:Security:42 - Your software subscription period has lapsed. Your current
+version of Xilinx tools will continue to function, but you no longer qualify for
+Xilinx software updates or new releases.
+----------------------------------------------------------------------
+Mapping design into LUTs...
+Writing file design_map.ngm...
+Running directed packing...
+Running delay-based LUT packing...
+Updating timing models...
+INFO:Map:215 - The Interim Design Summary has been generated in the MAP Report
+   (.mrp).
+Running timing-driven placement...
+Total REAL time at the beginning of Placer: 9 secs 
+Total CPU  time at the beginning of Placer: 6 secs 
+
+Phase 1.1  Initial Placement Analysis
+Phase 1.1  Initial Placement Analysis (Checksum:a42cf6a0) REAL time: 11 secs 
+
+Phase 2.7  Design Feasibility Check
+INFO:Place:834 - Only a subset of IOs are locked. Out of 12 IOs, 1 are locked
+   and 11 are not locked. If you would like to print the names of these IOs,
+   please set the environment variable XIL_PAR_DESIGN_CHECK_VERBOSE to 1. 
+Phase 2.7  Design Feasibility Check (Checksum:a42cf6a0) REAL time: 11 secs 
+
+Phase 3.31  Local Placement Optimization
+Phase 3.31  Local Placement Optimization (Checksum:a42cf6a0) REAL time: 11 secs 
+
+Phase 4.2  Initial Placement for Architecture Specific Features
+.........
+Phase 4.2  Initial Placement for Architecture Specific Features
+(Checksum:cab6f867) REAL time: 14 secs 
+
+Phase 5.36  Local Placement Optimization
+Phase 5.36  Local Placement Optimization (Checksum:cab6f867) REAL time: 14 secs 
+
+Phase 6.30  Global Clock Region Assignment
+Phase 6.30  Global Clock Region Assignment (Checksum:cab6f867) REAL time: 14 secs 
+
+Phase 7.3  Local Placement Optimization
+........
+Phase 7.3  Local Placement Optimization (Checksum:e9ee8378) REAL time: 15 secs 
+
+Phase 8.5  Local Placement Optimization
+Phase 8.5  Local Placement Optimization (Checksum:e9ee8378) REAL time: 15 secs 
+
+Phase 9.8  Global Placement
+............................................................
+...........................................................................................
+...............................................................................................................
+......................
+Phase 9.8  Global Placement (Checksum:e37d37cd) REAL time: 18 secs 
+
+Phase 10.5  Local Placement Optimization
+Phase 10.5  Local Placement Optimization (Checksum:e37d37cd) REAL time: 18 secs 
+
+Phase 11.18  Placement Optimization
+Phase 11.18  Placement Optimization (Checksum:dbb4dc7b) REAL time: 18 secs 
+
+Phase 12.5  Local Placement Optimization
+Phase 12.5  Local Placement Optimization (Checksum:dbb4dc7b) REAL time: 18 secs 
+
+Phase 13.34  Placement Validation
+Phase 13.34  Placement Validation (Checksum:dbb4dc7b) REAL time: 18 secs 
+
+Total REAL time to Placer completion: 18 secs 
+Total CPU  time to Placer completion: 13 secs 
+Running post-placement packing...
+Writing output files...
+
+Design Summary:
+Number of errors:      0
+Number of warnings:    0
+Slice Logic Utilization:
+  Number of Slice Registers:                   207 out of  18,224    1%
+    Number used as Flip Flops:                 207
+    Number used as Latches:                      0
+    Number used as Latch-thrus:                  0
+    Number used as AND/OR logics:                0
+  Number of Slice LUTs:                        567 out of   9,112    6%
+    Number used as logic:                      550 out of   9,112    6%
+      Number using O6 output only:             472
+      Number using O5 output only:              19
+      Number using O5 and O6:                   59
+      Number used as ROM:                        0
+    Number used as Memory:                      16 out of   2,176    1%
+      Number used as Dual Port RAM:             12
+        Number using O6 output only:            12
+        Number using O5 output only:             0
+        Number using O5 and O6:                  0
+      Number used as Single Port RAM:            4
+        Number using O6 output only:             4
+        Number using O5 output only:             0
+        Number using O5 and O6:                  0
+      Number used as Shift Register:             0
+    Number used exclusively as route-thrus:      1
+      Number with same-slice register load:      0
+      Number with same-slice carry load:         1
+      Number with other load:                    0
+
+Slice Logic Distribution:
+  Number of occupied Slices:                   189 out of   2,278    8%
+  Number of LUT Flip Flop pairs used:          584
+    Number with an unused Flip Flop:           380 out of     584   65%
+    Number with an unused LUT:                  17 out of     584    2%
+    Number of fully used LUT-FF pairs:         187 out of     584   32%
+    Number of unique control sets:              18
+    Number of slice register sites lost
+      to control set restrictions:              81 out of  18,224    1%
+
+  A LUT Flip Flop pair for this architecture represents one LUT paired with
+  one Flip Flop within a slice.  A control set is a unique combination of
+  clock, reset, set, and enable signals for a registered element.
+  The Slice Logic Distribution report is not meaningful if the design is
+  over-mapped for a non-slice resource or if Placement fails.
+
+IO Utilization:
+  Number of bonded IOBs:                        12 out of     232    5%
+    Number of LOCed IOBs:                        1 out of      12    8%
+    IOB Flip Flops:                              2
+
+Specific Feature Utilization:
+  Number of RAMB16BWERs:                         0 out of      32    0%
+  Number of RAMB8BWERs:                          2 out of      64    3%
+  Number of BUFIO2/BUFIO2_2CLKs:                 0 out of      32    0%
+  Number of BUFIO2FB/BUFIO2FB_2CLKs:             0 out of      32    0%
+  Number of BUFG/BUFGMUXs:                       1 out of      16    6%
+    Number used as BUFGs:                        1
+    Number used as BUFGMUX:                      0
+  Number of DCM/DCM_CLKGENs:                     0 out of       4    0%
+  Number of ILOGIC2/ISERDES2s:                   0 out of     248    0%
+  Number of IODELAY2/IODRP2/IODRP2_MCBs:         0 out of     248    0%
+  Number of OLOGIC2/OSERDES2s:                   2 out of     248    1%
+    Number used as OLOGIC2s:                     2
+    Number used as OSERDES2s:                    0
+  Number of BSCANs:                              0 out of       4    0%
+  Number of BUFHs:                               0 out of     128    0%
+  Number of BUFPLLs:                             0 out of       8    0%
+  Number of BUFPLL_MCBs:                         0 out of       4    0%
+  Number of DSP48A1s:                            0 out of      32    0%
+  Number of ICAPs:                               0 out of       1    0%
+  Number of MCBs:                                0 out of       2    0%
+  Number of PCILOGICSEs:                         0 out of       2    0%
+  Number of PLL_ADVs:                            0 out of       2    0%
+  Number of PMVs:                                0 out of       1    0%
+  Number of STARTUPs:                            0 out of       1    0%
+  Number of SUSPEND_SYNCs:                       0 out of       1    0%
+
+Average Fanout of Non-Clock Nets:                4.73
+
+Peak Memory Usage:  583 MB
+Total REAL time to MAP completion:  20 secs 
+Total CPU time to MAP completion:   14 secs 
+
+Mapping completed.
+See MAP report file "design_map.mrp" for details.
+
+*** Routing design ***
+
+cd Pac_Man-synthdir/layoutdefault; source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh; par -nopad -w  -ol high design_map.ncd design.ncd design.pcf 
+. /sw/xilinx/ise_12.4i/ISE_DS/EDK/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/EDK
+. /sw/xilinx/ise_12.4i/ISE_DS/ISE/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/ISE
+. /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead
+. /sw/xilinx/ise_12.4i/ISE_DS/common/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/common
+Release 12.4 - par M.81d (lin64)
+Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
+
+
+
+Constraints file: design.pcf.
+Loading device for application Rf_Device from file '6slx16.nph' in environment /sw/xilinx/ise_12.4i/ISE_DS/ISE/.
+   "Pac_Man" is an NCD, version 3.2, device xc6slx16, package csg324, speed -3
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+INFO:Security:50 - The XILINXD_LICENSE_FILE environment variable is set to '1706@license.isy.liu.se'.
+INFO:Security:52 - The LM_LICENSE_FILE environment variable is set to '1706@license.isy.liu.se'.
+INFO:Security:54 - 'xc6slx16' is a WebPack part.
+WARNING:Security:43 - No license file was found in the standard Xilinx license directory.
+WARNING:Security:44 - No license file was found.
+       Please run the Xilinx License Configuration Manager
+       (xlcm or "Manage Xilinx Licenses")
+       to assist in obtaining a license.
+WARNING:Security:42 - Your software subscription period has lapsed. Your current version of Xilinx tools will continue
+to function, but you no longer qualify for Xilinx software updates or new releases.
+
+----------------------------------------------------------------------
+
+Initializing temperature to 85.000 Celsius. (default - Range: 0.000 to 85.000 Celsius)
+Initializing voltage to 1.140 Volts. (default - Range: 1.140 to 1.260 Volts)
+
+
+Device speed data version:  "PRODUCTION 1.15 2010-12-02".
+
+
+
+Device Utilization Summary:
+
+Slice Logic Utilization:
+  Number of Slice Registers:                   207 out of  18,224    1%
+    Number used as Flip Flops:                 207
+    Number used as Latches:                      0
+    Number used as Latch-thrus:                  0
+    Number used as AND/OR logics:                0
+  Number of Slice LUTs:                        567 out of   9,112    6%
+    Number used as logic:                      550 out of   9,112    6%
+      Number using O6 output only:             472
+      Number using O5 output only:              19
+      Number using O5 and O6:                   59
+      Number used as ROM:                        0
+    Number used as Memory:                      16 out of   2,176    1%
+      Number used as Dual Port RAM:             12
+        Number using O6 output only:            12
+        Number using O5 output only:             0
+        Number using O5 and O6:                  0
+      Number used as Single Port RAM:            4
+        Number using O6 output only:             4
+        Number using O5 output only:             0
+        Number using O5 and O6:                  0
+      Number used as Shift Register:             0
+    Number used exclusively as route-thrus:      1
+      Number with same-slice register load:      0
+      Number with same-slice carry load:         1
+      Number with other load:                    0
+
+Slice Logic Distribution:
+  Number of occupied Slices:                   189 out of   2,278    8%
+  Number of LUT Flip Flop pairs used:          584
+    Number with an unused Flip Flop:           380 out of     584   65%
+    Number with an unused LUT:                  17 out of     584    2%
+    Number of fully used LUT-FF pairs:         187 out of     584   32%
+    Number of slice register sites lost
+      to control set restrictions:               0 out of  18,224    0%
+
+  A LUT Flip Flop pair for this architecture represents one LUT paired with
+  one Flip Flop within a slice.  A control set is a unique combination of
+  clock, reset, set, and enable signals for a registered element.
+  The Slice Logic Distribution report is not meaningful if the design is
+  over-mapped for a non-slice resource or if Placement fails.
+
+IO Utilization:
+  Number of bonded IOBs:                        12 out of     232    5%
+    Number of LOCed IOBs:                        1 out of      12    8%
+    IOB Flip Flops:                              2
+
+Specific Feature Utilization:
+  Number of RAMB16BWERs:                         0 out of      32    0%
+  Number of RAMB8BWERs:                          2 out of      64    3%
+  Number of BUFIO2/BUFIO2_2CLKs:                 0 out of      32    0%
+  Number of BUFIO2FB/BUFIO2FB_2CLKs:             0 out of      32    0%
+  Number of BUFG/BUFGMUXs:                       1 out of      16    6%
+    Number used as BUFGs:                        1
+    Number used as BUFGMUX:                      0
+  Number of DCM/DCM_CLKGENs:                     0 out of       4    0%
+  Number of ILOGIC2/ISERDES2s:                   0 out of     248    0%
+  Number of IODELAY2/IODRP2/IODRP2_MCBs:         0 out of     248    0%
+  Number of OLOGIC2/OSERDES2s:                   2 out of     248    1%
+    Number used as OLOGIC2s:                     2
+    Number used as OSERDES2s:                    0
+  Number of BSCANs:                              0 out of       4    0%
+  Number of BUFHs:                               0 out of     128    0%
+  Number of BUFPLLs:                             0 out of       8    0%
+  Number of BUFPLL_MCBs:                         0 out of       4    0%
+  Number of DSP48A1s:                            0 out of      32    0%
+  Number of ICAPs:                               0 out of       1    0%
+  Number of MCBs:                                0 out of       2    0%
+  Number of PCILOGICSEs:                         0 out of       2    0%
+  Number of PLL_ADVs:                            0 out of       2    0%
+  Number of PMVs:                                0 out of       1    0%
+  Number of STARTUPs:                            0 out of       1    0%
+  Number of SUSPEND_SYNCs:                       0 out of       1    0%
+
+
+Overall effort level (-ol):   High 
+Router effort level (-rl):    High 
+
+Starting initial Timing Analysis.  REAL time: 6 secs 
+Finished initial Timing Analysis.  REAL time: 6 secs 
+
+Starting Router
+
+
+Phase  1  : 3221 unrouted;      REAL time: 6 secs 
+
+Phase  2  : 2999 unrouted;      REAL time: 6 secs 
+
+Phase  3  : 1259 unrouted;      REAL time: 8 secs 
+
+Phase  4  : 1259 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 8 secs 
+
+Updating file: design.ncd with current fully routed design.
+
+Phase  5  : 0 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 11 secs 
+
+Phase  6  : 0 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 11 secs 
+
+Phase  7  : 0 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 11 secs 
+
+Phase  8  : 0 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 11 secs 
+
+Phase  9  : 0 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 11 secs 
+
+Phase 10  : 0 unrouted; (Setup:0, Hold:0, Component Switching Limit:0)     REAL time: 11 secs 
+Total REAL time to Router completion: 12 secs 
+Total CPU time to Router completion: 9 secs 
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+Generating "PAR" statistics.
+
+**************************
+Generating Clock Report
+**************************
+
++---------------------+--------------+------+------+------------+-------------+
+|        Clock Net    |   Resource   |Locked|Fanout|Net Skew(ns)|Max Delay(ns)|
++---------------------+--------------+------+------+------------+-------------+
+|           clk_BUFGP | BUFGMUX_X3Y13| No   |   76 |  0.491     |  1.349      |
++---------------------+--------------+------+------+------------+-------------+
+
+* Net Skew is the difference between the minimum and maximum routing
+only delays for the net. Note this is different from Clock Skew which
+is reported in TRCE timing report. Clock Skew is the difference between
+the minimum and maximum path delays which includes logic delays.
+
+Timing Score: 0 (Setup: 0, Hold: 0, Component Switching Limit: 0)
+
+Asterisk (*) preceding a constraint indicates it was not met.
+   This may be due to a setup or hold violation.
+
+----------------------------------------------------------------------------------------------------------
+  Constraint                                |    Check    | Worst Case |  Best Case | Timing |   Timing   
+                                            |             |    Slack   | Achievable | Errors |    Score   
+----------------------------------------------------------------------------------------------------------
+  TS_sys_clk_pin = PERIOD TIMEGRP "sys_clk_ | SETUP       |     1.405ns|     8.595ns|       0|           0
+  pin" 100 MHz HIGH 50%                     | HOLD        |     0.373ns|            |       0|           0
+----------------------------------------------------------------------------------------------------------
+
+
+All constraints were met.
+
+
+
+All signals are completely routed.
+
+Total REAL time to PAR completion: 12 secs 
+Total CPU time to PAR completion: 9 secs 
+
+Peak Memory Usage:  471 MB
+
+Placer: Placement generated during map.
+Routing: Completed - No errors found.
+Timing: Completed - No errors found.
+
+Number of error messages: 0
+Number of warning messages: 0
+Number of info messages: 0
+
+Writing design to file design.ncd
+
+
+
+PAR done!
+cd Pac_Man-synthdir/layoutdefault; source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh; bitgen -w design.ncd
+. /sw/xilinx/ise_12.4i/ISE_DS/EDK/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/EDK
+. /sw/xilinx/ise_12.4i/ISE_DS/ISE/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/ISE
+. /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/PlanAhead
+. /sw/xilinx/ise_12.4i/ISE_DS/common/settings64.sh /sw/xilinx/ise_12.4i/ISE_DS/common
+Release 12.4 - Bitgen M.81d (lin64)
+Copyright (c) 1995-2010 Xilinx, Inc.  All rights reserved.
+Loading device for application Rf_Device from file '6slx16.nph' in environment
+/sw/xilinx/ise_12.4i/ISE_DS/ISE/.
+   "Pac_Man" is an NCD, version 3.2, device xc6slx16, package csg324, speed -3
+Opened constraints file design.pcf.
+
+Wed Apr 27 14:11:30 2016
+
+Running DRC.
+DRC detected 0 errors and 0 warnings.
+INFO:Security:50 - The XILINXD_LICENSE_FILE environment variable is set to
+'1706@license.isy.liu.se'.
+INFO:Security:52 - The LM_LICENSE_FILE environment variable is set to
+'1706@license.isy.liu.se'.
+INFO:Security:54 - 'xc6slx16' is a WebPack part.
+WARNING:Security:43 - No license file was found in the standard Xilinx license
+directory.
+WARNING:Security:44 - No license file was found.
+       Please run the Xilinx License Configuration Manager
+       (xlcm or "Manage Xilinx Licenses")
+       to assist in obtaining a license.
+WARNING:Security:42 - Your software subscription period has lapsed. Your current
+version of Xilinx tools will continue to function, but you no longer qualify for
+Xilinx software updates or new releases.
+
+Creating bit map...
+Saving bit stream in "design.bit".
+Bitstream generation is complete.
+rm Pac_Man-synthdir/layoutdefault/design.ngd Pac_Man-synthdir/layoutdefault/design_map.ncd
+make[1]: Leaving directory `/edu/emino969/PacMan/TSEA83_Project-master'

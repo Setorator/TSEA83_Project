@@ -46,7 +46,6 @@ architecture Behavioral of PmodJSTK is
 		component spiCtrl
 
 			 Port ( CLK : in  STD_LOGIC;
-					  Six_CLK : in STD_LOGIC;
 					  RST : in  STD_LOGIC;
 					  sndRec : in STD_LOGIC;
 					  BUSY : in STD_LOGIC;
@@ -66,7 +65,6 @@ architecture Behavioral of PmodJSTK is
 		component spiMode0
 
 			 Port ( CLK : in  STD_LOGIC;
-					  Six_CLK : in STD_LOGIC;
 					  RST : in  STD_LOGIC;
 					  sndRec : in STD_LOGIC;
 					  DIN : in  STD_LOGIC_VECTOR(7 downto 0);
@@ -115,8 +113,7 @@ begin
 			--  	  				SPI Controller
 			-------------------------------------------------
 			SPI_Ctrl : spiCtrl port map(
-					CLK=>CLK,
-					Six_CLK=>iSCLK,
+					CLK=>iSCLK,
 					RST=>RST,
 					sndRec=>sndRec,
 					BUSY=>BUSY,
@@ -132,8 +129,7 @@ begin
 			--  	  				  SPI Mode 0
 			-------------------------------------------------
 			SPI_Int : spiMode0 port map(
-					CLK=>CLK,
-					Six_CLK=>iSCLK,
+					CLK=>iSCLK,
 					RST=>RST,
 					sndRec=>getByte,
 					DIN=>sndData,

@@ -14,6 +14,7 @@ entity RAM is
 		clk			: in std_logic;					-- Clock pulse
 		
 		-- port 1
+
 		x1 			: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
 		y1 			: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 		we 			: in std_logic;								-- Write enable
@@ -35,7 +36,7 @@ architecture Behavioral of RAM is
 	-- Declaration of a two-port RAM
 	-- with 2048 adresses and 8 bits width
 	-- (We only uses 40*30 = 1200 adresses,
-	-- each containing a 2-bit tile_type.)
+	-- each containing a 8-bit colour.)
 	type ram_t is array(0 to 2047) of 
 		std_logic_vector(1 downto 0);
 	
@@ -46,7 +47,7 @@ architecture Behavioral of RAM is
 									"00","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11",
 									"11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","11","00",
 									
-									"00","11","00","00","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","11", 
+									"00","11","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","11", 
 									"11","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","01","11","00",
 									
 									"00","11","01","11","11","11","11","11","11","01","11","11","11","11","11","11","11","11","01","11", 

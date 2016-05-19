@@ -1,0 +1,410 @@
+# //  ModelSim SE 6.5c Aug 27 2009 Linux 2.6.32-573.22.1.el6.x86_64
+# //
+# //  Copyright 1991-2009 Mentor Graphics Corporation
+# //              All Rights Reserved.
+# //
+# //  THIS WORK CONTAINS TRADE SECRET AND 
+# //  PROPRIETARY INFORMATION WHICH IS THE PROPERTY
+# //  OF MENTOR GRAPHICS CORPORATION OR ITS LICENSORS
+# //  AND IS SUBJECT TO LICENSE TERMS.
+# //
+# Loading project PacMan
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd failed with 1 errors.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 1 failed with 1 error. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+vsim work.cpu(behavioral)
+# vsim work.cpu(behavioral) 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading std.standard
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.cpu(behavioral)#1
+add wave sim:/cpu/*
+do /edu/emino969/PacMan/TSEA83_Project-master/sim.do
+# ** Error: (vish-4008) Object 'sim:/cpu/joystick_poss' not found.
+# Error in macro /edu/emino969/PacMan/TSEA83_Project-master/sim.do line 6
+# ** Error: (vish-4008) Object 'sim:/cpu/joystick_poss' not found.
+# 
+#     while executing
+# "vsimcmd::force -freeze sim:/cpu/joystick_poss 2'h0 0"
+#     ("uplevel" body line 1)
+#     invoked from within
+# "uplevel vsimcmd::force $args"
+#     (procedure "force" line 13)
+#     invoked from within
+# "force -freeze sim:/cpu/joystick_poss 2'h0 0"
+run
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2140 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2160 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2180 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2200 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2220 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2240 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2260 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2280 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2300 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2440 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2460 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2480 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2500 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2520 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2540 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2560 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2580 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2600 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2740 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2760 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2780 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2800 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2820 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2840 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2860 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2880 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 2900 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3040 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3060 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3080 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3100 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3120 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3140 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3160 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3180 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3200 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3220 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3240 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3260 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3280 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3300 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3320 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 3340 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304120 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304140 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304160 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304180 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304200 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304220 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304240 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304260 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304280 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304420 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304440 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304460 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304480 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304500 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304520 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304540 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304560 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304580 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304720 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304740 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304760 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304780 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304800 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304820 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304840 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304860 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49304880 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305020 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305040 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305060 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305080 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305100 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305120 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305140 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305160 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305180 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305200 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305220 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305240 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305260 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305280 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305300 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 49305320 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606100 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606120 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606140 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606160 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606180 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606200 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606220 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606240 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606260 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606400 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606420 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606440 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606460 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606480 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606500 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606520 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606540 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606560 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606700 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606720 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606740 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606760 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606780 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606800 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606820 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606840 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98606860 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607 us  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607020 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607040 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607060 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607080 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607100 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607120 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607140 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607160 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607180 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607200 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607220 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607240 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607260 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607280 ns  Iteration: 0  Instance: /cpu
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 98607300 ns  Iteration: 0  Instance: /cpu
+restart
+add wave sim:/cpu/*
+do /edu/emino969/PacMan/TSEA83_Project-master/sim.do
+run
+add wave sim:/cpu/*
+restart
+do /edu/emino969/PacMan/TSEA83_Project-master/sim.do
+run
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+vsim work.cpu(behavioral)
+# vsim work.cpu(behavioral) 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading std.standard
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.cpu(behavioral)#1
+add wave sim:/cpu/*
+do /edu/emino969/PacMan/TSEA83_Project-master/sim.do
+run
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+do /edu/emino969/PacMan/TSEA83_Project-master/sim.do
+vsim work.cpu(behavioral)
+# vsim work.cpu(behavioral) 
+# Loading std.standard
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.cpu(behavioral)#1
+add wave sim:/cpu/*
+do /edu/emino969/PacMan/TSEA83_Project-master/sim.do
+run
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
+# Compile of CPU.vhd was successful.
+# Compile of CPU_tb.vhd was successful.
+# Compile of Pac_Man.vhd was successful.
+# Compile of Pac_Man_tb.vhd was successful.
+# Compile of PIX_GEN.vhd was successful.
+# Compile of RAM.vhd was successful.
+# 6 compiles, 0 failed with no errors. 
