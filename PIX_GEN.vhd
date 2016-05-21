@@ -36,7 +36,7 @@ entity PIX_GEN is
 		
 		-- VGA-signals
 		Hsync                   : out std_logic;                     		-- horizontal sync
-		Vsync                   : buffer std_logic;                     	-- vertical sync  (is buffer since we read from it when assigning point_pulse its value)
+		Vsync                   : buffer std_logic;                     	-- vertical sync  (is buffer since we read from it when assigning add_points its value)
 		vgaRed                  : out std_logic_vector(2 downto 0);  		-- VGA red
 		vgaGreen                : out std_logic_vector(2 downto 0);  		-- VGA green
 		vgaBlue                 : out std_logic_vector(2 downto 1);  		-- VGA blue
@@ -44,10 +44,11 @@ entity PIX_GEN is
 		-- Interupts
 		ghost_wall_colision		: out std_logic;									-- (old colision 2)         Colision between Ghost and Wall 
 		pacman_wall_colision		: out std_logic;									-- (old colision)           Colision between PacMan and Wall 
---		pacman_ghost_colision	: out	std_logic;									-- (Totally new)            Colision between Pac_Man and Ghostion
+		pacman_ghost_colision	: out	std_logic;									-- (Totally new)            Colision between Pac_Man and Ghostion
 		
 		-- LED
 		display_value				: out unsigned(15 downto 0);					-- Value to be displayed at the 7-segment display
+		victory						: out std_logic;									-- = '1' if score = 368.
 		
 		-- Test coordinates
 		TEST_X						: in unsigned(9 downto 0);
@@ -87,10 +88,8 @@ architecture Behavioral of PIX_GEN is
 	signal food1			: unsigned(3 downto 0) 	:= "0000";							-- One
 	signal food10			: unsigned(3 downto 0) 	:= "0000";							-- Ten
 	signal food100			: unsigned(3 downto 0) 	:= "0000";							-- Houndred (We don't need thousand since max score is 368)
-	signal add_points		: std_logic := '0';												-- Detects if we are to update the score.
-	signal point_pulse	: std_logic := '0';												-- Used as a one-pulse to add points.
-	
-	signal komb				: std_logic	:= '0';
+	signal food_eaten		: std_logic := '0';												-- Detects if we are to update the score.
+	signal add_points		: std_logic := '0';												-- Used as a one-pulse to add points.
   
   	-- Tile memory type
   	type tile_t is array (0 to 1023) of unsigned(1 downto 0);  
@@ -386,36 +385,38 @@ begin
   	-- Colision when Ghost collides woth the wall
 	ghost_wall_colision <=  '1' when ((rst = '0') and (VGApixel = X"E0") and (tilePixel = X"02")) else '0';		
 	
---	pacman_ghost_colision <= '1' when ((rst = '0') and (VGApixel = X"E0") and (pacPixel = X"8C")) else '0';
+	-- Colision when Pac_Man collides with Ghost
+	pacman_ghost_colision <= '1' when ((rst = '0') and (VGApixel = X"E0") and (pacPixel = X"8C")) else '0';
 
 ----------------------------------------------------------------
 ---------------------------EAT_FOOD-----------------------------
 ----------------------------------------------------------------
 
+	-- Remove the food tile from RAM and signal to add_point process
 	eat_food : process(clk)
 	begin
 		if rising_edge(clk) then
-			if ((tilePixel = X"8C") and (pacPixel /= X"00") and (add_points = '0')) then
-				add_points <= '1';
+			if ((tilePixel = X"8C") and (pacPixel /= X"00") and (food_eaten = '0')) then
+				food_eaten <= '1';
 				write_enable <= '0';
 				write_addr <= tileY & tileX;
 				write_data <= "00"; 			-- Floor tile		
-			elsif (add_points = '1' and Vsync = '0') then 
-				add_points <= '0';
-				point_pulse <= '1';
+			elsif (food_eaten = '1' and Vsync = '0') then 
+				food_eaten <= '0';
+				add_points <= '1';
 			else
 				write_enable <= '1';
-				point_pulse <= '0';
+				add_points <= '0';
 			end if;
 		end if;
 	end process;
 	
 	
-	
+	-- Updates the score
 	add_point : process(clk)
 	begin
 		if rising_edge(clk) then
-			if point_pulse = '1' then
+			if add_points = '1' then
 				if food1 > 8 then							-- Adds score altough not with the correct score.
 					if food10 > 8 then					-- Different score depending on which way you eat from.
 						if food100 > 8 then				-- Gonna try to write out Pac-Man in the corresponding way and
@@ -438,7 +439,8 @@ begin
 		end if;
 	end process;
 	
-	
+	-- When score = 368 we have won!!!
+	victory <= '1' when ((food100 = 3) and (food10 = 6) and (food1 = 8)) else '0';
 	
 
 ----------------------------------------------------------------

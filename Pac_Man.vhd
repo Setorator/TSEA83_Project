@@ -96,10 +96,11 @@ architecture Behavioral of Pac_Man is
 			-- Interupts
 			ghost_wall_colision		: out std_logic;									-- (old colision 2)         Colision between Ghost and Wall 
 			pacman_wall_colision		: out std_logic;									-- (old colision)           Colision between PacMan and Wall 
---			pacman_ghost_colision	: out	std_logic;									-- (Totally new)            Colision between Pac_Man and Ghosost
+ 			pacman_ghost_colision	: out	std_logic;									-- (Totally new)            Colision between Pac_Man and Ghosost
 			
 			-- LED
 			display_value				: out unsigned(15 downto 0);					-- Value to be displayed at the 7-segment display
+			victory						: out std_logic;									-- = '1' if score = 368.
 			
 			-- Test collisions
 			TEST_X						: in unsigned(9 downto 0);
@@ -154,10 +155,12 @@ architecture Behavioral of Pac_Man is
 	end component;
 		
   	
-	signal start_pacman				: std_logic;					-- Signal between CPU and Joystick
-	signal intr2 						: std_logic;
-	signal intr3						: std_logic;
+	signal start_pacman				: std_logic;											-- Signal between CPU and Joystick
+	signal intr2 						: std_logic					:= '0';
+	signal intr3						: std_logic					:= '0';
 	signal intr_code					: unsigned(3 downto 0)  := (others => '0');
+	signal pacman_ghost_intr		: std_logic					:= '0';					-- Signals when pacman collides with ghost
+	
 	signal joystick_pos				: unsigned(1 downto 0)	:= "01";
 	signal output1						: unsigned(9 downto 0)  := (others => '0');
 	signal output2 					: unsigned(9 downto 0) 	:= (others => '0');
@@ -181,10 +184,12 @@ architecture Behavioral of Pac_Man is
 	signal write_data					: std_logic_vector(1 downto 0);
 	
 	signal display						: unsigned(15 downto 0) := (others => '0');   						-- value to be displayed by the LED
+	signal victory						: std_logic;																	-- = '1' if score = 368.
 
 begin 
 
-	Lampa <= clr_cntr;
+--	Lampa <= clr_cntr;
+	Lampa <= intr2;
 
 	test_pac_x <= 	(output1 - 14) when (joystick_pos = "00") else
 		      		(output1 + 14) when (joystick_pos = "10") else output1;
@@ -238,11 +243,13 @@ begin
 				vgaBlue(1)=>vgaBlue(1),
 				ghost_wall_colision=>intr2, 
 				pacman_wall_colision=>intr3,
+				pacman_ghost_colision=>pacman_ghost_intr,
 				Ghost_X => output3, Ghost_Y => output4,
 				TEST_X => test_pac_x,
 				TEST_Y => test_pac_y,
 				TEST_COLLISION => test_pac_collision,
-				display_value=>display);
+				display_value=>display,
+				victory=>victory);
 				
 	U3 : LED port map(clk=>clk, rst=>btns, seg=>seg, an=>an, value=>display);
 							
