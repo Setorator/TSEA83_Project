@@ -12,21 +12,20 @@ use IEEE.NUMERIC_STD.ALL;                        -- IEEE library for the unsigne
 entity RAM is
 	port (
 		clk			: in std_logic;					-- Clock pulse
+		rst			: in std_logic;					-- Reset 						-- Never used???
 		
-		-- port 1
-		x1 			: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
-		y1 			: in unsigned(4 downto 0);					-- 32 rows, only 30 used
+		-- port 1 (write)
+		x_write 		: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
+		y_write		: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 		we 			: in std_logic;								-- Write enable
-		data1			: in std_logic_vector(1 downto 0);		-- Data to be written (tile-type)
+		data_write	: in std_logic_vector(1 downto 0);		-- Data to be written (tile-type)
 
-		-- port 2
-		x2 			: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
-		y2 			: in unsigned(4 downto 0);					-- 32 rows, only 30 used
+		-- port 2 (read)
+		x_read		: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
+		y_read		: in unsigned(4 downto 0);					-- 32 rows, only 30 used
 		re 			: in std_logic;								-- Read enable
-		data2			: out std_logic_vector(1 downto 0);		-- Data to be read (tile-type)
+		data_read	: out std_logic_vector(1 downto 0)		-- Data to be read (tile-type)
 		
-		--Reset
-		rst			: in std_logic
 	);
 end RAM;
 
@@ -40,7 +39,7 @@ architecture Behavioral of RAM is
 	type ram_t is array(0 to 2047) of 
 		std_logic_vector(1 downto 0);
 	
-	-- Set all bits to zero
+	-- ("00", "01", "10", "11") = (Floor, Food, Undefined, Wall)
 	signal ram : ram_t := ( "00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00", 
 									"00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00",
 									
@@ -136,17 +135,18 @@ architecture Behavioral of RAM is
 
 
 	
-	process(clk)
+	Read_Write : process(clk)
 	begin
-		if rising_edge(clk) then			
+		if rising_edge(clk) then	
+				
 			-- Synched write port 1	
 			if (we = '0') then
-				ram(40*to_integer(y1) + to_integer(x1)) <= data1;
+				ram(40*to_integer(y_write) + to_integer(x_write)) <= data_write;
 			end if;
 		
 			-- synched read from port 2
 			if (re = '0') then 
-				data2 <= ram(40*to_integer(y2) + to_integer(x2));
+				data_read <= ram(40*to_integer(y_read) + to_integer(x_read));
 			end if;
 		end if;
 	end process;

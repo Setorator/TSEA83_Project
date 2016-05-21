@@ -24,17 +24,18 @@ entity Pac_Man is
 		vgaGreen							: 	out std_logic_vector(2 downto 0);
 		vgaBlue							: 	out std_logic_vector(2 downto 1);
 
-		--LED
+		-- 7-degment display
 		seg 								: out std_logic_vector(0 to 7);				-- Which segments to be litt.
       an 								: out std_logic_vector(3 downto 0);			-- which display to be litt.
       
+      -- LED
       Lampa								: out std_logic;
       
       -- Joystick
-      MISO 								: in  STD_LOGIC;									-- Master In Slave Out, pin 3, JA3
-      SS 								: out  STD_LOGIC;									-- Slave Select, Pin 1, Port JA1
-      MOSI 								: out  STD_LOGIC;									-- Master Out Slave In, Pin 2, Port JA2
-      SCLK 								: out  STD_LOGIC									-- Serial Clock, Pin 4, Port JA4
+      MISO 								: in  std_logic;									-- Master In Slave Out, pin 3, JA3
+      SS 								: out  std_logic;									-- Slave Select, Pin 1, Port JA1
+      MOSI 								: out  std_logic;									-- Master Out Slave In, Pin 2, Port JA2
+      SCLK 								: out  std_logic									-- Serial Clock, Pin 4, Port JA4
       
       
 	 );
@@ -92,13 +93,13 @@ architecture Behavioral of Pac_Man is
 			vgaGreen                : out std_logic_vector(2 downto 0);  		-- VGA green
 			vgaBlue                 : out std_logic_vector(2 downto 1);  		-- VGA blue
 			
-			-- Interuption
-			intr_code					: out unsigned(3 downto 0);					-- intr_code
-			colision						: out std_logic;									-- Interupt 
-			colision2					: out std_logic;									-- Ghost colision
+			-- Interupts
+			ghost_wall_colision		: out std_logic;									-- (old colision 2)         Colision between Ghost and Wall 
+			pacman_wall_colision		: out std_logic;									-- (old colision)           Colision between PacMan and Wall 
+--			pacman_ghost_colision	: out	std_logic;									-- (Totally new)            Colision between Pac_Man and Ghosost
 			
-			-- Display
-			display						: out unsigned(15 downto 0);
+			-- LED
+			display_value				: out unsigned(15 downto 0);					-- Value to be displayed at the 7-segment display
 			
 			-- Test collisions
 			TEST_X						: in unsigned(9 downto 0);
@@ -110,22 +111,20 @@ architecture Behavioral of Pac_Man is
   
 	component RAM
 		port (
-			clk							: in std_logic;									-- System clock
+			clk							: in std_logic;								-- System clock
+			rst							: in std_logic;								-- Reset
 
-			-- port 1
-			x1 							: in unsigned(5 downto 0);						-- 64 columns, only 40 is used
-			y1 							: in unsigned(4 downto 0);						-- 32 rows, only 30 used
-			we 							: in std_logic;									-- Write enable
-			data1							: in std_logic_vector(1 downto 0);			-- Data to be written
+			-- port 1 (write)
+			x_write 						: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
+			y_write						: in unsigned(4 downto 0);					-- 32 rows, only 30 used
+			we 							: in std_logic;								-- Write enable
+			data_write					: in std_logic_vector(1 downto 0);		-- Data to be written (tile-type)
 
-			-- port 2
-			x2 							: in unsigned(5 downto 0);						-- 64 columns, only 40 is used
-			y2 							: in unsigned(4 downto 0);						-- 32 rows, only 30 used
-			re 							: in std_logic;									-- Read enable
-			data2							: out std_logic_vector(1 downto 0);			-- Data to be read		
-			
-			-- reset
-			rst							: in std_logic
+			-- port 2 (read)
+			x_read						: in unsigned(5 downto 0);					-- 64 columns, only 40 is used
+			y_read						: in unsigned(4 downto 0);					-- 32 rows, only 30 used
+			re 							: in std_logic;								-- Read enable
+			data_read					: out std_logic_vector(1 downto 0)		-- Data to be read (tile-type)
 		);
 	end component;
 	
@@ -147,7 +146,7 @@ architecture Behavioral of Pac_Man is
 			rst							: in std_logic;
 			MISO							: in std_logic;
 			joystick_pos				: buffer unsigned(1 downto 0);	
-       	 		start_pacman 				: out std_logic;
+       	start_pacman 				: out std_logic;
 			SS								: out std_logic;
 			MOSI							: out std_logic;
 			SCLK							: out std_logic
@@ -222,8 +221,8 @@ begin
 	U0 : CPU port map(clk=>clk, rst=>btns, intr=>start_pacman, intr2=>intr2, intr3=>intr3, intr_code => intr_code, joystick_pos => joystick,
 				output1 => output1, output2 => output2, output3 => output3, output4 => output4);
 							 
-	U1 : RAM port map(clk=>clk, we=>write_enable, data1=>write_data, x1=>write_addr(5 downto 0), y1=>write_addr(10 downto 6), 
-				re=>read_enable, data2=>read_data, x2=>read_addr(5 downto 0), y2=>read_addr(10 downto 6), rst => btns);
+	U1 : RAM port map(clk=>clk, we=>write_enable, data_write=>write_data, x_write=>write_addr(5 downto 0), y_write=>write_addr(10 downto 6), 
+				re=>read_enable, data_read=>read_data, x_read=>read_addr(5 downto 0), y_read=>read_addr(10 downto 6), rst => btns);
 
 	U2 : PIX_GEN port map(clk=>clk, rst=>btns, read_data=>read_data,
 				Hsync=>Hsync, Vsync=>Vsync, read_addr=>read_addr, read_enable=>read_enable,
@@ -237,14 +236,13 @@ begin
 				vgaGreen(0)=>vgaGreen(0),
 				vgaBlue(2)=>vgaBlue(2),
 				vgaBlue(1)=>vgaBlue(1),
-				colision=>intr2, 
-				colision2=>intr3,
-				intr_code => intr_code,
+				ghost_wall_colision=>intr2, 
+				pacman_wall_colision=>intr3,
 				Ghost_X => output3, Ghost_Y => output4,
 				TEST_X => test_pac_x,
 				TEST_Y => test_pac_y,
 				TEST_COLLISION => test_pac_collision,
-				display=>display);
+				display_value=>display);
 				
 	U3 : LED port map(clk=>clk, rst=>btns, seg=>seg, an=>an, value=>display);
 							
