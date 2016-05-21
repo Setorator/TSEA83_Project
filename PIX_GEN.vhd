@@ -52,8 +52,7 @@ entity PIX_GEN is
 		-- Test coordinates
 		TEST_X						: in unsigned(9 downto 0);
 		TEST_Y						: in unsigned(9 downto 0);
-		TEST_COLLISION_1			: out std_logic;
-		TEST_COLLISION_2			: out std_logic
+		TEST_COLLISION					: out std_logic
 	);
          
 end PIX_GEN;
@@ -92,7 +91,7 @@ architecture Behavioral of PIX_GEN is
   	type sprite is array (0 to 255) of unsigned(1 downto 0);
   	
   	signal TestPixel_1	: std_logic_vector(7 downto 0) 	:= (others => '0');
-  	signal TestPixel_2   : std_logic_vector(7 downto 0) 	:= (others => '0'); 
+	signal TestPixel_2      : std_logic_vector(7 downto 0)  := (others => '0');
   	
   	-- Color Map
   	type color_m is array(0 to 3) of std_logic_vector(7 downto 0);
@@ -176,23 +175,23 @@ architecture Behavioral of PIX_GEN is
 		  "11","00","00","00","00","11","00","00", "00","00","11","00","00","00","00","11");
 		  
 	signal Pac_Man : sprite :=
-		( "00","00","00","00","00","00","00","01", "01","00","00","00","00","00","00","00",  -- Pac_Man (Start adress 0)
-		  "00","00","00","00","00","01","01","01", "01","01","01","00","00","00","00","00",
+		( "00","00","00","00","00","01","01","01", "01","01","01","00","00","00","00","00",  -- Pac_Man (Start adress 0)
+		  "00","00","00","00","01","01","01","01", "01","01","01","01","00","00","00","00",
 		  "00","00","00","01","01","01","01","01", "01","01","01","01","01","00","00","00",
 		  "00","00","01","01","01","01","01","01", "01","01","01","01","01","01","00","00",
 		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","00",
-		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","01",
-		  "00","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
+		  "01","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","01",
+		  "01","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
 		  "01","01","01","01","01","01","01","00", "00","00","00","00","00","00","00","00",
 		  
 		  "01","01","01","01","01","01","01","00", "00","00","00","00","00","00","00","00",
-		  "00","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
-		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","01",
+		  "01","01","01","01","01","01","01","01", "01","01","01","00","00","00","00","00",
+		  "01","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","01",
 		  "00","01","01","01","01","01","01","01", "01","01","01","01","01","01","01","00",
 		  "00","00","01","01","01","01","01","01", "01","01","01","01","01","01","00","00",
 		  "00","00","00","01","01","01","01","01", "01","01","01","01","01","00","00","00",
-		  "00","00","00","00","00","01","01","01", "01","01","01","00","00","00","00","00",
-		  "00","00","00","00","00","00","00","01", "01","00","00","00","00","00","00","00");
+		  "00","00","00","00","01","01","01","01", "01","01","01","01","00","00","00","00",
+		  "00","00","00","00","00","01","01","01", "01","01","01","00","00","00","00","00");
 		  
 
 begin
@@ -315,46 +314,46 @@ begin
 
 	
   	PacPixel <= -- Left
-  					color_map(to_integer(Pac_Man(((to_integer(Pac_Man_Y) - to_integer(Ypixel))*16) + (to_integer(Pac_Man_X) - to_integer(Xpixel))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "00") and
-  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else 
+  					color_map(to_integer(Pac_Man(((to_integer(Pac_Man_Y) - to_integer(Ypixel))*16) + (to_integer(Pac_Man_X) - to_integer(Xpixel)) - 1))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) <= 15)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) >= 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) <= 15) and (Pac_Man_direction = "00") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) >= 0)) else 
   					
   					-- Up
-  					color_map(to_integer(Pac_Man(((to_integer(Pac_Man_X) - to_integer(Xpixel))*16) + (to_integer(Pac_Man_Y) - to_integer(Ypixel))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "01") and
-  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else 
+  					color_map(to_integer(Pac_Man(((to_integer(Pac_Man_X) - to_integer(Xpixel))*16) + (to_integer(Pac_Man_Y) - to_integer(Ypixel)) - 1))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) <= 15)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) >= 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) <= 15) and (Pac_Man_direction = "01") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) >= 0)) else 
   					
   					-- Right
-  					color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(Pac_Man_Y))*16) + (to_integer(Xpixel) - to_integer(Pac_Man_X))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "10") and
-  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else
+  					color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(Pac_Man_Y))*16) + (to_integer(Xpixel) - to_integer(Pac_Man_X))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) <= 15)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) >= 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) <= 15) and (Pac_Man_direction = "10") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) >= 0)) else
   					
   					-- Down
-  					color_map(to_integer(Pac_Man(((to_integer(Xpixel) - to_integer(Pac_Man_X))*16) + (to_integer(Ypixel) - to_integer(Pac_Man_Y))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) > 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) < 16) and (Pac_Man_direction = "11") and
-  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) > 0)) else X"00";
+  					color_map(to_integer(Pac_Man(((to_integer(Xpixel) - to_integer(Pac_Man_X))*16) + (to_integer(Ypixel) - to_integer(Pac_Man_Y))))) when (((to_integer(Xpixel) - to_integer(Pac_Man_X)) <= 15)
+  					and ((to_integer(Xpixel) - to_integer(Pac_Man_X)) >= 0) and ((to_integer(Ypixel) - to_integer(Pac_Man_Y)) <= 15) and (Pac_Man_direction = "11") and
+  					((to_integer(Ypixel) - to_integer(Pac_Man_Y)) >= 0)) else X"00";
   					
   					
   					
-	GhostPixel <= color_map(to_integer(Ghost(((to_integer(Ypixel) - to_integer(Ghost_Y))*16) + (to_integer(Xpixel) - to_integer(Ghost_X))))) when (((to_integer(Xpixel) - to_integer(Ghost_X)) < 16) 
-						and ((to_integer(Xpixel) - to_integer(Ghost_X)) > 0) and ((to_integer(Ypixel) - to_integer(Ghost_Y)) < 16) and ((to_integer(Ypixel) - to_integer(Ghost_Y)) > 0)) else x"00"; 			
+	GhostPixel <= color_map(to_integer(Ghost(((to_integer(Ypixel) - to_integer(Ghost_Y))*16) + (to_integer(Xpixel) - to_integer(Ghost_X))))) when (((to_integer(Xpixel) - to_integer(Ghost_X)) <= 15) 
+						and ((to_integer(Xpixel) - to_integer(Ghost_X)) >= 0) and ((to_integer(Ypixel) - to_integer(Ghost_Y)) <= 15) and ((to_integer(Ypixel) - to_integer(Ghost_Y)) >= 0)) else x"00"; 			
   				
   
   
   	tileData <= GhostPixel when (GhostPixel /= "00000000") else
   			TilePixel when (TilePixel /= "00000000") else PacPixel;
   					
-  	TestPixel_1 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y))*16) + (to_integer(Xpixel) - to_integer(TEST_X))))) when (((to_integer(Xpixel) - to_integer(TEST_X)) < 16)
-  					and ((to_integer(Xpixel) - to_integer(TEST_X)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y)) > 0)) else x"00"; 		
+  	TestPixel_1 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y - 1))*16) + (to_integer(Xpixel) - to_integer(TEST_X - 1))))) when (((to_integer(Xpixel) - to_integer(TEST_X - 1)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(TEST_X - 1)) >= 0) and ((to_integer(Ypixel) - to_integer(TEST_Y - 1)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y - 1)) >= 0)) else x"00"; 		
 
-  	TestPixel_2 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y + 1))*16) + (to_integer(Xpixel) - to_integer(TEST_X + 1))))) when (((to_integer(Xpixel) - to_integer(TEST_X + 1)) 						< 16) and ((to_integer(Xpixel) - to_integer(TEST_X + 1)) > 0) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) > 0)) else x"00";
+  	TestPixel_2 <= color_map(to_integer(Pac_Man(((to_integer(Ypixel) - to_integer(TEST_Y + 1))*16) + (to_integer(Xpixel) - to_integer(TEST_X + 1))))) when (((to_integer(Xpixel) - to_integer(TEST_X + 1)) < 16)
+  					and ((to_integer(Xpixel) - to_integer(TEST_X + 1)) >= 0) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) < 16) and ((to_integer(Ypixel) - to_integer(TEST_Y + 1)) >= 0)) else x"00"; 	
 
 ----------------------------------------------------------------
 -------------------------COLISION-------------------------------
 ----------------------------------------------------------------
   	
-  	TEST_COLLISION_1 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_1 /= X"00")) else '0';
-	TEST_COLLISION_2 <= '1' when ((rst = '0') and (tileData = X"02") and (TestPixel_2 /= X"00")) else '0';
+  	TEST_COLLISION <= '1' when ((rst = '0') and (tileData = X"02") and ((TestPixel_1 /= X"00") or (TestPixel_2 /= X"00"))) else '0';
   	
   	-- Colision when Pac_Man collide with the wall				
   	colision2 <= '1' when ((rst = '0') and (tileData = X"02") and (PacPixel /= X"00")) else '0';
@@ -416,7 +415,7 @@ begin
 
 
 	display(15 downto 12) <= "0000";
-	display(11 downto 8)	<=	food100;
+	display(11 downto 8) <=	food100;
 	display(7 downto 4) <= food10;
 	display(3 downto 0) <= food1;
 				

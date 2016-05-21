@@ -35,18 +35,19 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+
 --  ===================================================================================
 --  								Define Module, Inputs and Outputs
 --  ===================================================================================
 entity PmodJSTK_Master is
-    Port ( clk : in  std_logic;											-- 100Mhz onboard clock
-           rst : in  std_logic;											-- Button D
-           MISO : in  std_logic;										-- Master In Slave Out, JA3
-	   	   joystick_pos : buffer unsigned(1 downto 0);					-- positionen som joysticken är i
-	   	   start_pacman : out std_logic;
-           SS : out  std_logic;											-- Slave Select, Pin 1, Port JA
-       	   MOSI : out  std_logic;										-- Master Out Slave In, Pin 2, Port JA
-           SCLK : out  std_logic										-- Serial Clock, Pin 4, Port JA
+    Port ( clk : in  STD_LOGIC;											-- 100Mhz onboard clock
+           rst : in  STD_LOGIC;											-- Button D
+           MISO : in  STD_LOGIC;											-- Master In Slave Out, JA3
+	   	  joystick_pos : buffer unsigned(1 downto 0);				-- positionen som joysticken är i
+	   	  start_pacman : out std_logic;
+           SS : out  STD_LOGIC;											-- Slave Select, Pin 1, Port JA
+           MOSI : out  STD_LOGIC;										-- Master Out Slave In, Pin 2, Port JA
+           SCLK : out  STD_LOGIC											-- Serial Clock, Pin 4, Port JA
            );	
 
 
@@ -63,15 +64,28 @@ architecture Behavioral of PmodJSTK_Master is
 		-- **********************************************
 		component PmodJSTK
 
-			 Port (   	  clk : in  std_logic;
-					  rst : in  std_logic;
-					  sndRec : in  std_logic;
-					  DIN : in  std_logic_vector (7 downto 0);
-					  MISO : in  std_logic;
-					  SS : out  std_logic;
-					  SCLK : out  std_logic;
-					  MOSI : out  std_logic;
-					  DOUT : inout  std_logic_vector (39 downto 0)
+			 Port (   clk : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
+					  sndRec : in  STD_LOGIC;
+					  DIN : in  STD_LOGIC_VECTOR (7 downto 0);
+					  MISO : in  STD_LOGIC;
+					  SS : out  STD_LOGIC;
+					  SCLK : out  STD_LOGIC;
+					  MOSI : out  STD_LOGIC;
+					  DOUT : inout  STD_LOGIC_VECTOR (39 downto 0)
+			 );
+
+		end component;
+
+
+		-- **********************************************
+		-- 				5Hz Clock Divider
+		-- **********************************************
+		component ClkDiv_5Hz
+
+			 Port ( clk : in  STD_LOGIC;
+					  rst : in  STD_LOGIC;
+					  CLKOUT : inout STD_LOGIC
 			 );
 
 		end component;
@@ -82,26 +96,22 @@ architecture Behavioral of PmodJSTK_Master is
 --  ===================================================================================
 
 			-- Holds data to be sent to PmodJSTK
-			signal sndData : std_logic_vector(7 downto 0) := X"00";
+			signal sndData : STD_LOGIC_VECTOR(7 downto 0) := X"00";
 
 			-- Signal to send/receive data to/from PmodJSTK
-			signal sndRec : std_logic;
+			signal sndRec : STD_LOGIC;
 
 			-- Signal indicating that SPI interface is busy
-			signal BUSY : std_logic := '0';
+			signal BUSY : STD_LOGIC := '0';
 
 			-- Data read from PmodJSTK
-			signal jstkData : std_logic_vector(39 downto 0) := (others => '0');
+			signal jstkData : STD_LOGIC_VECTOR(39 downto 0) := (others => '0');
 
-			-- Holds the x and y value from jstkData
-			signal xPos : std_logic_vector(1 downto 0) := "01";
-			signal yPos : std_logic_vector(1 downto 0) := "01";
+			-- Signal carrying output data that user selected
+			--signal posData : STD_LOGIC_VECTOR(9 downto 0);
 
-
-			-- Current count value
-			signal clkCount : STD_LOGIC_VECTOR(23 downto 0) := (others => '0');
-			-- Value to toggle output clock at
-			constant cntEndVal : STD_LOGIC_VECTOR(23 downto 0) := X"989680";
+			signal xPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
+			signal yPos : STD_LOGIC_VECTOR(1 downto 0) := "01";
 			
 --  ===================================================================================
 -- 							  				Implementation
@@ -125,27 +135,17 @@ begin
 			);
 			
 			
-
-
-
+			
 			-------------------------------------------------
-			--	5Hz Clock Divider Generates Send/Receive signal
+			--  		 Send Receive Signal Generator
 			-------------------------------------------------
-			process(clk) begin
+			genSndRec : ClkDiv_5Hz port map(
+					clk=>clk,
+					rst=>rst,
+					CLKOUT=>sndRec
+			);
 
-					if rising_edge(clk) then
-						if rst = '1'  then
-							sndRec <= '0';
-							clkCount <= X"000000";
-						elsif(clkCount = cntEndVal) then
-							sndRec <= NOT sndRec;
-							clkCount <= X"000000";
-						else
-							clkCount <= clkCount + '1';
-						end if;
-					end if;
 
-			end process;
 
 			xPos <= jstkData(25 downto 24);
 			yPos <= jstkData(9 downto 8);
@@ -154,7 +154,7 @@ begin
 			process(clk) 
 			begin
 				if rising_edge(clk) then
-					if rst = '1' then 	joystick_pos <= "00";
+					if(rst = '1') then 	joystick_pos <= "01";
 					elsif xPos = "11" then	joystick_pos <= "10";					-- höger
 					elsif yPos = "11" then	joystick_pos <= "01";					-- upp
 					elsif xPos = "00" then	joystick_pos <= "00";					-- vänster
@@ -163,7 +163,7 @@ begin
 				end if;
 			end process;
 
-			start_pacman <= '0' when rst = '1' else
+			start_pacman <= '0' when (rst = '1') else
 					'1' when (xPos = "11" and joystick_pos /= "10") else
 					'1' when (yPos = "11" and joystick_pos /= "01") else
 					'1' when (xPos = "00" and joystick_pos /= "00") else

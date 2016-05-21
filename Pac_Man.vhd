@@ -103,8 +103,7 @@ architecture Behavioral of Pac_Man is
 			-- Test collisions
 			TEST_X						: in unsigned(9 downto 0);
 			TEST_Y						: in unsigned(9 downto 0);
-			TEST_COLLISION_1			: out std_logic;
-			TEST_COLLISION_2			: out std_logic
+			TEST_COLLISION					: out std_logic
 		);
   	end component;
   
@@ -160,7 +159,7 @@ architecture Behavioral of Pac_Man is
 	signal intr2 						: std_logic;
 	signal intr3						: std_logic;
 	signal intr_code					: unsigned(3 downto 0)  := (others => '0');
-	signal joystick_pos				: unsigned(1 downto 0)	:= "00";
+	signal joystick_pos				: unsigned(1 downto 0)	:= "01";
 	signal output1						: unsigned(9 downto 0)  := (others => '0');
 	signal output2 					: unsigned(9 downto 0) 	:= (others => '0');
 	signal output3						: unsigned(9 downto 0) 	:= (others => '0');
@@ -169,11 +168,9 @@ architecture Behavioral of Pac_Man is
 	signal test_pac_x					: unsigned(9 downto 0)	:= (others => '0');
 	signal test_pac_y					: unsigned(9 downto 0)	:= (others => '0');
 
-	signal test_pac_collision_1	: std_logic		:= '1';
-	signal test_pac_collision_2	: std_logic		:= '1';
 	signal test_pac_collision		: std_logic		:= '1';
 	
-	signal joystick					: unsigned(1 downto 0)	:= "00";
+	signal joystick					: unsigned(1 downto 0)	:= "01";
 	signal delay_cntr					: unsigned(27 downto 0) := (others => '0');
 	signal clr_cntr					: std_logic		:= '0';
 
@@ -190,26 +187,20 @@ begin
 
 	Lampa <= clr_cntr;
 
-	-- Använd knapparna på Nexys för att styra PacMan
-	
-	test_pac_collision <= test_pac_collision_1 or test_pac_collision_2;
+	test_pac_x <= 	(output1 - 14) when (joystick_pos = "00") else
+		      		(output1 + 14) when (joystick_pos = "10") else output1;
 
-	-- Använd knapparna på Nexys för att styra PacMan
+	test_pac_y <= 	(output2 - 14) when (joystick_pos = "01") else
+		      		(output2 + 14) when (joystick_pos = "11") else output2;
 
-	test_pac_x <= 	(output1 - 8) when (joystick_pos = "00") else
-		      		(output1 + 8) when (joystick_pos = "10") else output1;
-
-	test_pac_y <= 	(output2 - 8) when (joystick_pos = "01") else
-		      		(output2 + 8) when (joystick_pos = "11") else output2;
-
-	start_pacman <= '1' when (btns = '0' and delay_cntr = X"0197080") else '0';
+	start_pacman <= '1' when (btns = '0' and delay_cntr = X"0197085") else '0';
 
 	DELAY_CNTR_func : process(clk)
 	begin
 		if rising_edge(clk) then	
 			if (btns = '1') or (test_pac_collision = '1') or (clr_cntr = '1')then
 				delay_cntr <= (others => '0');
-			elsif (delay_cntr /= X"0197080") then
+			elsif (delay_cntr /= X"0197085") then
 				delay_cntr <= delay_cntr + 1;
 			else
 				delay_cntr <= (others => '0');
@@ -221,8 +212,8 @@ begin
 	begin
 		if rising_edge(clk) then
 			if btns = '1' then
-				joystick <= "00";
-			elsif delay_cntr = X"0197080" then
+				joystick <= "01";
+			elsif delay_cntr = X"0197085" then
 				joystick <= joystick_pos;
 			end if;
 		end if;
@@ -252,8 +243,7 @@ begin
 				Ghost_X => output3, Ghost_Y => output4,
 				TEST_X => test_pac_x,
 				TEST_Y => test_pac_y,
-				TEST_COLLISION_1 => test_pac_collision_1,
-				TEST_COLLISION_2 => test_pac_collision_2,
+				TEST_COLLISION => test_pac_collision,
 				display=>display);
 				
 	U3 : LED port map(clk=>clk, rst=>btns, seg=>seg, an=>an, value=>display);
