@@ -63,7 +63,7 @@ architecture Behavioral of PmodJSTK_Master is
 		-- **********************************************
 		component PmodJSTK
 
-			 Port (   	  clk : in  std_logic;
+			 Port (   clk : in  std_logic;
 					  rst : in  std_logic;
 					  sndRec : in  std_logic;
 					  DIN : in  std_logic_vector (7 downto 0);
@@ -95,7 +95,7 @@ architecture Behavioral of PmodJSTK_Master is
 
 			-- Holds the x and y value from jstkData
 			signal xPos : std_logic_vector(1 downto 0) := "01";
-			signal yPos : std_logic_vector(1 downto 0) := "01";
+			signal yPos : std_logic_vector(1 downto 0) := "11";
 
 
 			-- Current count value
@@ -131,8 +131,8 @@ begin
 			-------------------------------------------------
 			--	5Hz Clock Divider Generates Send/Receive signal
 			-------------------------------------------------
-			process(clk) begin
-
+			process(clk) 
+			begin
 					if rising_edge(clk) then
 						if rst = '1'  then
 							sndRec <= '0';
@@ -147,14 +147,26 @@ begin
 
 			end process;
 
-			xPos <= jstkData(25 downto 24);
-			yPos <= jstkData(9 downto 8);
+			process(clk) 
+			begin
+				if rising_edge(clk) then
+					if rst = '1'  then
+						xPos <= "01";
+						yPos <= "11";
+					elsif jstkData > 1 then
+						xPos <= jstkData(25 downto 24);
+						yPos <= jstkData(9 downto 8);
+					end if;
+				end if;
+			end process;
+
+
 			
 
 			process(clk) 
 			begin
 				if rising_edge(clk) then
-					if rst = '1' then 	joystick_pos <= "00";
+					if rst = '1' then 	joystick_pos <= "01";
 					elsif xPos = "11" then	joystick_pos <= "10";					-- höger
 					elsif yPos = "11" then	joystick_pos <= "01";					-- upp
 					elsif xPos = "00" then	joystick_pos <= "00";					-- vänster
