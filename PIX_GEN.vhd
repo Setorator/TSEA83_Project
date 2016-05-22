@@ -418,9 +418,7 @@ begin
   -- Choose final pixel depending to hierarchy, (ghost > wall/food > pacman > floor).
   	VGApixel <= 
   					ghostPixel when (ghostPixel /= "00000000") else
-  					tilePixel when (tilePixel /= "00000000") else 
-  					TestPixel_1 when (TestPixel_1 /= "00000000") else
-  					TestPixel_2 when (TestPixel_2 /= "00000000") else pacPixel;
+  					tilePixel when (tilePixel /= "00000000") else pacPixel;
   					
   					
   					
@@ -509,7 +507,7 @@ begin
 	end process;
 	
 	-- When score = 368 we have won!!!
-	victory <= '1' when ((food100 = 3) and (food10 = 6) and (food1 = 8)) else '0';
+	victory <= '1' when ((food100 = 3) and (food10 = 7) and (food1 = 2)) else '0';
 	
 
 ----------------------------------------------------------------

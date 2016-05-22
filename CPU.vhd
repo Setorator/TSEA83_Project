@@ -17,11 +17,11 @@ use IEEE.NUMERIC_STD.ALL;
 entity cpu is 
 	port (
   		clk       	:  in std_logic;
-   	rst         	:  in std_logic;
-   	intr        	:  in std_logic; 				-- Avbrotts nivå 1
+   		rst         	:  in std_logic;
+   		intr        	:  in std_logic; 				-- Avbrotts nivå 1
 		intr2		:  in std_logic;  				-- Avbrotts nivå 2
 		intr3		:  in std_logic;				-- Avbrotts nivå 3
-		intr_code   	:  in unsigned(3 downto 0); 			-- Vilken typ av avbrott som skett (För att kunna veta vad som orsakat kollision)
+		intr4		:  in std_logic;				-- Avbrotts nivå 4
 		joystick_pos 	:  in unsigned(1 downto 0);			-- Vilken riktning joystick pekar (00 = vänster, 01 = uppåt, 10 = höger, 11 = neråt) : Address $FF8 i minnet
 		output1 	:  out unsigned(9 downto 0);   			-- Output 1  : Address $77 i minnet
 		output2    	:  out unsigned(9 downto 0);			-- Output 2  : Address $76 i minnet
@@ -135,8 +135,8 @@ architecture Behavioral of cpu is
 				 b"0000_0111_0100_0_0_0110_00_00_01000111", -- XR <= AR 					69
 				 b"0000_0101_0111_0_0_0101_00_00_01000010", -- AR <= DR  ,  uPC <= 66 				70
 				 b"0000_0000_0000_0_1_0011_00_00_00000000", -- uPC <= 0						71
-				 -- OP = 10010, LDIC M,ADDR , XR <= IC
-				 b"0000_1110_0100_0_1_0011_00_00_00000000", -- XR <= IC						72
+				 -- OP = 10010, LDV4 M,ADDR , IV4 <= DR
+				 b"0000_0101_1110_0_1_0011_00_00_00000000", -- XR <= IC						72
 				 -- OP = 10011, LDV3 M,ADDR , IV3 <= DR	
 				 b"0000_0101_1111_0_1_0011_00_00_00000000", -- IV3 <= DR					73 
 				 -- OP = 10100, AND M,ADDR AR <= AR AND DATA_BUS						
@@ -169,6 +169,7 @@ architecture Behavioral of cpu is
 	signal intr_1: std_logic := '0';
 	signal intr_2: std_logic := '0';
 	signal intr_3: std_logic := '0';
+	signal intr_4: std_logic := '0';
   
 	-- K1 out
 
@@ -217,7 +218,7 @@ architecture Behavioral of cpu is
 				 "00111011", -- SLEEP 59
 				 "00111111", -- LDJOY 63
 				 "01000000", -- SLEEP_LONG 64
-				 "01001000", -- LDIC 72
+				 "01001000", -- LDV4 72
 				 "01001001", -- LDV3 73
 				 "01001010", -- AND  74
 				 "01001011", -- ADD_RND 75
@@ -234,77 +235,80 @@ architecture Behavioral of cpu is
 	-- Skriv program minne här 
 	constant p_mem_c : p_mem_t :=  
 			-- OP   _ M_        ADDR
-			(b"01100_11_000001000011", -- 0  LDV1  11,67	   		 	UPPDATERA ADDRESSERNA
-			 b"01101_11_000000111010", -- 1  LDV2  11,58    		 	UPPDATERA ADDRESSERNA
-			 b"10011_11_000000110011", -- 2  LDV3  11,51		 		UPPDATERA ADDRESSERNA
-			 b"01110_11_000001111111", -- 3  LDSP  11,$07F		 
-			 b"00000_11_000000010000", -- 4	 LDA   11,$010		 
-			 b"01001_00_000001110110", -- 5	 STORE 00,PacMan_X
-			 b"00000_11_000011010000", -- 6  LDA   11,208
-			 b"01001_00_000001110101", -- 7  STORE 00,PacMan_Y
-			 b"00000_11_000100110000", -- 8  LDA   11,GHOST_START_X
-			 b"01001_00_000001110000", -- 9  STORE 00,GHOST_X
-			 b"00000_11_000011100000", -- 10 LDA   11,GHOST_START_Y
-			 b"01001_00_000001101111", -- 11 STORE 00,GHOST_Y
-			 b"00000_11_000000000001", -- 12 LDA   11,$001
-			 b"01001_00_000001101110", -- 13 STORE 00,GHOST_DIR
-			 b"00000_11_000000000000", -- 14 LDA   11,$000
-			 b"01001_00_000001101101", -- 15 STORE 00,GHOST_SPEED
-			 b"10000_11_000000000000", -- 16 LDJOY 11,$000				LOAD_JOYSTICK
-			 b"01001_00_000001110100", -- 17 STORE 00,PacMan_DIR
-			 b"00100_00_000001110011", -- 18 LDXR  00,PacMan_SPEED
-			 b"00000_00_000001110110", -- 19 LDA   00,PacMan_X			START_PAC_ADD
-			 b"10110_00_000001110100", -- 20 ADD_X 00,PacMan_DIR
-			 b"01001_00_000001110110", -- 21 STORE 00,PacMan_X
-			 b"00000_00_000001110101", -- 22 LDA   00,PacMan_Y
-			 b"10111_00_000001110100", -- 23 ADD_Y 00,PacMan_DIR
-			 b"01001_00_000001110101", -- 24 STORE 00,PacMan_Y			END_PAC_ADD
-			 b"00100_00_000001101101", -- 25 LDXR  00,GHOST_SPEED			START_GHOST_ADD
-			 b"00000_00_000001110000", -- 26 LDA   00,GHOST_X
-			 b"10110_00_000001101110", -- 27 ADD_X 00,GHOST_DIR
-			 b"01001_00_000001110000", -- 28 STORE 00,GHOST_X
-			 b"00000_00_000001101111", -- 29 LDA   00,GHOST_Y
-			 b"10111_00_000001101110", -- 30 ADD_Y 00,GHOST_DIR
-			 b"01001_00_000001101111", -- 31 STORE 00,GHOST_Y
-			 b"10001_11_011000011111", -- 32 SLEEP_LONG 11,$61F			SLEEP
-			 b"00100_00_000001110110", -- 33 LDXR  00,PacMan_X
-			 b"00000_11_000000000000", -- 34 LDA   11,$000
-			 b"01011_11_000000100110", -- 35 NEQU  11,SKIP_ZERO
-			 b"00000_11_001001110000", -- 36 LDA   11,624
-			 b"01001_00_000001110110", -- 37 STORE 00,PacMan_X
-			 b"00000_11_001001110000", -- 38 LDA   11,624				SKIP_ZERO
-			 b"01011_11_000000101010", -- 39 NEQU  11,SKIP_639
-			 b"00000_11_000000000000", -- 40 LDA   11,$000
-			 b"01001_00_000001110110", -- 41 STORE 00,PacMan_X
-			 b"00000_00_000001110110", -- 42 LDA   00,PacMan_X			SKIP_639	
-			 b"01001_00_000001110010", -- 43 STORE 00,PacMan_Old_X
-			 b"00000_00_000001110101", -- 44 LDA   00,PacMan_Y
-			 b"01001_00_000001110001", -- 45 STORE 00,PacMan_Old_Y
-			 b"00000_00_000001110000", -- 46 LDA   00,GHOST_X
-			 b"01001_00_000001101100", -- 47 STORE 00,GHOST_OLD_X
-			 b"00000_00_000001101111", -- 48 LDA   00,GHOST_Y
-			 b"01001_00_000001101011", -- 49 STORE 00,GHOST_OLD_Y
- 			 b"00101_11_000000010000", -- 50 JMP   11,$00F				JUMP TO LOAD_JOYSTICK
-			 b"00000_11_000000000000", -- 51 LDA   11,$000				AVBROTT 3 STANNA PACMAN
-			 b"01001_00_000001110011", -- 52 STORE 00,PacMan_Speed
-			 b"00000_00_000001110010", -- 53 LDA   00,PacMan_Old_X
- 			 b"01001_00_000001110110", -- 54 STORE 00,PacMan_X
-			 b"00000_00_000001110001", -- 55 LDA   00,PacMan_Old_Y
- 			 b"01001_00_000001110101", -- 56 STORE 00,PacMan_Y
-			 b"00010_00_000000000000", -- 57 RTE
-			 b"00000_00_000001101110", -- 58 LDA   00,GHOST_DIR			AVBROTT 2 ÄNDRA RIKTNING GHOST
-			 b"10101_11_000000000000", -- 59 ADD_RND 00,$000
-			 b"10100_11_000000000011", -- 60 AND   11,$FFC
-			 b"01001_00_000001101110", -- 61 STORE 00,GHOST_DIR
-			 b"00000_00_000001101100", -- 62 LDA   00,GHOST_OLD_X
-			 b"01001_00_000001110000", -- 63 STORE 00,GHOST_X
-			 b"00000_00_000001101011", -- 64 LDA   00,GHOST_OLD_Y
-			 b"01001_00_000001101111", -- 65 STORE 00,GHOST_Y
-			 b"00010_00_000000000000", -- 66 RTE	
-			 b"00000_11_000000000010", -- 67 LDA   11,$002				AVBROTT 1 STARTA PACMAN
-			 b"01001_00_000001110011", -- 68 STORE 00,PacMan_SPEED
-			 b"01001_00_000001101101", -- 69 STORE 00,GHOST_SPEED
-			 b"00010_00_000000000000", -- 70 RTE
+			(b"01100_11_000001000100", -- 0  LDV1  11,68	   		 	UPPDATERA ADDRESSERNA
+			 b"01101_11_000000111011", -- 1  LDV2  11,59    		 	UPPDATERA ADDRESSERNA
+			 b"10011_11_000000110100", -- 2  LDV3  11,52		 		UPPDATERA ADDRESSERNA
+			 b"10010_11_000001001001", -- 3  LDV4  11,73				UPPDATERA ADDRESSERNA
+			 b"01110_11_000001111111", -- 4  LDSP  11,$07F		 
+			 b"00000_11_000000010000", -- 5	 LDA   11,$010		 
+			 b"01001_00_000001110110", -- 6	 STORE 00,PacMan_X
+			 b"00000_11_000011010000", -- 7  LDA   11,208
+			 b"01001_00_000001110101", -- 8  STORE 00,PacMan_Y
+			 b"00000_11_000100110000", -- 9  LDA   11,GHOST_START_X
+			 b"01001_00_000001110000", -- 10  STORE 00,GHOST_X
+			 b"00000_11_000011100000", -- 11 LDA   11,GHOST_START_Y
+			 b"01001_00_000001101111", -- 12 STORE 00,GHOST_Y
+			 b"00000_11_000000000001", -- 13 LDA   11,$001
+			 b"01001_00_000001101110", -- 14 STORE 00,GHOST_DIR
+			 b"00000_11_000000000000", -- 15 LDA   11,$000
+			 b"01001_00_000001101101", -- 16 STORE 00,GHOST_SPEED
+			 b"10000_11_000000000000", -- 17 LDJOY 11,$000				LOAD_JOYSTICK
+			 b"01001_00_000001110100", -- 18 STORE 00,PacMan_DIR
+			 b"00100_00_000001110011", -- 19 LDXR  00,PacMan_SPEED
+			 b"00000_00_000001110110", -- 20 LDA   00,PacMan_X			START_PAC_ADD
+			 b"10110_00_000001110100", -- 21 ADD_X 00,PacMan_DIR
+			 b"01001_00_000001110110", -- 22 STORE 00,PacMan_X
+			 b"00000_00_000001110101", -- 23 LDA   00,PacMan_Y
+			 b"10111_00_000001110100", -- 24 ADD_Y 00,PacMan_DIR
+			 b"01001_00_000001110101", -- 25 STORE 00,PacMan_Y			END_PAC_ADD
+			 b"00100_00_000001101101", -- 26 LDXR  00,GHOST_SPEED			START_GHOST_ADD
+			 b"00000_00_000001110000", -- 27 LDA   00,GHOST_X
+			 b"10110_00_000001101110", -- 28 ADD_X 00,GHOST_DIR
+			 b"01001_00_000001110000", -- 29 STORE 00,GHOST_X
+			 b"00000_00_000001101111", -- 30 LDA   00,GHOST_Y
+			 b"10111_00_000001101110", -- 31 ADD_Y 00,GHOST_DIR
+			 b"01001_00_000001101111", -- 32 STORE 00,GHOST_Y
+			 b"10001_11_011000011111", -- 33 SLEEP_LONG 11,$61F			SLEEP
+			 b"00100_00_000001110110", -- 34 LDXR  00,PacMan_X
+			 b"00000_11_000000000000", -- 35 LDA   11,$000
+			 b"01011_11_000000100111", -- 36 NEQU  11,SKIP_ZERO
+			 b"00000_11_001001110000", -- 37 LDA   11,624
+			 b"01001_00_000001110110", -- 38 STORE 00,PacMan_X
+			 b"00000_11_001001110000", -- 39 LDA   11,624				SKIP_ZERO
+			 b"01011_11_000000101011", -- 40 NEQU  11,SKIP_639
+			 b"00000_11_000000000000", -- 41 LDA   11,$000
+			 b"01001_00_000001110110", -- 42 STORE 00,PacMan_X
+			 b"00000_00_000001110110", -- 43 LDA   00,PacMan_X			SKIP_639	
+			 b"01001_00_000001110010", -- 44 STORE 00,PacMan_Old_X
+			 b"00000_00_000001110101", -- 45 LDA   00,PacMan_Y
+			 b"01001_00_000001110001", -- 46 STORE 00,PacMan_Old_Y
+			 b"00000_00_000001110000", -- 47 LDA   00,GHOST_X
+			 b"01001_00_000001101100", -- 48 STORE 00,GHOST_OLD_X
+			 b"00000_00_000001101111", -- 49 LDA   00,GHOST_Y
+			 b"01001_00_000001101011", -- 50 STORE 00,GHOST_OLD_Y
+ 			 b"00101_11_000000010001", -- 51 JMP   11,$011				JUMP TO LOAD_JOYSTICK
+			 b"00000_11_000000000000", -- 52 LDA   11,$000				AVBROTT 3 STANNA PACMAN
+			 b"01001_00_000001110011", -- 53 STORE 00,PacMan_Speed
+			 b"00000_00_000001110010", -- 54 LDA   00,PacMan_Old_X
+ 			 b"01001_00_000001110110", -- 55 STORE 00,PacMan_X
+			 b"00000_00_000001110001", -- 56 LDA   00,PacMan_Old_Y
+ 			 b"01001_00_000001110101", -- 57 STORE 00,PacMan_Y
+			 b"00010_00_000000000000", -- 58 RTE
+			 b"00000_00_000001101110", -- 59 LDA   00,GHOST_DIR			AVBROTT 2 ÄNDRA RIKTNING GHOST
+			 b"10101_11_000000000000", -- 60 ADD_RND 00,$000
+			 b"10100_11_000000000011", -- 61 AND   11,$FFC
+			 b"01001_00_000001101110", -- 62 STORE 00,GHOST_DIR
+			 b"00000_00_000001101100", -- 63 LDA   00,GHOST_OLD_X
+			 b"01001_00_000001110000", -- 64 STORE 00,GHOST_X
+			 b"00000_00_000001101011", -- 65 LDA   00,GHOST_OLD_Y
+			 b"01001_00_000001101111", -- 66 STORE 00,GHOST_Y
+			 b"00010_00_000000000000", -- 67 RTE	
+			 b"00000_11_000000000010", -- 68 LDA   11,$002				AVBROTT 1 STARTA PACMAN
+			 b"01001_00_000001110011", -- 69 STORE 00,PacMan_SPEED
+			 b"00000_11_000000000011", -- 70 LDA   11,$003
+			 b"01001_00_000001101101", -- 71 STORE 00,GHOST_SPEED
+			 b"00010_00_000000000000", -- 72 RTE
+			 b"00011_11_000000000000", -- 73 HALT					AVBROTT 4 GAME OVER
 			 others => (others => '0'));
 
 	signal p_mem : p_mem_t := p_mem_c;
@@ -316,11 +320,11 @@ architecture Behavioral of cpu is
 	signal XR      		: unsigned(11 downto 0) 		:= (others => '0');     -- XR
 	signal SP       	: unsigned(11 downto 0) 		:= (others => '0');     -- Stack pekare, startar på $FFF
 	signal IV 	  	: unsigned(11 downto 0)  		:= (others => '0');	-- Avbrotts vektorn, startvärde = 3
-	signal IL       	: unsigned(1 downto 0)  		:= (others => '0');     -- Avbrotts nivå
+	signal IL       	: unsigned(2 downto 0)  		:= (others => '0');     -- Avbrotts nivå
 	signal IV1	 	: unsigned(11 downto 0) 		:= (others => '0');  	-- Avbrotts vektor för nivå 1
 	signal IV2	  	: unsigned(11 downto 0) 		:= (others => '0');  	-- Avbrotts vektor för nivå 2
 	signal IV3		: unsigned(11 downto 0)			:= (others => '0');	-- Avbrotts vektor för nivå 3
-	signal IC		: unsigned(11 downto 0)			:= (others => '0');	-- Interruptcode register
+	signal IV4		: unsigned(11 downto 0)			:= (others => '0');	-- Avbrotts vektor för nivå 4
 	signal SR       	: unsigned(11 downto 0) 		:= (others => '0');     -- Status register
 	signal AR       	: unsigned(11 downto 0) 		:= (others => '0');     -- Ackumulator register
 	signal DATA_BUS 	: unsigned(18 downto 0) 		:= (others => '0');     -- Bussen 19 bitar
@@ -386,21 +390,29 @@ begin
 				intr_1 <= '0';
 				intr_2 <= '0';
 				intr_3 <= '0';
-			elsif intr = '1' or intr2 = '1' or intr3 = '1' then
-				if intr = '1' then 
-					intr_1 <= '1';
-				end if;
+				intr_4 <= '0';
+			end if;
 				
-				if intr2 = '1' then 
-					intr_2 <= '1';
-				end if;
 
-				if intr3 = '1' then 
-					intr_3 <= '1';
-				end if;
+			if intr = '1' then 
+				intr_1 <= '1';
 			end if;
 			
-			if    intr_3 = '1' and I = '0' and IL < 3 then
+			if intr2 = '1' then 
+				intr_2 <= '1';
+			end if;
+
+			if intr3 = '1' then 
+				intr_3 <= '1';
+			end if;
+
+			if intr4 = '1' then
+				intr_4 <= '1';
+			end if;
+			
+			if intr_4 = '1' and I = '0' and IL < 4 then
+				intr_4 <= '0';
+			elsif	intr_3 = '1' and I = '0' and IL < 3 then
 				intr_3 <= '0';
 			elsif intr_2 = '1' and I = '0' and IL < 2 then
 				intr_2 <= '0';
@@ -435,7 +447,7 @@ begin
 		"0000000" & IV1 when (TB = 10) 	else
 		"0000000" & IV2 when (TB = 11) 	else
 		"0000000" & JOY when (TB = 13)  else
-		"0000000" & IC	when (TB = 14)  else
+		"0000000" & IV4	when (TB = 14)  else
 		"0000000" & IV3 when (TB = 15)  else
 		(others => '0') when (rst = '1')else
 		(others => '0');
@@ -465,50 +477,22 @@ begin
 		end if;
 	end process;
 	
-	IV1_reg : process(clk)
+	IVX_regs : process(clk)
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
 				IV1 <= (others => '0');
+				IV2 <= (others => '0');
+				IV3 <= (others => '0');
+				IV4 <= (others => '0');
 			elsif FB = 10 then
 				IV1 <= DATA_BUS(11 downto 0);
-			end if;
-		end if;
-	end process;
-	
-	IV2_reg : process(clk)
-	begin
-		if rising_edge(clk) then
-			if rst = '1' then
-				IV2 <= (others => '0');
 			elsif FB = 11 then
 				IV2 <= DATA_BUS(11 downto 0);
-			end if;
-		end if;
-	end process;
-
-	IV3_reg : process(clk)
-	begin
-		if rising_edge(clk) then
-			if rst = '1' then
-				IV3 <= (others => '0');
 			elsif FB = 15 then
 				IV3 <= DATA_BUS(11 downto 0);
-			end if;
-		end if;
-	end process;
-
-	--intr_code:s register
-
-	IC_reg : process(clk)
-	begin
-		if rising_edge(clk) then
-			if rst = '1' then
-				IC <= (others => '0');
 			elsif FB = 14 then
-				IC <= DATA_BUS(11 downto 0);
-			else
-				IC <= "00000000" & intr_code; 
+				IV4 <= DATA_BUS(11 downto 0);
 			end if;
 		end if;
 	end process;
@@ -519,15 +503,17 @@ begin
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then 
-				IL <= "00";
+				IL <= "000";
 			elsif TB = 12 then
-				IL <= SR(1 downto 0);
+				IL <= SR(2 downto 0);
+			elsif intr_4 = '1' and I = '0' and IL < 4 then
+				IL <= "100";
 			elsif intr_3 = '1' and I = '0' and IL < 3 then
-				IL <= "11";
+				IL <= "011";
 			elsif intr_2 = '1' and I = '0' and IL < 2 then
-				IL <= "10";
+				IL <= "010";
 			elsif intr_1 = '1' and I = '0' and IL < 1 then
-				IL <= "01";
+				IL <= "001";
 			end if;
 		end if;
 	end process;
@@ -536,7 +522,8 @@ begin
 		  (others => '0') 	when (IL = 0)    else
 		  IV1 			when (IL = 1)    else
 		  IV2 			when (IL = 2)    else 
-		  IV3			when (IL = 3)    else (others => '0');	
+		  IV3			when (IL = 3)    else 
+		  IV4			when (IL = 4)    else (others => '0');	
 
 	XR_reg : process(clk)
 	begin
@@ -568,7 +555,7 @@ begin
 			elsif FB = 8 then
 				SR <= DATA_BUS(11 downto 0);
 			elsif FB = 12 then
-				SR(1 downto 0) <= IL;
+				SR(2 downto 0) <= IL;
 			elsif AR = 0 then 
 				SR(11) <= '1'; -- Sätt Z flaggan
 			else
@@ -627,7 +614,7 @@ begin
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then uPC <= (others => '0');
-			elsif I = '0' and ((intr_1 = '1' and IL < 1) or (intr_2 = '1' and IL < 2) or (intr_3 = '1' and IL < 3))  then uPC <= intr_vector;
+			elsif I = '0' and ((intr_1 = '1' and IL < 1) or (intr_2 = '1' and IL < 2) or (intr_3 = '1' and IL < 3) or (intr_4 = '1' and IL < 4))  then uPC <= intr_vector;
 			elsif SEQ = 1 then uPC <= K1_out;
 			elsif SEQ = 2 then uPC <= K2_out;
 			elsif SEQ = 3 then uPC <= (others => '0');

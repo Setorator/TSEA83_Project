@@ -52,12 +52,12 @@ architecture Behavioral of Pac_Man is
 			intr							: in std_logic;									-- Interupt signal
 			intr2							: in std_logic;
 			intr3							: in std_logic;
-			intr_code					: in unsigned(3 downto 0);
-			joystick_pos				: in unsigned(1 downto 0);
-			output1						: out unsigned(9 downto 0);
+			intr4							: in std_logic;
+			joystick_pos						: in unsigned(1 downto 0);
+			output1							: out unsigned(9 downto 0);
 			output2 						: out unsigned(9 downto 0);
-			output3						: out unsigned(9 downto 0);
-			output4						: out unsigned(9 downto 0)
+			output3							: out unsigned(9 downto 0);
+			output4							: out unsigned(9 downto 0)
 		);
 	end component;
 	
@@ -155,38 +155,37 @@ architecture Behavioral of Pac_Man is
 	end component;
 		
   	
-	signal start_pacman				: std_logic					:= '0';								-- Signal between CPU and Joystick
-	signal intr2 						: std_logic					:= '0';
-	signal intr3						: std_logic					:= '0';
-	signal intr_code					: unsigned(3 downto 0)  := (others => '0');
-	signal pacman_ghost_intr		: std_logic					:= '0';								-- Signals when pacman collides with ghost
+	signal start_pacman			: std_logic		:= '0';								-- Signal between CPU and Joystick
+	signal intr2 				: std_logic		:= '0';
+	signal intr3				: std_logic		:= '0';
+	signal intr4				: std_logic		:= '0';								-- Signals when pacman collides with ghost
+									
+	signal joystick_pos			: unsigned(1 downto 0)	:= "01";
+	signal output1				: unsigned(9 downto 0)  := (others => '0');
+	signal output2 				: unsigned(9 downto 0) 	:= (others => '0');
+	signal output3				: unsigned(9 downto 0) 	:= (others => '0');
+	signal output4				: unsigned(9 downto 0)  := (others => '0');
 	
-	signal joystick_pos				: unsigned(1 downto 0)	:= "01";
-	signal output1						: unsigned(9 downto 0)  := (others => '0');
-	signal output2 					: unsigned(9 downto 0) 	:= (others => '0');
-	signal output3						: unsigned(9 downto 0) 	:= (others => '0');
-	signal output4						: unsigned(9 downto 0)  := (others => '0');
-	
-	signal test_pac_x					: unsigned(9 downto 0)	:= (others => '0');
-	signal test_pac_y					: unsigned(9 downto 0)	:= (others => '0');
+	signal test_pac_x			: unsigned(9 downto 0)	:= (others => '0');
+	signal test_pac_y			: unsigned(9 downto 0)	:= (others => '0');
 
 	signal test_pac_collision		: std_logic		:= '1';
 	
-	signal joystick					: unsigned(1 downto 0)	:= "01";
-	signal delay_cntr					: unsigned(27 downto 0) := (others => '0');
-	signal clr_cntr					: std_logic		:= '0';
+	signal joystick				: unsigned(1 downto 0)	:= "01";
+	signal delay_cntr			: unsigned(27 downto 0) := (others => '0');
+	signal clr_cntr				: std_logic		:= '0';
 
 	-- Signals between PIX_GEN and RAM
-	signal read_enable				: std_logic := '0';
-	signal write_enable				: std_logic := '0';
-	signal read_addr					: unsigned(10 downto 0);
-	signal write_addr					: unsigned(10 downto 0);
-	signal read_data					: std_logic_vector(1 downto 0);
-	signal write_data					: std_logic_vector(1 downto 0);
+	signal read_enable			: std_logic := '0';
+	signal write_enable			: std_logic := '0';
+	signal read_addr			: unsigned(10 downto 0);
+	signal write_addr			: unsigned(10 downto 0);
+	signal read_data			: std_logic_vector(1 downto 0);
+	signal write_data			: std_logic_vector(1 downto 0);
 	
 	-- Signals between PIX_GEN and LED
-	signal display						: unsigned(15 downto 0) := (others => '0');   				-- value to be displayed by the LED
-	signal victory						: std_logic;															-- = '1' if score = 368.
+	signal display				: unsigned(15 downto 0) := (others => '0');   				-- value to be displayed by the LED
+	signal victory				: std_logic;															-- = '1' if score = 368.
 
 begin 
 
@@ -225,7 +224,7 @@ begin
 		end if;
 	end process;
 
-	U0 : CPU port map(clk=>clk, rst=>btns, intr=>start_pacman, intr2=>intr2, intr3=>intr3, intr_code => intr_code, joystick_pos => joystick,
+	U0 : CPU port map(clk=>clk, rst=>btns, intr=>start_pacman, intr2=>intr2, intr3=>intr3, intr4=>intr4, joystick_pos => joystick,
 				output1 => output1, output2 => output2, output3 => output3, output4 => output4);
 							 
 	U1 : RAM port map(clk=>clk, we=>write_enable, data_write=>write_data, x_write=>write_addr(5 downto 0), y_write=>write_addr(10 downto 6), 
@@ -245,7 +244,7 @@ begin
 				vgaBlue(1)=>vgaBlue(1),
 				ghost_wall_colision=>intr2, 
 				pacman_wall_colision=>intr3,
-				pacman_ghost_colision=>pacman_ghost_intr,
+				pacman_ghost_colision=>intr4,
 				Ghost_X => output3, Ghost_Y => output4,
 				TEST_X => test_pac_x,
 				TEST_Y => test_pac_y,
