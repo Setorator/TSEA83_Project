@@ -155,11 +155,11 @@ architecture Behavioral of Pac_Man is
 	end component;
 		
   	
-	signal start_pacman				: std_logic;											-- Signal between CPU and Joystick
+	signal start_pacman				: std_logic					:= '0';								-- Signal between CPU and Joystick
 	signal intr2 						: std_logic					:= '0';
 	signal intr3						: std_logic					:= '0';
 	signal intr_code					: unsigned(3 downto 0)  := (others => '0');
-	signal pacman_ghost_intr		: std_logic					:= '0';					-- Signals when pacman collides with ghost
+	signal pacman_ghost_intr		: std_logic					:= '0';								-- Signals when pacman collides with ghost
 	
 	signal joystick_pos				: unsigned(1 downto 0)	:= "01";
 	signal output1						: unsigned(9 downto 0)  := (others => '0');
@@ -176,6 +176,7 @@ architecture Behavioral of Pac_Man is
 	signal delay_cntr					: unsigned(27 downto 0) := (others => '0');
 	signal clr_cntr					: std_logic		:= '0';
 
+	-- Signals between PIX_GEN and RAM
 	signal read_enable				: std_logic := '0';
 	signal write_enable				: std_logic := '0';
 	signal read_addr					: unsigned(10 downto 0);
@@ -183,13 +184,14 @@ architecture Behavioral of Pac_Man is
 	signal read_data					: std_logic_vector(1 downto 0);
 	signal write_data					: std_logic_vector(1 downto 0);
 	
-	signal display						: unsigned(15 downto 0) := (others => '0');   						-- value to be displayed by the LED
-	signal victory						: std_logic;																	-- = '1' if score = 368.
+	-- Signals between PIX_GEN and LED
+	signal display						: unsigned(15 downto 0) := (others => '0');   				-- value to be displayed by the LED
+	signal victory						: std_logic;															-- = '1' if score = 368.
 
 begin 
 
---	Lampa <= clr_cntr;
-	Lampa <= intr2;
+
+	Lampa <= victory;
 
 	test_pac_x <= 	(output1 - 14) when (joystick_pos = "00") else
 		      		(output1 + 14) when (joystick_pos = "10") else output1;
@@ -197,14 +199,14 @@ begin
 	test_pac_y <= 	(output2 - 14) when (joystick_pos = "01") else
 		      		(output2 + 14) when (joystick_pos = "11") else output2;
 
-	start_pacman <= '1' when (btns = '0' and delay_cntr = X"0197085") else '0';
+	start_pacman <= '1' when (btns = '0' and delay_cntr = X"01970F5") else '0';
 
 	DELAY_CNTR_func : process(clk)
 	begin
 		if rising_edge(clk) then	
 			if (btns = '1') or (test_pac_collision = '1') or (clr_cntr = '1')then
 				delay_cntr <= (others => '0');
-			elsif (delay_cntr /= X"0197085") then
+			elsif (delay_cntr /= X"01970F5") then
 				delay_cntr <= delay_cntr + 1;
 			else
 				delay_cntr <= (others => '0');
@@ -217,7 +219,7 @@ begin
 		if rising_edge(clk) then
 			if btns = '1' then
 				joystick <= "01";
-			elsif delay_cntr = X"0197085" then
+			elsif delay_cntr = X"01970F5" then
 				joystick <= joystick_pos;
 			end if;
 		end if;

@@ -33,12 +33,15 @@ architecture Behavioral of RAM is
 
 
 	-- Declaration of a two-port RAM
-	-- with 2048 adresses and 8 bits width
-	-- (We only uses 40*30 = 1200 adresses,
-	-- each containing a 2-bit tile_type.)
-	type ram_t is array(0 to 2047) of 
+	-- with 1200 adresses, each containing a 2-bit tile_type.
+	type ram_t is array(0 to 1199) of 
 		std_logic_vector(1 downto 0);
-	
+		
+-- 	The ram only contains a 2-bit binary-code of the specific tile type on 
+-- 	the corresponding position. The color is later given in the PIX_GEN module
+--		This is to minimize the space required, since 2 bits (tile type) < 8 bits (color)
+
+
 	-- ("00", "01", "10", "11") = (Floor, Food, Undefined, Wall)
 	signal ram : ram_t := ( "00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00", 
 									"00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00","00",
@@ -135,18 +138,20 @@ architecture Behavioral of RAM is
 
 
 	
+	-- Our read and write process for the ram.
 	Read_Write : process(clk)
 	begin
 		if rising_edge(clk) then	
-				
-			-- Synched write port 1	
-			if (we = '0') then
-				ram(40*to_integer(y_write) + to_integer(x_write)) <= data_write;
-			end if;
+			if (rst = '0') then
+				-- Synched write port 1	
+				if (we = '0') then
+					ram(40*to_integer(y_write) + to_integer(x_write)) <= data_write;
+				end if;
 		
-			-- synched read from port 2
-			if (re = '0') then 
-				data_read <= ram(40*to_integer(y_read) + to_integer(x_read));
+				-- synched read from port 2
+				if (re = '0') then 
+					data_read <= ram(40*to_integer(y_read) + to_integer(x_read));
+				end if;
 			end if;
 		end if;
 	end process;
